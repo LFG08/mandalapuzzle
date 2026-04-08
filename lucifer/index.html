@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucifer, 1890 - Jigsaw</title>
+  <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+
+  <style>
+    :root {
+      --bg: #f3efe4;
+      --panel: #431708;
+      --panel-border: #9a4f19;
+      --ink: #2c241b;
+      --muted: #c98b59;
+      --accent: #b85b18;
+      --accent-soft: #f2dfc6;
+      --shadow: 0 24px 60px rgba(63, 42, 21, 0.14);
+      --piece-overhang: 18px;
+      --board-guide-image: url("jigsaw_base.png");
+      --board-guide-overlay: linear-gradient(rgba(255, 248, 239, 0.12), rgba(255, 248, 239, 0.12));
+      --board-guide-opacity: 1;
+      --board-guide-inset: calc(var(--piece-overhang) * -1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #f2e7d6;
+      background:#3b1200;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 20px 0 36px;
+    }
+
+    .status-card,
+    .tray-wrap {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .status-card {
+      position: sticky;
+      top: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+      z-index: 40;
+      background:
+        radial-gradient(circle at top left, rgba(184, 91, 24, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(184, 91, 24, 0.14), transparent 26%),
+        linear-gradient(180deg, rgba(72, 29, 10, 0.98), rgba(49, 18, 7, 0.98));
+      box-shadow:
+        inset 0 0 0 1px rgba(230, 162, 102, 0.08),
+        0 24px 60px rgba(17, 6, 2, 0.42);
+    }
+
+    .status-card.minimized .menu-body {
+      display: none;
+    }
+
+    .menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: -4px -4px 16px;
+      padding: 4px;
+      cursor: default;
+    }
+
+    .menu-title {
+      margin: 0;
+      font-family: "Baskerville Old Face", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #f6e6cf;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.26);
+    }
+
+    .menu-toggle {
+      width: auto;
+      min-width: 88px;
+      padding: 9px 12px;
+    }
+
+    .status-line + .status-line {
+      margin-top: 14px;
+    }
+
+    .status-label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .menu-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .menu-button {
+      display: block;
+      width: 100%;
+      border: 1px solid rgba(255, 240, 220, 0.18);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: linear-gradient(180deg, rgba(118, 49, 12, 0.96), rgba(80, 31, 8, 0.96));
+      color: #f6e6cf;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-size: 0.9rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 214, 178, 0.16),
+        0 10px 24px rgba(18, 7, 3, 0.24);
+    }
+
+    .menu-button:hover {
+      filter: brightness(1.08);
+    }
+
+    #shuffle-button {
+      width: 100%;
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: linear-gradient(90deg, #c5661b, #8e3d0d);
+      color: #fff5e7;
+      cursor: pointer;
+      font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-size: 0.9rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 217, 184, 0.18),
+        0 16px 30px rgba(96, 36, 9, 0.34);
+    }
+
+    #shuffle-button:hover {
+      filter: brightness(1.04);
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(768px, 820px) minmax(320px, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .board-wrap {
+      position: sticky;
+      top: 18px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+        .board {
+      position: relative;
+      width: 768px;
+      height: 768px;
+      overflow: visible;
+
+      background: linear-gradient(rgba(255, 248, 239, 0.2), rgba(255, 248, 239, 0.2));
+      box-shadow: 0 26px 70px rgba(48, 29, 16, 0.2);
+    }
+
+    .board::before {
+      content: "";
+      position: absolute;
+      inset: var(--board-guide-inset);
+
+      background: var(--board-guide-overlay), var(--board-guide-image);
+      background-size: 100% 100%;
+      background-position: center;
+      opacity: var(--board-guide-opacity);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .board::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+
+      pointer-events: none;
+    }
+
+    .board-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.28), transparent 42%),
+        radial-gradient(circle at 50% 110%, rgba(255, 230, 190, 0.22), transparent 30%);
+      z-index: 1;
+    }
+
+    .board-message {
+      margin: 16px 8px 0;
+      color: #e4cdb3;
+      line-height: 1.5;
+    }
+
+    .board-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 14px 8px 0;
+      color: #e8d3ba;
+    }
+
+    .board-controls label {
+      white-space: nowrap;
+    }
+
+    .guide-slider {
+      flex: 1;
+      accent-color: #d28455;
+    }
+
+    .guide-value {
+      min-width: 52px;
+      text-align: right;
+      color: #f1dcc0;
+    }
+
+    .tray-wrap {
+      min-height: 840px;
+      padding: 20px;
+    }
+
+    .tray-header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    .tray-header p {
+      margin: 8px 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .tray {
+      position: relative;
+      min-height: 710px;
+      height: calc(100vh - 180px);
+      overflow: auto;
+      border-radius: 20px;
+      background:
+        linear-gradient(135deg,#2a0d00 ,#9b3f14),
+        repeating-linear-gradient(
+          45deg,
+          rgba(255, 214, 170, 0.04) 0,
+          rgba(255, 214, 170, 0.04) 16px,
+          transparent 16px,
+          transparent 32px
+        );
+      border: 2px inset rgb(49, 20, 0);
+    }
+
+    .piece {
+      position: absolute;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      outline: none;
+      transition: filter 160ms ease, transform 160ms ease;
+      z-index: 2;
+    }
+
+    .piece canvas {
+      display: block;
+      filter: drop-shadow(0 12px 20px rgba(57, 40, 25, 0.18));
+    }
+
+    .piece:hover {
+      transform: translateY(-2px);
+    }
+
+    .piece:focus-visible {
+      filter: drop-shadow(0 0 0 4px rgba(182, 93, 47, 0.25));
+    }
+
+    .piece.dragging {
+      position: fixed;
+      cursor: grabbing;
+      z-index: 9999;
+      transition: none;
+    }
+
+    .piece.placed {
+      cursor: default;
+    }
+
+    .piece.placed canvas {
+      filter: drop-shadow(0 8px 12px rgba(57, 40, 25, 0.08));
+    }
+
+    .piece.level-two:not(.active) {
+      display: none;
+    }
+
+    .tray-empty {
+      display: grid;
+      place-items: center;
+      min-height: 100%;
+      text-align: center;
+      color: var(--muted);
+      padding: 24px;
+    }
+
+    .celebration {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .info-dialog {
+      border: 1px solid rgba(255, 240, 220, 0.16);
+      border-radius: 24px;
+      padding: 0;
+      width: min(560px, calc(100vw - 28px));
+      background: #2a170f;
+      color: #f2e7d6;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
+    }
+
+    .info-dialog::backdrop {
+      background: rgba(14, 8, 5, 0.72);
+    }
+
+    .info-content {
+      padding: 24px;
+    }
+
+    .info-content h2 {
+      margin: 0 0 12px;
+      font-size: 1.45rem;
+    }
+
+    .info-content p {
+      margin: 0 0 14px;
+      line-height: 1.6;
+      color: #ebdcc6;
+    }
+
+    .info-content a {
+      color: #ffd4a7;
+    }
+
+    .dialog-close {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 1280px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .board-wrap {
+        position: static;
+      }
+
+      .board {
+        margin: 0 auto;
+      }
+
+      .tray {
+        height: 780px;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .app-shell {
+        width: min(100vw - 20px, 100%);
+        padding-top: 18px;
+      }
+
+      .board {
+        border-width: 7px;
+        border-radius: 20px;
+      }
+
+      .tray-wrap,
+      .status-card {
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+  <body>
+  <main class="app-shell">
+    <section class="game-layout">
+      <div class="board-wrap">
+        <div id="board" class="board">
+          <div class="board-glow"></div>
+        </div>
+        <p id="board-message" class="board-message"></p>
+        <div class="board-controls">
+          <label class="status-label" for="guide-visibility">Visibilidade da guia</label>
+          <input id="guide-visibility" class="guide-slider" type="range" min="0" max="100" value="100">
+          <span id="guide-value" class="guide-value">100%</span>
+        </div>
+      </div>
+
+      <aside class="tray-wrap">
+        <div id="status-card" class="status-card">
+          <div class="menu-header">
+            <h2 class="menu-title">Lucifer, 1890</h2>
+            <button id="menu-toggle-button" class="menu-button menu-toggle" type="button">Minimizar</button>
+          </div>
+          <div id="menu-body" class="menu-body">
+            <div class="status-line">
+              <span class="status-label">Peças colocadas</span>
+              <strong id="placed-label">0 / 100</strong>
+            </div>
+            <div class="menu-actions">
+              <a href="/" class="menu-button" role="button">Menu Principal</a>
+              <button id="shuffle-button" type="button">Embaralhar Peças Soltas</button>
+              <button id="info-button" class="menu-button" type="button">Sobre Esta Imagem</button>
+            </div>
+          </div>
+        </div>
+        <div class="tray-header">
+          <h2>Bandeja de Peças</h2>
+          <br></br>
+        </div>
+        <div id="tray" class="tray"></div>
+      </aside>
+    </section>
+  </main>
+
+  <template id="piece-template">
+    <button class="piece" type="button" aria-label="Puzzle piece"></button>
+  </template>
+
+  <dialog id="info-dialog" class="info-dialog">
+    <div class="info-content">
+      <h2>Sobre Esta Imagem</h2>
+      <p><a href="https://www.tumblr.com/readingc33/798737837734379520/2910-inspired-by-lucifer-franz-von-stuck-1890?source=share" target="_blank" rel="noreferrer">Ilustração</a> inspirada em <a href="https://pt.wikipedia.org/wiki/Ficheiro:1-Luzifer.jpg" target="_blank" rel="noreferrer">Lucifer, de Franz von Stuck, 1890</a></p>
+      <button id="close-info-button" class="menu-button dialog-close" type="button">Fechar</button>
+    </div>
+  </dialog>
+
+  <script>
+    const BOARD_SIZE = 768;
+    const SNAP_DISTANCE = 110;
+    const SNAP_AXIS_TOLERANCE = 72;
+    const SAVE_KEY = "luciferJigsawProgress";
+    const LEGACY_SAVE_KEYS = ["LuciferFVS"];
+
+    const LEVELS = [
+      {
+        id: "levelOne",
+        label: "Nivel Um",
+        image:"level_one.png",
+        rows: 10,
+        cols: 10,
+        unlockText: ""
+      },
+      {
+        id: "levelTwo",
+        label: "Nivel Dois",
+        image:"level_two.png",
+        rows: 5,
+        cols: 10,
+        occupancyMask: [
+          [1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+          [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+          [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+          [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+          [1, 1, 1, 1, 0, 0, 1, 1, 1, 1]
+        ],
+        unlockText: ""
+      }
+    ];
+
+    const board = document.getElementById("board");
+    const tray = document.getElementById("tray");
+    const placedLabel = document.getElementById("placed-label");
+    const boardMessage = document.getElementById("board-message");
+    const guideVisibilitySlider = document.getElementById("guide-visibility");
+    const guideValue = document.getElementById("guide-value");
+    const shuffleButton = document.getElementById("shuffle-button");
+    const infoButton = document.getElementById("info-button");
+    const infoDialog = document.getElementById("info-dialog");
+    const closeInfoButton = document.getElementById("close-info-button");
+    const statusCard = document.getElementById("status-card");
+    const menuToggleButton = document.getElementById("menu-toggle-button");
+    const pieceTemplate = document.getElementById("piece-template");
+
+    const EASY_BOARD_GUIDE = {
+      image: "level_one.png",
+      overlay: "linear-gradient(rgba(255, 248, 239, 0.48), rgba(255, 248, 239, 0.48))",
+      opacity: "0.72",
+      inset: "0px"
+    };
+
+    const state = {
+      boardRect: null,
+      trayRect: null,
+      pieces: [],
+      levels: [],
+      currentLevelIndex: 0,
+      drag: null,
+      zCounter: 1,
+      guideVisibility: 1,
+      boardGuideBaseOpacity: 1,
+      menuMinimized: false
+    };
+
+    initialize().catch((error) => {
+      console.error(error);
+      const detail = error && error.message ? ` ${error.message}` : "";
+      boardMessage.textContent = `The puzzle could not be initialized.${detail}`;
+    });
+
+    async function initialize() {
+      const savedProgress = loadProgress();
+      applyBoardGuide();
+      applyGuideVisibility(savedProgress?.guideVisibility ?? state.guideVisibility);
+      const levels = await Promise.all(LEVELS.map(loadLevel));
+      state.levels = levels;
+
+      for (const [index, level] of levels.entries()) {
+        createPieces(level, index === 0);
+      }
+
+      updateRects();
+      restoreProgress(savedProgress);
+      if (!savedProgress) {
+        shuffleUnplacedPieces();
+      }
+      updateStatus();
+      window.addEventListener("resize", handleResize);
+      shuffleButton.addEventListener("click", shuffleUnplacedPieces);
+      guideVisibilitySlider.addEventListener("input", handleGuideVisibilityChange);
+      infoButton.addEventListener("click", openInfoDialog);
+      closeInfoButton.addEventListener("click", closeInfoDialog);
+      infoDialog.addEventListener("click", handleDialogBackdropClick);
+      menuToggleButton.addEventListener("click", toggleMenuMinimized);
+      setMenuMinimized(Boolean(savedProgress?.menuMinimized));
+    }
+
+    function applyBoardGuide() {
+      const guide = EASY_BOARD_GUIDE;
+      state.boardGuideBaseOpacity = Number.parseFloat(guide.opacity) || 1;
+      board.style.setProperty("--board-guide-image", `url("${guide.image}")`);
+      board.style.setProperty("--board-guide-overlay", guide.overlay);
+      board.style.setProperty("--board-guide-inset", guide.inset);
+      syncGuideOpacity();
+    }
+
+    function handleGuideVisibilityChange(event) {
+      applyGuideVisibility(Number(event.target.value) / 100);
+      saveProgress();
+    }
+
+    function applyGuideVisibility(value) {
+      const clamped = Math.max(0, Math.min(1, Number(value)));
+      state.guideVisibility = clamped;
+      guideVisibilitySlider.value = String(Math.round(clamped * 100));
+      guideValue.textContent = `${Math.round(clamped * 100)}%`;
+      syncGuideOpacity();
+    }
+
+    function syncGuideOpacity() {
+      const opacity = Math.max(0, Math.min(1, state.boardGuideBaseOpacity * state.guideVisibility));
+      board.style.setProperty("--board-guide-opacity", opacity.toFixed(2));
+    }
+
+    function toggleMenuMinimized() {
+      setMenuMinimized(!state.menuMinimized);
+      saveProgress();
+    }
+
+    function setMenuMinimized(minimized) {
+      state.menuMinimized = minimized;
+      statusCard.classList.toggle("minimized", minimized);
+      menuToggleButton.textContent = minimized ? "Expandir" : "Minimizar";
+    }
+
+    function openInfoDialog() {
+      infoDialog.showModal();
+    }
+
+    function closeInfoDialog() {
+      infoDialog.close();
+    }
+
+    function handleDialogBackdropClick(event) {
+      const bounds = infoDialog.getBoundingClientRect();
+      const clickedInside = (
+        event.clientX >= bounds.left &&
+        event.clientX <= bounds.right &&
+        event.clientY >= bounds.top &&
+        event.clientY <= bounds.bottom
+      );
+
+      if (!clickedInside) {
+        closeInfoDialog();
+      }
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY) || LEGACY_SAVE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
+        if (!raw) {
+          return null;
+        }
+
+        const saved = JSON.parse(raw);
+        if (!saved || !Array.isArray(saved.placedPieceIds)) {
+          return null;
+        }
+
+        return saved;
+      } catch (error) {
+        console.warn("Unable to load saved progress.", error);
+        return null;
+      }
+    }
+
+    function saveProgress() {
+      try {
+        const placedPieceIds = state.pieces.filter((piece) => piece.placed).map((piece) => piece.id);
+        const payload = {
+          guideVisibility: state.guideVisibility,
+          menuMinimized: state.menuMinimized,
+          placedPieceIds
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn("Unable to save progress.", error);
+      }
+    }
+
+    function restoreProgress(savedProgress) {
+      if (!savedProgress) {
+        return;
+      }
+
+      applyBoardGuide();
+      applyGuideVisibility(savedProgress.guideVisibility ?? 1);
+
+      const placedIds = new Set(savedProgress.placedPieceIds);
+      const hasPlacedLevelTwoPiece = state.pieces.some((piece) => piece.levelId === "levelTwo" && placedIds.has(piece.id));
+
+      if (hasPlacedLevelTwoPiece || state.levels[0].totalPieces === [...placedIds].filter((id) => id.startsWith("levelOne-")).length) {
+        activateLevelTwoPieces();
+      }
+
+      for (const piece of state.pieces) {
+        if (placedIds.has(piece.id)) {
+          restorePlacedPiece(piece);
+        }
+      }
+
+      if (state.currentLevelIndex === 0 && state.levels[0].placedPieces === state.levels[0].totalPieces) {
+        activateLevelTwoPieces();
+      }
+
+      state.currentLevelIndex = state.levels[1].placedPieces > 0 || state.levels[0].placedPieces === state.levels[0].totalPieces ? 1 : 0;
+      shuffleUnplacedPieces();
+      syncRestoredProgressState();
+    }
+
+    function restorePlacedPiece(piece) {
+      board.appendChild(piece.element);
+      piece.element.style.position = "absolute";
+      piece.element.classList.add("placed");
+      piece.placed = true;
+      piece.active = true;
+      piece.element.classList.add("active");
+      piece.element.style.left = `${piece.targetX}px`;
+      piece.element.style.top = `${piece.targetY}px`;
+      piece.currentX = state.boardRect.left + piece.targetX;
+      piece.currentY = state.boardRect.top + piece.targetY;
+
+      const level = state.levels.find((entry) => entry.id === piece.levelId);
+      level.placedPieces += 1;
+    }
+
+    function activateLevelTwoPieces() {
+      const levelTwoPieces = state.pieces.filter((piece) => piece.levelId === "levelTwo");
+      for (const piece of levelTwoPieces) {
+        piece.active = true;
+        piece.element.classList.add("active");
+      }
+    }
+
+    function syncRestoredProgressState() {
+      const levelOne = state.levels[0];
+      const levelTwo = state.levels[1];
+
+      if (levelTwo.placedPieces === levelTwo.totalPieces && levelTwo.totalPieces > 0) {
+        placedLabel.textContent = `${levelTwo.totalPieces} / ${levelTwo.totalPieces}`;
+        boardMessage.innerHTML = '<span class="celebration">As duas camadas estao completas.</span> A mandala foi montada por inteiro.';
+        renderTrayEmptyState();
+        return;
+      }
+
+      if (levelOne.placedPieces === levelOne.totalPieces) {
+        boardMessage.innerHTML = `<span class="celebration">Nivel um completo.</span> As ${levelTwo.totalPieces} pecas de <code>level_two.png</code> agora estao na bandeja.`;
+      }
+    }
+
+    async function loadLevel(config) {
+      const image = await loadImage(config.image);
+      const occupancy = resolveOccupiedCells(config, image);
+      const edges = generateEdgeMap(config.rows, config.cols, occupancy);
+      const totalPieces = occupancy.flat().filter(Boolean).length;
+      return { ...config, image, occupancy, edges, totalPieces, placedPieces: 0 };
+    }
+
+    async function loadImage(src) {
+      try {
+        const response = await fetch(src);
+        if (!response.ok) {
+          throw new Error(`Asset request failed with status ${response.status}.`);
+        }
+
+        const blob = await response.blob();
+        return await createImageBitmap(blob);
+      } catch (primaryError) {
+        return await loadImageFallback(src, primaryError);
+      }
+    }
+
+    function loadImageFallback(src, primaryError) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => {
+          const baseMessage = primaryError && primaryError.message ? primaryError.message : "Unknown asset load failure.";
+          reject(new Error(`Embedded image load failed. ${baseMessage}`));
+        };
+        image.src = src;
+      });
+    }
+
+    function resolveOccupiedCells(config, image) {
+      try {
+        return detectOccupiedCells(image, config.rows, config.cols);
+      } catch (error) {
+        if (Array.isArray(config.occupancyMask)) {
+          console.warn(`Falling back to occupancy mask for ${config.id}.`, error);
+          return config.occupancyMask.map((row) => row.map(Boolean));
+        }
+
+        console.warn(`Falling back to full occupancy for ${config.id}.`, error);
+        return Array.from({ length: config.rows }, () => Array.from({ length: config.cols }, () => true));
+      }
+    }
+
+    function detectOccupiedCells(image, rows, cols) {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(image, 0, 0);
+
+      const cellWidth = image.width / cols;
+      const cellHeight = image.height / rows;
+      const occupancy = Array.from({ length: rows }, () => Array.from({ length: cols }, () => false));
+
+      for (let row = 0; row < rows; row += 1) {
+        for (let col = 0; col < cols; col += 1) {
+          const startX = Math.max(0, Math.floor(col * cellWidth));
+          const startY = Math.max(0, Math.floor(row * cellHeight));
+          const endX = Math.min(image.width, Math.ceil((col + 1) * cellWidth));
+          const endY = Math.min(image.height, Math.ceil((row + 1) * cellHeight));
+          const width = Math.max(1, endX - startX);
+          const height = Math.max(1, endY - startY);
+          const { data } = ctx.getImageData(startX, startY, width, height);
+          let solidPixels = 0;
+
+          for (let index = 3; index < data.length; index += 4) {
+            if (data[index] > 8) {
+              solidPixels += 1;
+            }
+          }
+
+          const coverage = solidPixels / (width * height);
+          occupancy[row][col] = coverage >= 0.05;
+        }
+      }
+
+      return occupancy;
+    }
+
+    function generateEdgeMap(rows, cols, occupancy = null) {
+      const map = Array.from({ length: rows }, () => Array.from({ length: cols }, () => null));
+      const isOccupied = (row, col) => occupancy ? Boolean(occupancy[row]?.[col]) : true;
+
+      for (let row = 0; row < rows; row += 1) {
+        for (let col = 0; col < cols; col += 1) {
+          if (!isOccupied(row, col)) {
+            map[row][col] = { top: 0, right: 0, bottom: 0, left: 0 };
+            continue;
+          }
+
+          const top = row === 0 || !isOccupied(row - 1, col) ? 0 : -map[row - 1][col].bottom;
+          const left = col === 0 || !isOccupied(row, col - 1) ? 0 : -map[row][col - 1].right;
+          const bottom = row === rows - 1 || !isOccupied(row + 1, col) ? 0 : (Math.random() > 0.5 ? 1 : -1);
+          const right = col === cols - 1 || !isOccupied(row, col + 1) ? 0 : (Math.random() > 0.5 ? 1 : -1);
+          map[row][col] = { top, right, bottom, left };
+        }
+      }
+
+      return map;
+    }
+
+    function createPieces(level, active) {
+      const pieceWidth = BOARD_SIZE / level.cols;
+      const pieceHeight = BOARD_SIZE / level.rows;
+      const tabSize = Math.round(Math.min(pieceWidth, pieceHeight) * 0.24);
+
+      for (let row = 0; row < level.rows; row += 1) {
+        for (let col = 0; col < level.cols; col += 1) {
+          if (!level.occupancy[row][col]) {
+            continue;
+          }
+
+          const element = pieceTemplate.content.firstElementChild.cloneNode(true);
+          const edges = level.edges[row][col];
+          const piece = buildPiece(level, row, col, pieceWidth, pieceHeight, tabSize, edges, element, active);
+          state.pieces.push(piece);
+        }
+      }
+    }
+
+    function buildPiece(level, row, col, pieceWidth, pieceHeight, tabSize, edges, element, active) {
+      const canvas = document.createElement("canvas");
+      const width = Math.round(pieceWidth + tabSize * 2);
+      const height = Math.round(pieceHeight + tabSize * 2);
+
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
+      drawPiece(canvas, level.image, row, col, pieceWidth, pieceHeight, tabSize, edges);
+
+      element.appendChild(canvas);
+      element.dataset.level = level.id;
+      element.classList.toggle("level-two", level.id === "levelTwo");
+      element.classList.toggle("active", active);
+      element.style.position = "absolute";
+      element.style.width = `${width}px`;
+      element.style.height = `${height}px`;
+      element.addEventListener("pointerdown", (event) => startDrag(event, piece));
+
+      const targetX = Math.round(col * pieceWidth - tabSize);
+      const targetY = Math.round(row * pieceHeight - tabSize);
+
+      const piece = {
+        id: `${level.id}-${row}-${col}`,
+        levelId: level.id,
+        row,
+        col,
+        element,
+        canvas,
+        width,
+        height,
+        tabSize,
+        pieceWidth,
+        pieceHeight,
+        targetX,
+        targetY,
+        currentX: 0,
+        currentY: 0,
+        placed: false,
+        active
+      };
+
+      tray.appendChild(element);
+      return piece;
+    }
+
+    function drawPiece(canvas, image, row, col, pieceWidth, pieceHeight, tabSize, edges) {
+      const ctx = canvas.getContext("2d");
+      const x = tabSize;
+      const y = tabSize;
+
+      ctx.save();
+      ctx.beginPath();
+      tracePiecePath(ctx, x, y, pieceWidth, pieceHeight, tabSize, edges);
+      ctx.closePath();
+      ctx.clip();
+
+      ctx.drawImage(
+        image,
+        col * pieceWidth - tabSize,
+        row * pieceHeight - tabSize,
+        pieceWidth + tabSize * 2,
+        pieceHeight + tabSize * 2,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      ctx.restore();
+
+      ctx.beginPath();
+      tracePiecePath(ctx, x, y, pieceWidth, pieceHeight, tabSize, edges);
+      ctx.closePath();
+      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = "rgba(82, 53, 30, 0.48)";
+      ctx.stroke();
+    }
+
+    function tracePiecePath(ctx, x, y, width, height, tabSize, edges) {
+      ctx.moveTo(x, y);
+
+      drawHorizontalEdge(ctx, x, y, width, tabSize, edges.top, 1);
+      drawVerticalEdge(ctx, x + width, y, height, tabSize, edges.right, 1);
+      drawHorizontalEdge(ctx, x + width, y + height, width, tabSize, edges.bottom, -1);
+      drawVerticalEdge(ctx, x, y + height, height, tabSize, edges.left, -1);
+
+      function drawHorizontalEdge(path, startX, startY, span, tab, direction, sign) {
+        const segment = span / 3;
+
+        if (sign === 1) {
+          path.lineTo(startX + segment, startY);
+          if (direction !== 0) {
+            path.bezierCurveTo(
+              startX + segment + tab * 0.15,
+              startY,
+              startX + segment + tab * 0.25,
+              startY - tab * direction,
+              startX + span / 2,
+              startY - tab * direction
+            );
+            path.bezierCurveTo(
+              startX + segment * 2 - tab * 0.25,
+              startY - tab * direction,
+              startX + segment * 2 - tab * 0.15,
+              startY,
+              startX + segment * 2,
+              startY
+            );
+          } else {
+            path.lineTo(startX + segment * 2, startY);
+          }
+          path.lineTo(startX + span, startY);
+          return;
+        }
+
+        path.lineTo(startX - segment, startY);
+        if (direction !== 0) {
+          path.bezierCurveTo(
+            startX - segment - tab * 0.15,
+            startY,
+            startX - segment - tab * 0.25,
+            startY + tab * direction,
+            startX - span / 2,
+            startY + tab * direction
+          );
+          path.bezierCurveTo(
+            startX - segment * 2 + tab * 0.25,
+            startY + tab * direction,
+            startX - segment * 2 + tab * 0.15,
+            startY,
+            startX - segment * 2,
+            startY
+          );
+        } else {
+          path.lineTo(startX - segment * 2, startY);
+        }
+        path.lineTo(startX - span, startY);
+      }
+
+      function drawVerticalEdge(path, startX, startY, span, tab, direction, sign) {
+        const segment = span / 3;
+
+        if (sign === 1) {
+          path.lineTo(startX, startY + segment);
+          if (direction !== 0) {
+            path.bezierCurveTo(
+              startX,
+              startY + segment + tab * 0.15,
+              startX + tab * direction,
+              startY + segment + tab * 0.25,
+              startX + tab * direction,
+              startY + span / 2
+            );
+            path.bezierCurveTo(
+              startX + tab * direction,
+              startY + segment * 2 - tab * 0.25,
+              startX,
+              startY + segment * 2 - tab * 0.15,
+              startX,
+              startY + segment * 2
+            );
+          } else {
+            path.lineTo(startX, startY + segment * 2);
+          }
+          path.lineTo(startX, startY + span);
+          return;
+        }
+
+        path.lineTo(startX, startY - segment);
+        if (direction !== 0) {
+          path.bezierCurveTo(
+            startX,
+            startY - segment - tab * 0.15,
+            startX - tab * direction,
+            startY - segment - tab * 0.25,
+            startX - tab * direction,
+            startY - span / 2
+          );
+          path.bezierCurveTo(
+            startX - tab * direction,
+            startY - segment * 2 + tab * 0.25,
+            startX,
+            startY - segment * 2 + tab * 0.15,
+            startX,
+            startY - segment * 2
+          );
+        } else {
+          path.lineTo(startX, startY - segment * 2);
+        }
+        path.lineTo(startX, startY - span);
+      }
+    }
+
+    function startDrag(event, piece) {
+      if (piece.placed || !piece.active) {
+        return;
+      }
+
+      event.preventDefault();
+      updateRects();
+
+      const rect = piece.element.getBoundingClientRect();
+      const pointerOffsetX = event.clientX - rect.left;
+      const pointerOffsetY = event.clientY - rect.top;
+
+      state.drag = { piece, pointerOffsetX, pointerOffsetY };
+      piece.element.classList.add("dragging");
+      piece.element.style.zIndex = String(++state.zCounter);
+
+      const source = board.contains(piece.element) ? board : tray;
+      if (source !== document.body) {
+        const sourceRect = source.getBoundingClientRect();
+        const localX = rect.left - sourceRect.left + source.scrollLeft;
+        const localY = rect.top - sourceRect.top + source.scrollTop;
+        document.body.appendChild(piece.element);
+        piece.element.style.position = "fixed";
+        setPiecePosition(piece, rect.left, rect.top);
+        piece.sourceX = localX;
+        piece.sourceY = localY;
+      }
+
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp, { once: true });
+    }
+
+    function onPointerMove(event) {
+      if (!state.drag) {
+        return;
+      }
+
+      const { piece, pointerOffsetX, pointerOffsetY } = state.drag;
+      setPiecePosition(piece, event.clientX - pointerOffsetX, event.clientY - pointerOffsetY);
+    }
+
+    function onPointerUp() {
+      if (!state.drag) {
+        return;
+      }
+
+      const { piece } = state.drag;
+      piece.element.classList.remove("dragging");
+
+      const pieceCenterX = piece.currentX + piece.width / 2;
+      const pieceCenterY = piece.currentY + piece.height / 2;
+      const targetCenterX = state.boardRect.left + piece.targetX + piece.width / 2;
+      const targetCenterY = state.boardRect.top + piece.targetY + piece.height / 2;
+      const distance = Math.hypot(pieceCenterX - targetCenterX, pieceCenterY - targetCenterY);
+      const axisAligned =
+        Math.abs(piece.currentX - (state.boardRect.left + piece.targetX)) <= SNAP_AXIS_TOLERANCE &&
+        Math.abs(piece.currentY - (state.boardRect.top + piece.targetY)) <= SNAP_AXIS_TOLERANCE;
+
+      if (distance <= SNAP_DISTANCE || axisAligned) {
+        placePiece(piece);
+      } else {
+        returnPieceToTray(piece);
+      }
+
+      state.drag = null;
+      window.removeEventListener("pointermove", onPointerMove);
+    }
+
+    function setPiecePosition(piece, left, top) {
+      piece.currentX = left;
+      piece.currentY = top;
+      piece.element.style.left = `${left}px`;
+      piece.element.style.top = `${top}px`;
+    }
+
+    function placePiece(piece) {
+      board.appendChild(piece.element);
+      piece.element.style.position = "absolute";
+      piece.element.classList.add("placed");
+      piece.placed = true;
+      piece.element.style.left = `${piece.targetX}px`;
+      piece.element.style.top = `${piece.targetY}px`;
+      piece.currentX = state.boardRect.left + piece.targetX;
+      piece.currentY = state.boardRect.top + piece.targetY;
+
+      const level = state.levels.find((entry) => entry.id === piece.levelId);
+      level.placedPieces += 1;
+      compactTrayPieces();
+      saveProgress();
+      updateStatus();
+      checkLevelCompletion(level);
+    }
+
+    function returnPieceToTray(piece) {
+      if (!tray.contains(piece.element)) {
+        tray.appendChild(piece.element);
+      }
+
+      const localLeft = piece.currentX - (state.trayRect?.left ?? 0) + tray.scrollLeft;
+      const localTop = piece.currentY - (state.trayRect?.top ?? 0) + tray.scrollTop;
+      const maxLeft = Math.max(0, tray.scrollWidth - piece.width);
+      const maxTop = Math.max(0, tray.scrollHeight - piece.height);
+      const droppedInsideTray =
+        piece.currentX + piece.width * 0.5 >= (state.trayRect?.left ?? 0) &&
+        piece.currentX + piece.width * 0.5 <= (state.trayRect?.right ?? 0) &&
+        piece.currentY + piece.height * 0.5 >= (state.trayRect?.top ?? 0) &&
+        piece.currentY + piece.height * 0.5 <= (state.trayRect?.bottom ?? 0);
+
+      if (droppedInsideTray) {
+        piece.sourceX = Math.max(0, Math.min(maxLeft, localLeft));
+        piece.sourceY = Math.max(0, Math.min(maxTop, localTop));
+      }
+
+      piece.element.style.position = "absolute";
+      piece.element.style.left = `${piece.sourceX ?? 0}px`;
+      piece.element.style.top = `${piece.sourceY ?? 0}px`;
+      piece.currentX = (state.trayRect?.left ?? 0) + (piece.sourceX ?? 0);
+      piece.currentY = (state.trayRect?.top ?? 0) + (piece.sourceY ?? 0);
+      saveProgress();
+    }
+
+    function shuffleUnplacedPieces() {
+      updateRects();
+
+      const activePieces = state.pieces.filter((piece) => piece.active && !piece.placed);
+      if (!activePieces.length) {
+        renderTrayEmptyState();
+        return;
+      }
+
+      clearTrayMessage();
+
+      const padding = 12;
+      let cursorX = padding;
+      let cursorY = padding;
+      let rowHeight = 0;
+      const maxWidth = Math.max(tray.clientWidth - padding, 180);
+
+      for (const piece of shuffle(activePieces)) {
+        if (!tray.contains(piece.element)) {
+          tray.appendChild(piece.element);
+        }
+
+        piece.element.style.position = "absolute";
+
+        if (cursorX + piece.width > maxWidth) {
+          cursorX = padding;
+          cursorY += rowHeight + padding;
+          rowHeight = 0;
+        }
+
+        piece.element.style.left = `${cursorX}px`;
+        piece.element.style.top = `${cursorY}px`;
+        piece.sourceX = cursorX;
+        piece.sourceY = cursorY;
+        piece.currentX = (state.trayRect?.left ?? 0) + cursorX;
+        piece.currentY = (state.trayRect?.top ?? 0) + cursorY;
+
+        cursorX += piece.width + padding;
+        rowHeight = Math.max(rowHeight, piece.height);
+      }
+
+      tray.style.minHeight = `${Math.max(cursorY + rowHeight + padding, 710)}px`;
+      saveProgress();
+    }
+
+    function compactTrayPieces() {
+      updateRects();
+
+      const activePieces = state.pieces.filter((piece) => piece.active && !piece.placed);
+      if (!activePieces.length) {
+        renderTrayEmptyState();
+        return;
+      }
+
+      clearTrayMessage();
+
+      const orderedPieces = [...activePieces].sort((a, b) => {
+        const ay = a.sourceY ?? Number.MAX_SAFE_INTEGER;
+        const by = b.sourceY ?? Number.MAX_SAFE_INTEGER;
+        if (ay !== by) {
+          return ay - by;
+        }
+
+        const ax = a.sourceX ?? Number.MAX_SAFE_INTEGER;
+        const bx = b.sourceX ?? Number.MAX_SAFE_INTEGER;
+        return ax - bx;
+      });
+
+      const padding = 12;
+      let cursorX = padding;
+      let cursorY = padding;
+      let rowHeight = 0;
+      const maxWidth = Math.max(tray.clientWidth - padding, 180);
+
+      for (const piece of orderedPieces) {
+        if (!tray.contains(piece.element)) {
+          tray.appendChild(piece.element);
+        }
+
+        piece.element.style.position = "absolute";
+
+        if (cursorX + piece.width > maxWidth) {
+          cursorX = padding;
+          cursorY += rowHeight + padding;
+          rowHeight = 0;
+        }
+
+        piece.element.style.left = `${cursorX}px`;
+        piece.element.style.top = `${cursorY}px`;
+        piece.sourceX = cursorX;
+        piece.sourceY = cursorY;
+        piece.currentX = (state.trayRect?.left ?? 0) + cursorX;
+        piece.currentY = (state.trayRect?.top ?? 0) + cursorY;
+
+        cursorX += piece.width + padding;
+        rowHeight = Math.max(rowHeight, piece.height);
+      }
+
+      tray.style.minHeight = `${Math.max(cursorY + rowHeight + padding, 710)}px`;
+      saveProgress();
+    }
+
+    function shuffle(list) {
+      const copy = [...list];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function updateStatus() {
+      const level = state.levels[state.currentLevelIndex];
+      placedLabel.textContent = `${level.placedPieces} / ${level.totalPieces}`;
+    }
+
+    function checkLevelCompletion(level) {
+      if (level.placedPieces !== level.totalPieces) {
+        return;
+      }
+
+      if (level.id === "levelOne") {
+        unlockLevelTwo();
+        return;
+      }
+
+      placedLabel.textContent = `${level.totalPieces} / ${level.totalPieces}`;
+      boardMessage.innerHTML = '<span class="celebration">As duas camadas estao completas.</span> A mandala foi montada por inteiro.';
+      renderTrayEmptyState();
+    }
+
+    function unlockLevelTwo() {
+      state.currentLevelIndex = 1;
+      activateLevelTwoPieces();
+
+      const levelTwo = state.levels[1];
+      boardMessage.innerHTML = `<span class="celebration">Nivel um completo.</span> As ${levelTwo.totalPieces} pecas de <code>level_two.png</code> agora estao na bandeja.`;
+      updateStatus();
+      shuffleUnplacedPieces();
+      saveProgress();
+    }
+
+    function renderTrayEmptyState() {
+      clearTrayMessage();
+      const unplacedActive = state.pieces.some((piece) => piece.active && !piece.placed);
+      if (unplacedActive) {
+        return;
+      }
+
+      const message = document.createElement("div");
+      message.className = "tray-empty";
+      message.id = "tray-empty";
+      message.textContent = state.currentLevelIndex === 0
+        ? "Todas as pecas ativas ja foram colocadas."
+        : "A bandeja esta vazia porque todas as pecas ativas estao no tabuleiro.";
+      tray.appendChild(message);
+    }
+
+    function clearTrayMessage() {
+      const empty = document.getElementById("tray-empty");
+      if (empty) {
+        empty.remove();
+      }
+    }
+
+    function handleResize() {
+      updateRects();
+      for (const piece of state.pieces) {
+        if (piece.placed) {
+          piece.element.style.left = `${piece.targetX}px`;
+          piece.element.style.top = `${piece.targetY}px`;
+        }
+      }
+    }
+
+    function updateRects() {
+      state.boardRect = board.getBoundingClientRect();
+      state.trayRect = tray.getBoundingClientRect();
+    }
+  </script>
+</body>
+</html>

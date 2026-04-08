@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Vibe Vegana</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32px32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+:root{
+--mandala-display-size:2048px;
+--mandala-render-size:var(--mandala-display-size);
+--mobile-menu-scale:0.20;
+--mobile-menu-ui-scale:1;
+--mobile-menu-base-width:250px;
+}
+
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+contain:layout paint;
+transition:transform 0.25s ease;
+margin-bottom:20px;
+overflow:hidden;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+}
+
+#regionHints{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+z-index:3;
+}
+
+.hint-region{
+position:absolute;
+border:6px solid rgba(130, 255, 130, 0);
+box-shadow:0 0 0 rgba(130, 255, 130, 0);
+opacity:0;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(130, 255, 130, 0.95);
+box-shadow:0 0 26px rgba(130, 255, 130, 0.95), inset 0 0 18px rgba(130, 255, 130, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(0.996);}
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+
+background-image:url("mandala_gabarito_1.png");
+background-size:var(--mandala-display-size) var(--mandala-display-size);
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(16, 56, 0);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+  position:fixed;
+  top:120px;
+  left:30px;
+  width:calc(250px * var(--mobile-menu-ui-scale));
+
+  max-height:70vh;
+
+  background:rgba(0,0,0,0.418);
+  border:1px solid white;
+  color:white;
+
+  font-family:'Times New Roman', Times, serif;
+  font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+  box-sizing:border-box;
+}
+
+#wordMenu.mobile-pinned{
+  left:auto;
+  right:auto;
+  top:auto;
+  bottom:auto;
+}
+
+#menuHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  touch-action:none;
+}
+/* LEFT SIDE */
+.title {
+  flex-shrink:inherit;
+
+  white-space: nowrap;
+
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  margin-left:calc(8px * var(--mobile-menu-ui-scale));
+  margin-top:calc(8px * var(--mobile-menu-ui-scale));
+}
+/* RIGHT SIDE GROUP */
+.right{
+  display:flex;
+  align-items:center;
+  gap:calc(6px * var(--mobile-menu-ui-scale));
+  flex-shrink:0;
+  margin-right:calc(8px * var(--mobile-menu-ui-scale));
+}
+/* COUNTER */
+#counter {
+  white-space: nowrap;
+}
+
+/* ================= INFO ================= */
+
+.info-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.info-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 6px; /* invisible bridge */
+}
+
+.info-btn,
+.menu-btn,
+#toggleMenu{
+  
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:calc(16px * var(--mobile-menu-ui-scale));
+  height:calc(16px * var(--mobile-menu-ui-scale));
+  border-radius:50%;
+  border:none;
+  font-size:calc(11px * var(--mobile-menu-ui-scale));
+  cursor:pointer;
+  background:#ccc;
+  line-height:calc(16px * var(--mobile-menu-ui-scale));
+  padding:0;
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 180px;
+  margin-top: 4px; /* small, safe gap */
+
+  background: rgba(0,0,0,0.85);
+  color: white;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+}
+
+.tooltip.help-tooltip {
+  width: 320px;
+  line-height: 1.35;
+}
+
+/* show tooltip when hovering button OR tooltip itself */
+.info-wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  
+}
+
+.tooltip a {
+  text-decoration: none;
+}
+
+.tooltip a:hover {
+  text-decoration: none; /* optional: add back on hover */
+}
+
+.highlight {
+  color: #03d626;
+  text-decoration: none
+}
+
+.highlight:hover{
+  text-decoration: none;
+}
+
+#wordList{
+flex:1;
+min-height:0;
+overflow-y:auto;
+
+list-style:none;
+margin:0;
+padding:calc(8px * var(--mobile-menu-ui-scale));
+line-height:calc(1.4 * var(--mobile-menu-ui-scale));
+}
+
+#wordList li{
+padding:calc(4px * var(--mobile-menu-ui-scale)) 0;
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#overlaySelector,
+#clearButton,
+#toggleClickMode,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:calc(8px * var(--mobile-menu-ui-scale));
+font-family:'Times New Roman', Times, serif;
+cursor:pointer;
+
+}
+
+#mobileMenuOptions{
+display:none;
+border-top:1px solid white;
+padding:calc(8px * var(--mobile-menu-ui-scale));
+gap:calc(6px * var(--mobile-menu-ui-scale));
+flex-direction:column;
+font-size:inherit;
+font-family:inherit;
+}
+
+#mobileMenuOptions label{
+display:flex;
+flex-direction:column;
+gap:calc(4px * var(--mobile-menu-ui-scale));
+font-size:inherit;
+}
+
+#mobileMenuOptions input,
+#mobileMenuOptions select{
+width:100%;
+font-size:inherit;
+font-family:inherit;
+}
+
+@media (max-width: 900px) and (any-pointer: coarse){
+  :root{
+    --mandala-display-size:min(2048px, 100vw);
+  }
+
+  html,
+  body{
+    margin:0;
+    padding:0;
+    height:auto;
+  }
+
+  .container img{
+    display:block;
+  }
+
+ #wordMenu{
+    top:auto;
+    top:8px;
+    left:8px;
+    bottom: auto;
+    right:auto;
+    width:max(
+      calc(var(--mobile-menu-base-width) * var(--mobile-menu-ui-scale)),
+      calc(var(--mandala-render-size) * var(--mobile-menu-scale))
+    );
+    max-width:calc(100vw - 16px);
+    max-height:40vh;
+    font-size:calc(0.78rem * var(--mobile-menu-ui-scale));
+  }
+
+  #wordMenu.pinned-bottom-collapsed{
+    left:8px !important;
+    right:auto !important;
+    top:655px !important;
+    bottom:auto !important;
+    max-height:none;
+  }
+
+  #wordMenu.pinned-top-left{
+    top:8px !important;
+    left:8px !important;
+    right:auto !important;
+    bottom:auto !important;
+  }
+
+  #wordMenu.pinned-top-right{
+    top:8px !important;
+    right:8px !important;
+    left:auto !important;
+    bottom:auto !important;
+  }
+
+  #mobileMenuOptions{
+    display:flex;
+  }
+
+  #mobileMenuOptions label{
+    font-size: inherit
+  }
+
+  .tooltip.help-tooltip{
+    width:230px;
+  }
+
+
+  #overlaySelector,
+  #clearButton,
+  #toggleClickMode,
+  #rotateMandala{
+    padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
+    font-size:calc(0.78rem * var(--mobile-menu-ui-scale));
+  }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class= "title">🍃Vibe Vegana</span>
+
+<div class="right">
+<span id="counter"></span>
+
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+
+    <span class="tooltip">
+      Mandala e Caça-Palavras inspirados em... pasmem... <a class=highlight>plantas</a>... majoritariamente verdes 🌿 . 
+    </span>
+  </span>
+  <span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras escondidas. Para dica, clique com o botão direito do mouse na palavra desejada no menu.
+    </span>
+  </span>
+  
+  <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleMenu">–</button>
+</div>
+</div>
+  
+<ul id="wordList">
+
+<li id="menu-Aglaonema">Aglaonema</li>
+<li id="menu-Aspidistra">Aspidistra</li>
+<li id="menu-Asplenio">Asplênio</li>
+<li id="menu-Avenca">Avenca</li>
+<li id="menu-Bambu">Bambu</li>
+<li id="menu-BegoniaMaculata">Begônia maculata</li>
+<li id="menu-Calathea">Calathea</li>
+<li id="menu-Chamaedorea">Chamaedorea</li>
+<li id="menu-Clorofito">Clorofito</li>
+<li id="menu-CostelaDeAdao">Costela-de-adão</li>
+<li id="menu-Dracena">Dracena</li>
+<li id="menu-FicusElastica">Ficus elastica</li>
+<li id="menu-FicusLyrata">Ficus lyrata</li>
+<li id="menu-Filodendro">Filodendro</li>
+<li id="menu-Grama">Grama</li>
+<li id="menu-Jiboia">Jiboia</li>
+<li id="menu-Maranta">Maranta</li>
+<li id="menu-Mato">Mato</li>
+<li id="menu-Peperomia">Peperômia</li>
+<li id="menu-Relva">Relva</li>
+<li id="menu-Samambaia">Samambaia</li>
+<li id="menu-Singonio">Singônio</li>
+<li id="menu-Xaxim">Xaxim</li>
+<li id="menu-Zamioculca">Zamioculca</li>
+<li id="menu-Zebrina">Zebrina</li>
+
+</ul>
+
+<div id="mobileMenuOptions">
+  <label for="mobileMenuPin">
+    Fixação menu (mobile)
+    <select id="mobileMenuPin">
+      <option value="free">Livre (arrastar)</option>
+      <option value="bottom-collapsed">Recolhido inferior</option>
+      <option value="top-left">Superior esquerdo</option>
+      <option value="top-right">Superior direito</option>
+    </select>
+  </label>
+</div>
+
+<div id="wordTooltip"></div>
+  
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+
+<select id="overlaySelector">
+<option value="mandala_gabarito_1.png">Laranja</option>
+<option value="mandala_gabarito_2.png">Verde</option>
+</select>
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container">
+
+<img src="mandala_prantas.png" usemap="#image-map">
+
+<div id="answersOverlay"></div>
+<div id="regionHints">
+  <div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
+  <div id="regionHint-2" class="hint-region" style="left:1px;top:693px;width:2045px;height:667px;"></div>
+  <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
+</div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
+
+<map name="image-map">
+
+<area coords="1430,408,1456,416,1443,394,1423,381,1400,372,1391,383,1403,390,1418,397" 
+  shape="poly" onclick="toggleAnswer(this,'Aglaonema');return false;">
+  
+<area coords="1309,985,1331,987,1354,987,1354,967,1326,963,1302,961,1297,979" 
+  shape="poly" onclick="toggleAnswer(this,'Avenca');return false;">
+  
+<area coords="1253,43,1278,46,1289,27,1266,14,1264,-2,1233,2,1237,18,1239,32" 
+  shape="poly" onclick="toggleAnswer(this,'Aspidistra');return false;">
+  
+<area coords="1510,1805,1535,1807,1552,1801,1553,1774,1517,1776,1496,1769,1476,1776,1476,1791,1474,1796,1488,1801" shape="poly" onclick="toggleAnswer(this,'Asplenio');return false;">
+<area coords="249,645,236,645,216,643,236,627,262,614,271,632,271,648" 
+  shape="poly" onclick="toggleAnswer(this,'Bambu');return false;">
+  
+<area coords="1977,214,1970,235,1952,235,1937,221,1937,186,1939,172,1950,159,1966,165,1970,185,1977,194,1975,203,1977,223" shape="poly" onclick="toggleAnswer(this,'BegoniaMaculata');return false;">
+<area coords="1521,1296,1514,1312,1557,1336,1568,1316,1543,1300" 
+  shape="poly" onclick="toggleAnswer(this,'Calathea');return false;">
+  
+<area coords="1953,1333,1970,1306,1953,1309,1932,1320,1915,1331,1903,1327,1881,1335,1883,1362,1910,1364,1930,1353" shape="poly" onclick="toggleAnswer(this,'Chamaedorea');return false;">
+<area coords="495,890,501,908,511,908,531,910,548,908,555,883,529,879,515,881,504,881" 
+  shape="poly" onclick="toggleAnswer(this,'Clorofito');return false;">
+  
+<area coords="1740,1967,1763,1976,1790,1989,1810,1978,1809,1961,1783,1952,1749,1941,1731,1934,1716,1934,1695,1932,1675,1931,1677,1951,1698,1959,1713,1968,1727,1968" shape="poly" onclick="toggleAnswer(this,'CostelaDeAdao');return false;">
+<area coords="656,549,667,537,681,549,698,568,683,582,669,564" 
+  shape="poly" onclick="toggleAnswer(this,'Dracena');return false;">
+  
+<area coords="640,441,620,437,602,446,602,472,580,493,567,501,564,522,569,542,580,568,596,535,616,501,631,477" 
+  shape="poly" onclick="toggleAnswer(this,'FicusElastica');return false;">
+  
+<area coords="953,1710,985,1712,996,1695,1014,1661,969,1678,920,1685,900,1696,902,1711,924,1710" 
+  shape="poly" onclick="toggleAnswer(this,'FicusLyrata');return false;">
+  
+<area coords="215,471,220,484,209,500,206,536,197,547,189,529,184,504,180,487,182,471,204,466" 
+  shape="poly" onclick="toggleAnswer(this,'Filodendro');return false;">
+  
+<area coords="955,1283,938,1292,918,1310,913,1323,920,1332,933,1329,938,1318,946,1309" 
+  shape="poly" onclick="toggleAnswer(this,'Grama');return false;">
+  
+<area coords="1112,2002,1141,2011,1116,2047,1087,2047" 
+  shape="poly" onclick="toggleAnswer(this,'Jiboia');return false;">
+  
+<area coords="750,827,745,850,761,858,786,879,797,856,783,834" 
+  shape="poly" onclick="toggleAnswer(this,'Maranta');return false;">
+  
+<area coords="1483,242,1487,272,1534,278,1541,256,1514,242" 
+  shape="poly" onclick="toggleAnswer(this,'Mato');return false;">
+  
+<area coords="334,28,356,23,376,-2,256,-1,256,14,280,16,303,19" 
+  shape="poly" onclick="toggleAnswer(this,'Peperomia');return false;">
+  
+<area coords="-1,1095,-1,1116,5,1119,23,1137,34,1122,27,1101,16,1093" 
+  shape="poly" onclick="toggleAnswer(this,'Relva');return false;">
+  
+<area coords="1365,1616,1365,1637,1354,1652,1336,1649,1333,1612,1329,1581,1318,1538,1311,1511,1335,1518,1351,1514,1354,1547,1358,1579,1362,1598" 
+  shape="poly" onclick="toggleAnswer(this,'Samambaia');return false;">
+  
+<area coords="718,1375,723,1399,757,1384,783,1380,779,1346,745,1350" 
+  shape="poly" onclick="toggleAnswer(this,'Singonio');return false;">
+  
+<area coords="1611,635,1591,654,1550,635,1557,616" 
+  shape="poly" onclick="toggleAnswer(this,'Xaxim');return false;">
+  
+<area coords="696,1166,734,1168,763,1174,783,1152,736,1148,692,1152" 
+  shape="poly" onclick="toggleAnswer(this,'Zamioculca');return false;">
+  
+<area coords="83,1819,106,1816,103,1883,77,1881" 
+  shape="poly" onclick="toggleAnswer(this,'Zebrina');return false;">
+  
+
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+const overlayStorageKey = "PRANTAS_selectedOverlay";
+const progressStorageKey = "prantasPuzzleProgress";
+const hintStorageKey = "PRANTAS_wordHints";
+const mobileMenuSizeKey = "PRANTAS_mobileMenuSize";
+const mobileMenuPinKey = "PRANTAS_mobileMenuPin";
+const defaultOverlay = "mandala_gabarito_1.png";
+const baseMandalaSize = 2048;
+const areaRegionMap = {};
+
+let currentOverlay = defaultOverlay;
+let allowToggleOff = true;
+let rotation = 0;
+let completionShown = false;
+let isBootstrapping = true;
+
+const menuItems = {};
+const answerClips = {};
+
+function clamp(value, min, max){
+  return Math.min(max, Math.max(min, value));
+}
+
+function updateCounter(){
+  let found = document.querySelectorAll("#wordList li.found").length;
+  let total = document.querySelectorAll("#wordList li").length;
+
+  document.getElementById("counter").textContent = found + " / " + total;
+
+  if(isBootstrapping) return;
+
+  if(found === total && total > 0 && !completionShown){
+    completionShown = true;
+    setTimeout(function(){
+      alert("fim! 🎉🎉");
+    }, 200);
+  }else if(found < total){
+    completionShown = false;
+  }
+}
+
+function computeAreaRegion(coordsText){
+  let coords = coordsText.split(",").map(Number).filter(n => !Number.isNaN(n));
+  if(coords.length < 4) return 2;
+  let ys = [];
+  for(let i=1;i<coords.length;i+=2){
+    ys.push(coords[i]);
+  }
+  let avgY = ys.reduce((acc, y) => acc + y, 0) / ys.length;
+  if(avgY <= baseMandalaSize / 3) return 1;
+  if(avgY <= (baseMandalaSize / 3) * 2) return 2;
+  return 3;
+}
+
+function findAreaByWord(word){
+  return Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area => {
+    let handler = area.getAttribute("onclick") || "";
+    return handler.includes("'" + word + "'");
+  }) || null;
+}
+
+function getAreaBounds(area){
+  let coords = (area?.coords || "").split(",").map(Number).filter(Number.isFinite);
+  if(coords.length < 2) return null;
+
+  let xs = [];
+  let ys = [];
+
+  for(let i = 0; i < coords.length; i += 2){
+    xs.push(coords[i]);
+    ys.push(coords[i + 1]);
+  }
+
+  if(!xs.length || !ys.length) return null;
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys)
+  };
+}
+
+function centerViewOnArea(area){
+  let bounds = getAreaBounds(area);
+  if(!bounds) return;
+
+  let container = document.querySelector(".container");
+  if(!container) return;
+
+  let containerRect = container.getBoundingClientRect();
+  let areaCenterX = (bounds.minX + bounds.maxX) / 2;
+  let areaCenterY = (bounds.minY + bounds.maxY) / 2;
+
+  let targetX = window.scrollX + containerRect.left + areaCenterX - (window.innerWidth / 2);
+  let targetY = window.scrollY + containerRect.top + areaCenterY - (window.innerHeight / 2);
+
+  let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+  let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+  window.scrollTo({
+    left: clamp(targetX, 0, maxX),
+    top: clamp(targetY, 0, maxY),
+    behavior: "smooth"
+  });
+}
+
+function showRegionHint(regionId){
+  document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+  let el = document.getElementById("regionHint-" + regionId);
+  if(!el) return;
+  el.classList.add("active");
+  setTimeout(() => el.classList.remove("active"), 1800);
+}
+
+function saveHints(){
+  let hints = {};
+  document.querySelectorAll("#wordList li").forEach(li => {
+    if(Number(li.dataset.hintLevel || 0) > 0){
+      hints[li.id] = 1;
+    }
+  });
+  localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+  let raw = localStorage.getItem(hintStorageKey);
+  if(!raw) return;
+  let hints;
+  try{
+    hints = JSON.parse(raw);
+  }catch{
+    return;
+  }
+  document.querySelectorAll("#wordList li").forEach(li => {
+    if(hints[li.id]){
+      li.dataset.hintLevel = "1";
+    }
+  });
+}
+
+function toggleAnswer(area, word, shouldPersist=true){
+  if(!area || !area.coords) return;
+
+  if(!answerClips[word]){
+    let coords = area.coords.split(",");
+    let points = [];
+    for(let i=0;i<coords.length;i+=2){
+      points.push(coords[i] + "px " + coords[i+1] + "px");
+    }
+
+    let clip = document.createElement("div");
+    clip.className = "answerClip";
+    clip.style.clipPath = "polygon(" + points.join(",") + ")";
+    clip.style.backgroundImage = "url('" + currentOverlay + "')";
+    answersOverlay.appendChild(clip);
+    answerClips[word] = clip;
+  }
+
+  if(!answerClips[word].classList.contains("visible")){
+    answerClips[word].classList.add("visible");
+  }else if(allowToggleOff){
+    answerClips[word].classList.remove("visible");
+  }
+
+  let menuItem = menuItems["menu-" + word];
+  if(menuItem){
+    menuItem.classList.toggle("found");
+  }
+
+  updateCounter();
+  if(shouldPersist){
+    saveProgress();
+  }
+}
+
+function saveProgress(){
+  localStorage.setItem(
+    progressStorageKey,
+    JSON.stringify(Object.keys(answerClips).filter(w => answerClips[w].classList.contains("visible")))
+  );
+}
+
+function loadProgress(){
+  let saved = localStorage.getItem(progressStorageKey);
+  if(!saved) return;
+  let words;
+  try{
+    words = JSON.parse(saved);
+  }catch{
+    return;
+  }
+
+  words.forEach(word => {
+    let area = document.querySelector(`area[onclick*="${word}"]`);
+    if(area){
+      toggleAnswer(area, word, false);
+    }
+  });
+  updateCounter();
+}
+
+function clearAll(){
+  Object.values(answerClips).forEach(clip => clip.classList.remove("visible"));
+  document.querySelectorAll("#wordList li").forEach(li => {
+    li.classList.remove("found");
+    delete li.dataset.hintLevel;
+  });
+  document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+  localStorage.removeItem(progressStorageKey);
+  localStorage.removeItem(hintStorageKey);
+  updateCounter();
+}
+
+function confirmReset(){
+  if(confirm("Reset?")){
+    clearAll();
+  }
+}
+
+function isMobileViewport(){
+  return window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
+}
+
+function setMobileMenuScaleVars(menuScale){
+  let safeScale = clamp(menuScale, 0.20, 0.60);
+  document.documentElement.style.setProperty("--mobile-menu-scale", safeScale.toFixed(2));
+  let uiScale = isMobileViewport() ? clamp(safeScale / 0.25, 0.85, 1.65) : 1;
+  document.documentElement.style.setProperty("--mobile-menu-ui-scale", uiScale.toFixed(2));
+}
+
+function applyMobileMenuPin(pinMode){
+  let menu = wordMenu;
+  menu.classList.remove("mobile-pinned", "pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right");
+
+  if(!isMobileViewport() || pinMode === "free"){
+    localStorage.setItem(mobileMenuPinKey, "free");
+    return;
+  }
+
+  menu.classList.add("mobile-pinned");
+
+  if(pinMode === "bottom-collapsed"){
+    menu.classList.add("collapsed", "pinned-bottom-collapsed");
+  }else if(pinMode === "top-left"){
+    menu.classList.remove("collapsed");
+    menu.classList.add("pinned-top-left");
+  }else if(pinMode === "top-right"){
+    menu.classList.remove("collapsed");
+    menu.classList.add("pinned-top-right");
+  }
+
+  localStorage.setItem(mobileMenuPinKey, pinMode);
+}
+
+function applyMenuBounds(){
+  if(isMobileViewport() && wordMenu.classList.contains("mobile-pinned")) return;
+  let maxLeft = Math.max(0, window.innerWidth - wordMenu.offsetWidth);
+  let maxTop = Math.max(0, window.innerHeight - wordMenu.offsetHeight);
+  let currentLeft = parseFloat(wordMenu.style.left || wordMenu.offsetLeft || 0);
+  let currentTop = parseFloat(wordMenu.style.top || wordMenu.offsetTop || 0);
+  wordMenu.style.left = clamp(currentLeft, 0, maxLeft) + "px";
+  wordMenu.style.top = clamp(currentTop, 0, maxTop) + "px";
+}
+
+function initMobileMenuOptions(){
+  let sizeInput = document.getElementById("mobileMenuSize");
+  let pinSelect = document.getElementById("mobileMenuPin");
+  if(!pinSelect) return;
+
+  let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+  let scale = Number.isFinite(savedScale) && savedScale >= 0.2 && savedScale <= 0.6 ? savedScale : 0.25;
+  setMobileMenuScaleVars(scale);
+  if(sizeInput){
+    sizeInput.value = scale.toFixed(2);
+
+    sizeInput.addEventListener("input", () => {
+      let nextScale = Number(sizeInput.value || 0.25);
+      setMobileMenuScaleVars(nextScale);
+      localStorage.setItem(mobileMenuSizeKey, nextScale.toFixed(2));
+      applyMenuBounds();
+    });
+  }
+
+  let savedPin = localStorage.getItem(mobileMenuPinKey) || "free";
+  pinSelect.value = savedPin;
+  applyMobileMenuPin(savedPin);
+
+  pinSelect.addEventListener("change", () => {
+    applyMobileMenuPin(pinSelect.value);
+    applyMenuBounds();
+  });
+}
+
+/* prevent image dragging */
+document.addEventListener("dragstart", e => e.preventDefault());
+
+/* menu items + tips */
+document.querySelectorAll("#wordList li").forEach(li => {
+  menuItems[li.id] = li;
+  li.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    let word = li.id.replace("menu-", "");
+    let regionId = areaRegionMap[word];
+    let area = findAreaByWord(word);
+    if(area){
+      centerViewOnArea(area);
+    }
+    if(regionId){
+      li.dataset.hintLevel = "1";
+      saveHints();
+      showRegionHint(regionId);
+    }
+  });
+});
+
+document.querySelectorAll("area").forEach(area => {
+  let onclickText = area.getAttribute("onclick") || "";
+  let match = onclickText.match(/'([^']+)'/);
+  if(!match) return;
+  areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
+});
+
+overlaySelector.onchange = function(){
+  currentOverlay = this.value;
+  Object.values(answerClips).forEach(clip => {
+    clip.style.backgroundImage = "url('" + currentOverlay + "')";
+  });
+  localStorage.setItem(overlayStorageKey, currentOverlay);
+};
+
+toggleClickMode.onclick = function(){
+  allowToggleOff = !allowToggleOff;
+  this.textContent = allowToggleOff ? "Desmarcar: ON" : "Desmarcar: OFF";
+};
+
+toggleMenu.onclick = () => {
+  wordMenu.classList.toggle("collapsed");
+  applyMenuBounds();
+};
+
+rotateMandala.onclick = function(){
+  rotation = (rotation + 90) % 360;
+  document.querySelector(".container").style.transform = "rotate(" + rotation + "deg)";
+  this.textContent = "Rotate (" + rotation + "°)";
+};
+
+/* menu drag */
+let draggingMenu = false;
+let offsetX = 0;
+let offsetY = 0;
+
+function startMenuDrag(clientX, clientY){
+  if(isMobileViewport() && document.getElementById("mobileMenuPin").value !== "free") return;
+  draggingMenu = true;
+  offsetX = clientX - wordMenu.offsetLeft;
+  offsetY = clientY - wordMenu.offsetTop;
+}
+
+menuHeader.addEventListener("mousedown", e => startMenuDrag(e.clientX, e.clientY));
+menuHeader.addEventListener("touchstart", e => {
+  if(!e.touches[0]) return;
+  startMenuDrag(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+
+document.addEventListener("mousemove", e => {
+  if(!draggingMenu) return;
+  wordMenu.style.left = (e.clientX - offsetX) + "px";
+  wordMenu.style.top = (e.clientY - offsetY) + "px";
+  applyMenuBounds();
+});
+
+document.addEventListener("touchmove", e => {
+  if(!draggingMenu || !e.touches[0]) return;
+  wordMenu.style.left = (e.touches[0].clientX - offsetX) + "px";
+  wordMenu.style.top = (e.touches[0].clientY - offsetY) + "px";
+  applyMenuBounds();
+}, { passive: true });
+
+document.addEventListener("mouseup", () => draggingMenu = false);
+document.addEventListener("touchend", () => draggingMenu = false);
+
+/* drag scroll */
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let scrollLeft = 0;
+let scrollTop = 0;
+
+document.addEventListener("mousedown", e => {
+  if(e.target.closest("#wordMenu")) return;
+  isDragging = true;
+  document.body.classList.add("dragging");
+  startX = e.clientX;
+  startY = e.clientY;
+  scrollLeft = window.scrollX;
+  scrollTop = window.scrollY;
+});
+
+document.addEventListener("mousemove", e => {
+  if(!isDragging) return;
+  window.scrollTo(
+    scrollLeft - (e.clientX - startX),
+    scrollTop - (e.clientY - startY)
+  );
+});
+
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+  document.body.classList.remove("dragging");
+});
+
+window.addEventListener("load", function(){
+  let savedOverlay = localStorage.getItem(overlayStorageKey);
+  let validOverlays = Array.from(overlaySelector.options).map(option => option.value);
+  currentOverlay = savedOverlay && validOverlays.includes(savedOverlay) ? savedOverlay : defaultOverlay;
+  overlaySelector.value = currentOverlay;
+  overlaySelector.dispatchEvent(new Event("change"));
+
+  initMobileMenuOptions();
+  loadHints();
+  loadProgress();
+  applyMenuBounds();
+  isBootstrapping = false;
+  updateCounter();
+});
+
+window.addEventListener("resize", () => {
+  let sizeInput = document.getElementById("mobileMenuSize");
+  if(sizeInput){
+    setMobileMenuScaleVars(Number(sizeInput.value || 0.25));
+  }else{
+    let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+    let fallbackScale = Number.isFinite(savedScale) ? clamp(savedScale, 0.20, 0.60) : 0.25;
+    setMobileMenuScaleVars(fallbackScale);
+  }
+  let pinSelect = document.getElementById("mobileMenuPin");
+  if(pinSelect){
+    applyMobileMenuPin(pinSelect.value);
+  }
+  applyMenuBounds();
+});
+
+</script>
+
+
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>imageMapResize();</script>
+
+</body>
+</html>

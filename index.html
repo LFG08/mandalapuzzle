@@ -156,6 +156,32 @@ margin-top:6px;
 opacity:0.8;
 color:#f5e6d3;
 }
+
+.bottom-actions{
+position:fixed;
+left:50%;
+bottom:16px;
+transform:translateX(-50%);
+display:flex;
+gap:10px;
+z-index:20;
+}
+
+.bottom-actions button{
+font-family:inherit;
+font-size:14px;
+padding:8px 14px;
+border:1px solid rgba(255,255,255,0.25);
+background:#2a0d02;
+color:#f5e6d3;
+border-radius:999px;
+cursor:pointer;
+box-shadow:0 4px 12px rgba(0,0,0,0.35);
+}
+
+.bottom-actions button:hover{
+background:#5c2208;
+}
 /* ===== MOBILE ===== */
   @media (max-width: 900px) and (hover: none) and (pointer: coarse){
 
@@ -197,6 +223,18 @@ color:#f5e6d3;
   .mandala-card,
   .menu-item{
     padding: 12px 0;
+  }
+
+  .bottom-actions{
+    bottom: 12px;
+    width: calc(100% - 24px);
+    max-width: 420px;
+  }
+
+  .bottom-actions button{
+    flex: 1;
+    font-size: 13px;
+    padding: 10px;
   }
 }
 
@@ -347,6 +385,12 @@ data-total="138">
 </a>
   
 </div>
+
+<div class="bottom-actions">
+  <button id="exportProgressButton" type="button">Exportar progresso</button>
+  <button id="importProgressButton" type="button">Importar progresso</button>
+  <input id="importProgressInput" type="file" accept="application/json" hidden>
+</div>
 <script>
 function safeParseStoredArray(key){
 try{
@@ -489,7 +533,75 @@ if(percentage < 100) return;
 thumb.classList.add("progress-complete");
 }
 
+function exportProgress(){
+try{
+let payload = {
+exportedAt: new Date().toISOString(),
+source: "varios-nadas-menu",
+localStorage: {}
+};
+
+for(let i = 0; i < localStorage.length; i++){
+let key = localStorage.key(i);
+payload.localStorage[key] = localStorage.getItem(key);
+}
+
+let blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+let url = URL.createObjectURL(blob);
+let a = document.createElement("a");
+a.href = url;
+a.download = "varios-nadas-progresso.json";
+a.click();
+URL.revokeObjectURL(url);
+}catch{
+alert("Não foi possível exportar o progresso.");
+}
+}
+
+function importProgressFromFile(file){
+if(!file) return;
+
+let reader = new FileReader();
+reader.onload = function(){
+try{
+let parsed = JSON.parse(reader.result);
+let storageData = parsed && parsed.localStorage ? parsed.localStorage : parsed;
+
+if(!storageData || typeof storageData !== "object"){
+throw new Error("Formato inválido");
+}
+
+Object.keys(storageData).forEach(key => {
+if(typeof storageData[key] === "string"){
+localStorage.setItem(key, storageData[key]);
+}
+});
+
+alert("Progresso importado com sucesso. A página será atualizada.");
+window.location.reload();
+}catch{
+alert("Arquivo inválido. Selecione um JSON de exportação válido.");
+}
+};
+reader.readAsText(file);
+}
+
 window.addEventListener("DOMContentLoaded", function(){
+let exportButton = document.getElementById("exportProgressButton");
+let importButton = document.getElementById("importProgressButton");
+let importInput = document.getElementById("importProgressInput");
+
+if(exportButton){
+exportButton.addEventListener("click", exportProgress);
+}
+
+if(importButton && importInput){
+importButton.addEventListener("click", () => importInput.click());
+importInput.addEventListener("change", () => {
+importProgressFromFile(importInput.files && importInput.files[0]);
+importInput.value = "";
+});
+}
 
 document.querySelectorAll(".card").forEach(card => {
 

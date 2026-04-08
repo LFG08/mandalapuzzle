@@ -414,8 +414,8 @@ return 0;
 
 async function getCelticCounterMeta(){
 try{
-let response = await fetch("CELTIC/index.html", { cache: "no-store" });
-if(!response.ok) throw new Error("Falha ao carregar CELTIC/index.html");
+let response = await fetch("celtic/index.html", { cache: "no-store" });
+if(!response.ok) throw new Error("Falha ao carregar celtic/index.html");
 let html = await response.text();
 
 let levelsStart = html.indexOf('const levels = [');

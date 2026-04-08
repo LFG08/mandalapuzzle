@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>UnrealUnearth</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+
+<style>
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:2048px;
+height:2048px;
+contain:layout paint;
+transition:transform 0.25s ease;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:2048px;
+height:2048px;
+pointer-events:none;
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:2048px;
+height:2048px;
+
+background-image:url("unreal_gabarito_1.png");
+background-size:2048px 2048px;
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+/* ================= HINT REGION ================= */
+
+.hint-region{
+position:absolute;
+border:6px solid rgba(255, 230, 120, 0);
+box-shadow:0 0 0 rgba(255, 230, 120, 0);
+opacity:0;
+pointer-events:none;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+z-index:4;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(255, 230, 120, 0.95);
+box-shadow:0 0 26px rgba(255, 230, 120, 0.95), inset 0 0 18px rgba(255, 230, 120, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(0.996);}
+}
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(56,21,0);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+position:fixed;
+top:120px;
+left:30px;
+width:clamp(240px, 28vw, 320px);
+min-width:240px;
+
+max-height:70vh;
+
+background:rgba(0,0,0,0.418);
+border:1px solid white;
+color:white;
+
+font-family:'Times New Roman', Times, serif;
+font-size:0.9rem;
+
+display:flex;
+flex-direction:column;
+z-index:20;
+box-sizing:border-box;
+}
+
+#menuHeader {
+  padding: 8px;
+  cursor: move;
+  border-bottom: 1px solid white;
+  gap:6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* KEY */
+}
+
+/* LEFT SIDE */
+.title {
+  white-space: nowrap;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  flex:1 1 auto;
+  margin-right: 6px;
+}
+
+/* RIGHT SIDE GROUP */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink:0;
+}
+
+/* COUNTER */
+#counter {
+  white-space: nowrap;
+}
+
+
+/* ================= INFO ================= */
+.info-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.info-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 6px; /* invisible bridge */
+}
+
+.info-btn,
+.menu-btn{
+
+  display: flex;              /* KEY */
+  align-items: center;        /* vertical center */
+  justify-content: center;    /* horizontal center */
+
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  background: #ccc;
+  line-height: 16px;
+  padding: 0;
+  margin-right: 4px;
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 180px;
+  margin-top: 4px; /* small, safe gap */
+
+  background: rgba(0,0,0,0.85);
+  color: white;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+}
+
+/* show tooltip when hovering button OR tooltip itself */
+.info-wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+
+}
+
+.tooltip a {
+  text-decoration: none;
+}
+
+.tooltip a:hover {
+  text-decoration: underline; /* optional: add back on hover */
+}
+
+.highlight {
+  color: #c44b05;
+  text-decoration: none;
+}
+
+#wordList{
+flex:1;
+overflow-y:auto;
+
+list-style:none;
+margin:0;
+padding:8px;
+line-height:1.4;
+}
+
+#wordList li{
+padding:4px 0;
+overflow-wrap:anywhere;
+word-break:break-word;
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#overlaySelector,
+#clearButton,
+#toggleClickMode,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:8px;
+font-family:'Times New Roman', Times, serif;
+cursor:pointer;
+width:100%;
+box-sizing:border-box;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class="title">Unreal Unearth</span>
+
+<div class="right">
+<span id="counter">0 / 23</span>
+
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+    <span class="tooltip">
+      Mandala inspirada na música <a href= "https://open.spotify.com/intl-pt/track/25m161aHgT9ORt97vTvhlR?si=020703b81b464235" class= highlight>"First Time"</a> do Hozier.
+      Caça-Palavras contém nomes das músicas do álbum
+      <a class= highlight href="https://open.spotify.com/intl-pt/album/4goifiXK2L1XEEMeUwmbxG?si=u0dbf8cUQAWlvRrZcZgYuA">Unreal Unearth Unending</a>.
+    </span>
+  </span>
+  <span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras escondidas. Para dica, clique com o botão direito do mouse na palavra desejada no menu.
+    </span>
+  </span>
+  <a class="menu-btn" href="/" >☰</a>
+  </div>
+
+<button id="toggleMenu">–</button>
+</div>
+
+<ul id="wordList">
+
+<li id="menu-Hozier">Hozier</li>
+<li id="menu-UnrealUnearthUnending">Unreal Unearth Unending</li>
+<li id="menu-DeSelbyI">De Selby I</li>
+<li id="menu-DeSelbyII">De Selby II</li>
+<li id="menu-FirstTime">First Time</li>
+<li id="menu-Francesca">Francesca</li>
+<li id="menu-ICarrion">I, Carrion</li>
+<li id="menu-EatYourYoung">Eat Your Young</li>
+<li id="menu-DamageGetsDone">Damage Gets Done</li>
+<li id="menu-WhoWeAre">Who We Are</li>
+<li id="menu-SonOfNyx">Son of Nyx</li>
+<li id="menu-AllThingsEnd">All Things End</li>
+<li id="menu-ToSomeoneFromAWarmClimate">To Someone From a Warm Climate</li>
+<li id="menu-ButcheredTongue">Butchered Tongue</li>
+<li id="menu-AnythingBut">Anything But</li>
+<li id="menu-Abstract">Abstract</li>
+<li id="menu-Unknown">Unknown</li>
+<li id="menu-FirstLight">First Light</li>
+<li id="menu-TooSweet">Too Sweet</li>
+<li id="menu-WildflowerAndBarley">Wildflower and Barley</li>
+<li id="menu-EmpireNow">Empire Now</li>
+<li id="menu-FareWell">Fare Well</li>
+<li id="menu-July">July</li>
+
+</ul>
+
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+
+<select id="overlaySelector">
+<option value="unreal_gabarito_1.png">Azul</option>
+<option value="unreal_gabarito_2.png">Dourado</option>
+</select>
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container">
+
+<img src="unreal.png" usemap="#image-map">
+
+<div id="answersOverlay"></div>
+<div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
+<div id="regionHint-2" class="hint-region" style="left:1px;top:693px;width:2045px;height:667px;"></div>
+<div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= -->
+
+<map name="image-map">
+
+<area coords="1329,781,1351,767,1383,821,1365,828"
+shape="poly"
+onclick="toggleAnswer(this,'Hozier');return false;">
+
+<area coords="318,657,330,678,349,697,367,682,381,655,399,626,414,604,392,599,359,595,358,635"
+shape="poly"
+onclick="toggleAnswer(this,'UnrealUnearthUnending');return false;">
+
+<area coords="2038,666,2027,683,2022,710,2027,732,2046,728,2046,695,2046,647"
+shape="poly"
+onclick="toggleAnswer(this,'DeSelbyI');return false;">
+
+<area coords="662,2037,678,2029,703,2022,721,2020,730,2035,723,2046,671,2047"
+shape="poly"
+onclick="toggleAnswer(this,'DeSelbyII');return false;">
+
+<area coords="946,1563,949,1548,920,1550,897,1563,886,1595,886,1624,904,1646,928,1658,949,1660,964,1646,969,1624,956,1611,935,1629,918,1620,915,1595,928,1584,938,1584"
+shape="poly"
+onclick="toggleAnswer(this,'FirstTime');return false;">
+
+<area coords="-1,1836,27,1851,41,1829,37,1804,28,1773,-1,1733,-1,1731"
+shape="poly"
+onclick="toggleAnswer(this,'Francesca');return false;">
+
+<area coords="1436,605,1441,590,1459,590,1485,599,1478,609,1463,627,1440,616,1445,627"
+shape="poly"
+onclick="toggleAnswer(this,'ICarrion');return false;">
+
+<area coords="1398,2001,1427,1996,1443,2046,1418,2046"
+shape="poly"
+onclick="toggleAnswer(this,'EatYourYoung');return false;">
+
+<area coords="495,1507,506,1489,495,1464,475,1453,457,1453,454,1478,457,1493,475,1500"
+shape="poly"
+onclick="toggleAnswer(this,'DamageGetsDone');return false;">
+
+<area coords="627,959,647,966,658,951,667,924,667,899,673,879,662,872,649,877,635,915"
+shape="poly"
+onclick="toggleAnswer(this,'WhoWeAre');return false;">
+
+<area coords="1772,1514,1778,1550,1751,1558,1729,1563,1722,1550"
+shape="poly"
+onclick="toggleAnswer(this,'SonOfNyx');return false;">
+
+<area coords="412,130,430,137,448,148,456,159,448,169,445,191,439,211,432,226,419,242,403,251,381,244,381,238,410,227,414,207,414,188,416,169,410,148"
+shape="poly"
+onclick="toggleAnswer(this,'AllThingsEnd');return false;">
+
+<area coords="813,330,810,316,822,307,831,305,839,296,844,291,853,274,866,291,868,303,862,318,878,314,889,325,888,343,888,359,882,370,871,385,841,402,830,385,837,364,841,351,837,337,821,333,810,334"
+shape="poly"
+onclick="toggleAnswer(this,'ToSomeoneFromAWarmClimate');return false;">
+
+<area coords="1897,265,1895,279,1892,294,1886,308,1876,326,1865,341,1857,353,1872,355,1888,348,1903,337,1906,352,1915,366,1923,352,1923,330,1923,308,1924,292,1926,276,1926,261"
+shape="poly"
+onclick="toggleAnswer(this,'ButcheredTongue');return false;">
+
+<area coords="43,550,76,550,101,550,110,573,117,600,121,637,108,657,88,666,67,666,84,648,84,621,68,588,55,574,46,560"
+shape="poly"
+onclick="toggleAnswer(this,'AnythingBut');return false;">
+
+<area coords="1430,1134,1450,1139,1450,1172,1443,1193,1436,1203,1425,1197,1434,1175"
+shape="poly"
+onclick="toggleAnswer(this,'Abstract');return false;">
+
+<area coords="1803,1159,1796,1191,1841,1204,1861,1191,1879,1177,1847,1175,1821,1173"
+shape="poly"
+onclick="toggleAnswer(this,'Unknown');return false;">
+
+<area coords="1633,1877,1657,1865,1669,1885,1680,1914,1677,1930,1651,1939,1644,1914"
+shape="poly"
+onclick="toggleAnswer(this,'FirstLight');return false;">
+
+<area coords="55,1163,88,1189,103,1178,90,1149,70,1147"
+shape="poly"
+onclick="toggleAnswer(this,'TooSweet');return false;">
+
+<area coords="200,25,198,51,215,47,229,45,236,52,222,60,213,74,220,83,231,89,238,100,254,105,265,96,265,78,273,77,278,69,287,52,302,45,316,40,283,16,283,21,274,7,258,16,226,20,273,5,278,5"
+shape="poly"
+onclick="toggleAnswer(this,'WildflowerAndBarley');return false;">
+
+<area coords="1941,1598,1952,1619,1966,1625,1993,1630,2000,1643,2008,1657,2020,1648,2020,1623,2004,1605,1988,1588,1966,1583,1952,1585"
+shape="poly"
+onclick="toggleAnswer(this,'EmpireNow');return false;">
+
+<area coords="472,1845,491,1825,486,1798,473,1780,455,1772,439,1767,426,1774,430,1792,444,1805,454,1827"
+shape="poly"
+onclick="toggleAnswer(this,'FareWell');return false;">
+
+<area coords="1374,48,1373,21,1347,14,1304,34,1331,46,1351,54"
+shape="poly"
+onclick="toggleAnswer(this,'July');return false;">
+
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+/* prevent image dragging */
+document.addEventListener("dragstart", e=>e.preventDefault());
+
+const hintStorageKey = "UNREAL_wordHints";
+const baseMandalaSize = 2048;
+const areaRegionMap = {};
+
+function computeAreaRegion(coordsText){
+let coords = coordsText.split(",").map(Number).filter(n => !Number.isNaN(n));
+if(coords.length < 4) return 2;
+let ys = [];
+for(let i=1;i<coords.length;i+=2){
+ys.push(coords[i]);
+}
+let avgY = ys.reduce((acc, y) => acc + y, 0) / ys.length;
+if(avgY <= baseMandalaSize / 3) return 1;
+if(avgY <= (baseMandalaSize / 3) * 2) return 2;
+return 3;
+}
+
+let activeRegionHintTimeout = null;
+
+function centerViewOnRegion(regionEl){
+if(!regionEl) return;
+let container = document.querySelector(".container");
+if(!container) return;
+
+let containerRect = container.getBoundingClientRect();
+let left = Number(regionEl.style.left.replace("px", "")) || 0;
+let top = Number(regionEl.style.top.replace("px", "")) || 0;
+let width = Number(regionEl.style.width.replace("px", "")) || regionEl.offsetWidth;
+let height = Number(regionEl.style.height.replace("px", "")) || regionEl.offsetHeight;
+let regionCenterX = left + (width / 2);
+let regionCenterY = top + (height / 2);
+
+let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
+
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+window.scrollTo({
+left: Math.min(Math.max(targetX, 0), maxX),
+top: Math.min(Math.max(targetY, 0), maxY),
+behavior: "smooth"
+});
+}
+
+function showRegionHint(regionId){
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+let el = document.getElementById("regionHint-" + regionId);
+if(!el) return;
+
+if(activeRegionHintTimeout){
+clearTimeout(activeRegionHintTimeout);
+}
+
+el.classList.add("active");
+centerViewOnRegion(el);
+
+activeRegionHintTimeout = setTimeout(() => el.classList.remove("active"), 2200);
+}
+
+function saveHints(){
+let hints = {};
+document.querySelectorAll("#wordList li").forEach(li => {
+if(Number(li.dataset.hintLevel || 0) > 0){
+hints[li.id] = 1;
+}
+});
+localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+let raw = localStorage.getItem(hintStorageKey);
+if(!raw) return;
+let hints;
+try{
+hints = JSON.parse(raw);
+}catch{
+return;
+}
+document.querySelectorAll("#wordList li").forEach(li => {
+if(hints[li.id]){
+li.dataset.hintLevel = "1";
+}
+});
+}
+
+/* load */
+window.addEventListener("load", function(){
+updateCounter();
+
+const overlayStorageKey = "UNREAL_selectedOverlay";
+const defaultOverlay = "unreal_gabarito_1.png";
+
+/* restore overlay OR set default */
+let savedOverlay = localStorage.getItem(overlayStorageKey);
+let validOverlays = Array.from(overlaySelector.options).map(option => option.value);
+
+if(savedOverlay && validOverlays.includes(savedOverlay)){
+  currentOverlay = savedOverlay;
+  overlaySelector.value = savedOverlay;
+}else{
+  // FIRST TIME → force option 1
+  currentOverlay = defaultOverlay;
+  overlaySelector.value = defaultOverlay;
+}
+
+/* apply overlay immediately */
+overlaySelector.dispatchEvent(new Event("change"));
+
+/* load answers AFTER overlay is ready */
+loadProgress();
+loadHints();
+});
+
+/* ===== toggle mode ===== */
+
+let allowToggleOff=true;
+
+toggleClickMode.onclick=function(){
+
+allowToggleOff=!allowToggleOff;
+
+this.textContent=allowToggleOff
+? "Desmarcar: ON"
+: "Desmarcar: OFF";
+};
+
+/* OVERLAY */
+
+overlaySelector.onchange = function(){
+
+currentOverlay = this.value;
+
+Object.values(answerClips).forEach(clip=>{
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+});
+
+localStorage.setItem("UNREAL_selectedOverlay", currentOverlay);
+};
+
+/* ===== menu items ===== */
+
+const menuItems={};
+
+document.querySelectorAll("#wordList li").forEach(li=>{
+menuItems[li.id]=li;
+li.addEventListener("contextmenu", e => {
+e.preventDefault();
+let word = li.id.replace("menu-", "");
+let regionId = areaRegionMap[word];
+if(regionId){
+li.dataset.hintLevel = "1";
+saveHints();
+showRegionHint(regionId);
+}
+});
+});
+
+document.querySelectorAll("area").forEach(area => {
+let onclickText = area.getAttribute("onclick") || "";
+let match = onclickText.match(/'([^']+)'/);
+if(!match) return;
+areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
+});
+
+/* ===== answer highlights ===== */
+
+const answerClips={};
+
+function toggleAnswer(area,word){
+
+if(!area.coords) return;
+
+if(!answerClips[word]){
+
+let coords=area.coords.split(",");
+let points=[];
+
+for(let i=0;i<coords.length;i+=2){
+points.push(coords[i]+"px "+coords[i+1]+"px");
+}
+
+let clip = document.createElement("div");
+clip.className = "answerClip";
+clip.style.clipPath = "polygon(" + points.join(",") + ")";
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+
+const answersOverlay = document.getElementById("answersOverlay");
+
+answersOverlay.appendChild(clip);
+
+answerClips[word]=clip;
+}
+
+let isVisible = answerClips[word].classList.contains("visible");
+
+if(!isVisible){
+
+  answerClips[word].classList.add("visible");
+  menuItems["menu-"+word].classList.add("found");
+
+}else if(allowToggleOff){
+
+  answerClips[word].classList.remove("visible");
+  menuItems["menu-"+word].classList.remove("found");
+
+}
+
+updateCounter();
+saveProgress();
+}
+
+/*counter*/
+function updateCounter(){
+
+let found = document.querySelectorAll("#wordList li.found").length;
+let total = document.querySelectorAll("#wordList li").length;
+
+document.getElementById("counter").textContent =
+found + " / " + total;
+
+  /* PUZZLE COMPLETE MESSAGE */
+
+if(found === total && total > 0){
+
+setTimeout(function(){
+alert("fim! 🎉🎉");
+},200);
+}
+}
+
+
+/* SAVE PROGRESS */
+
+function loadProgress(){
+
+let saved = localStorage.getItem("unrealPuzzleProgress");
+if(!saved) return;
+
+let words = JSON.parse(saved);
+
+words.forEach(word => {
+
+let area = document.querySelector(
+`area[onclick*="${word}"]`
+);
+
+if(area){
+
+// ONLY toggle if it's not already visible
+if(!answerClips[word] ||
+   !answerClips[word].classList.contains("visible")){
+
+toggleAnswer(area, word);
+}
+}
+});
+}
+
+/* ===== reset ===== */
+
+function clearAll(){
+
+for(let word in answerClips){
+answerClips[word].classList.remove("visible");
+}
+
+document.querySelectorAll("#wordList li")
+.forEach(li=>{
+li.classList.remove("found");
+delete li.dataset.hintLevel;
+});
+
+localStorage.removeItem("unrealPuzzleProgress");
+localStorage.removeItem(hintStorageKey);
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+updateCounter();
+}
+
+function confirmReset(){
+
+if(confirm("Reset?")){
+clearAll();
+localStorage.removeItem("unrealPuzzleProgress");
+}
+
+  }
+
+/* ===== menu drag ===== */
+
+let menu=wordMenu;
+let header=menuHeader;
+
+let offsetX,offsetY,dragging=false;
+
+header.onmousedown=e=>{
+dragging=true;
+offsetX=e.clientX-menu.offsetLeft;
+offsetY=e.clientY-menu.offsetTop;
+};
+
+document.onmousemove=e=>{
+if(!dragging) return;
+menu.style.left=(e.clientX-offsetX)+"px";
+menu.style.top=(e.clientY-offsetY)+"px";
+};
+
+document.onmouseup=()=>dragging=false;
+
+/* ===== collapse menu ===== */
+
+toggleMenu.onclick=()=>wordMenu.classList.toggle("collapsed");
+
+/* ===== rotate mandala ===== */
+
+let rotation=0;
+
+rotateMandala.onclick=function(){
+
+rotation=(rotation+90)%360;
+
+document.querySelector(".container")
+.style.transform="rotate("+rotation+"deg)";
+
+this.textContent="Rotate ("+rotation+"°)";
+
+};
+
+/* ===== drag scroll ===== */
+
+let isDragging=false,startX,startY,scrollLeft,scrollTop;
+
+document.addEventListener("mousedown",e=>{
+
+if(e.target.closest("#wordMenu")) return;
+
+isDragging=true;
+document.body.classList.add("dragging");
+
+startX=e.clientX;
+startY=e.clientY;
+
+scrollLeft=window.scrollX;
+scrollTop=window.scrollY;
+
+});
+
+document.addEventListener("mousemove",e=>{
+
+if(!isDragging) return;
+
+window.scrollTo(
+scrollLeft-(e.clientX-startX),
+scrollTop-(e.clientY-startY)
+);
+
+});
+
+document.addEventListener("mouseup",()=>{
+isDragging=false;
+document.body.classList.remove("dragging");
+});
+
+/* ===== savePuzzleProgress ===== */
+
+function saveProgress(){
+
+localStorage.setItem(
+"unrealPuzzleProgress",
+JSON.stringify(Object.keys(answerClips)
+.filter(w => answerClips[w].classList.contains("visible")))
+);
+
+}
+
+
+</script>
+
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>imageMapResize();</script>
+
+
+</body>
+</html>

@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mandala Celta</title>
+<link rel="preload" as="image" href="mandala_celtic_nivel1.webp">
+<link rel="preload" as="image" href="mandala_gabarito_nivel1.webp">
+<link rel="preload" as="image" href="mandala_celtic_nivel2.webp">
+<link rel="preload" as="image" href="mandala_gabarito_nivel2_1.png">
+<link rel="preload" as="image" href="mandala_gabarito_nivel2_2.png">
+<style>
+:root{
+--mandala-display-size:2048px;
+}
+
+.container{
+position:relative;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+contain:layout paint;
+transition:transform 0.25s ease;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+}
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+z-index:2;
+}
+
+#regionHints{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+z-index:3;
+}
+
+.hint-region{
+position:absolute;
+border:6px solid rgba(255, 230, 120, 0);
+box-shadow:0 0 0 rgba(255, 230, 120, 0);
+opacity:0;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(255, 230, 120, 0.95);
+box-shadow:0 0 26px rgba(255, 230, 120, 0.95), inset 0 0 18px rgba(255, 230, 120, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(0.996);}
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+.answerClipLayer{
+position:absolute;
+inset:0;
+background-size:var(--mandala-display-size) var(--mandala-display-size);
+background-repeat:no-repeat;
+}
+
+body{
+background:rgb(25, 66, 0);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+padding-bottom:24px;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+#wordMenu{
+position:fixed;
+top:120px;
+left:30px;
+width:250px;
+max-height:70vh;
+background:rgba(0, 0, 0, 0.815);
+border:1px solid white;
+color:white;
+font-family:"Times New Roman", Times, serif;
+font-size:1rem;
+display:flex;
+flex-direction:column;
+z-index:20;
+}
+
+#menuHeader{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:6px;
+}
+
+.title{
+flex-shrink:inherit;
+margin-right:4px;
+margin-left:8px;
+margin-top:8px;
+}
+
+.right{
+display:flex;
+align-items:center;
+gap:6px;
+flex-shrink:0;
+margin-right:8px;
+margin-top:6px;
+}
+
+#counter{
+white-space:nowrap;
+}
+
+.info-wrapper{
+position:relative;
+display:inline-block;
+}
+
+.info-wrapper::after{
+content:"";
+position:absolute;
+top:100%;
+left:0;
+width:100%;
+height:6px;
+}
+
+.info-btn,
+.menu-btn{
+display:flex;
+align-items:center;
+justify-content:center;
+width:16px;
+height:16px;
+border-radius:50%;
+border:none;
+font-size:11px;
+cursor:pointer;
+background:#ccc;
+line-height:16px;
+padding:0;
+margin-right:4px;
+text-decoration:none;
+color:black;
+}
+
+.tooltip{
+position:absolute;
+top:100%;
+left:0;
+width:180px;
+margin-top:4px;
+background:rgba(0,0,0,0.85);
+color:white;
+font-size:12px;
+padding:8px;
+border-radius:6px;
+opacity:0;
+pointer-events:none;
+transition:0.2s;
+}
+
+.tooltip.help-tooltip{
+width:320px;
+line-height:1.35;
+}
+
+.info-wrapper:hover .tooltip{
+opacity:1;
+pointer-events:auto;
+}
+
+#wordList{
+flex:1;
+overflow-y:auto;
+list-style:none;
+margin:0;
+padding:8px;
+line-height:1.4;
+}
+
+#wordList li{
+padding:4px 0;
+}
+
+#wordList li.hidden-word{
+cursor:text;
+}
+
+#wordList li[data-editing="true"]{
+background:rgba(255,255,255,0.12);
+outline:1px dashed rgba(255,255,255,0.4);
+}
+
+.menu-label{
+display:block;
+padding:6px 0 2px;
+font-style:italic;
+opacity:0.9;
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+.hidden-word.found{
+color:#f5e6d3;
+text-decoration:line-through;
+}
+
+.hidden-word.hint-revealed{
+color:#f5e6d3;
+text-decoration:none;
+opacity:1;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#wordTooltip{
+position:fixed;
+background:rgba(0,0,0,0.85);
+color:#f5e6d3;
+padding:6px 10px;
+font-size:12px;
+font-family:Georgia, serif;
+border:1px solid #f5e6d3;
+pointer-events:none;
+opacity:0;
+transition:opacity 0.15s;
+z-index:999;
+}
+
+#clearButton,
+#toggleClickMode,
+#rotateMandala{
+border:none;
+border-top:1px solid white;
+background:rgba(0,0,0,0.418);
+color:white;
+padding:8px;
+font-family:"Times New Roman", Times, serif;
+cursor:pointer;
+}
+
+.transition-screen{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+opacity:0;
+pointer-events:none;
+transition:opacity 0.45s ease;
+z-index:10;
+overflow:hidden;
+}
+
+.transition-screen.active{
+opacity:1;
+pointer-events:auto;
+}
+
+.transition-screen img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+display:block;
+opacity:0;
+transform:scale(1);
+transition:opacity 0.55s ease, transform 0.9s ease;
+will-change:opacity, transform;
+}
+
+.transition-screen img.active{
+opacity:1;
+transform:scale(1.012);
+}
+
+.level2-footer{
+display:none;
+width:var(--mandala-display-size);
+box-sizing:border-box;
+padding:12px 0 0 12px;
+flex-direction:column;
+align-items:flex-start;
+gap:12px;
+}
+
+.level2-footer.visible{
+display:flex;
+}
+
+.sound-credit{
+max-width:calc(var(--mandala-display-size) - 160px);
+padding:8px 14px;
+background:rgba(0, 0, 0, 0.418);
+color:#f2ead8;
+font:12px/1.35 Georgia, serif;
+text-align:left;
+}
+
+.sound-credit a{
+color:#f7d88a;
+}
+
+.footer-controls{
+display:flex;
+align-items:stretch;
+gap:12px;
+}
+
+.volume-button{
+width:132px;
+min-height:64px;
+padding:8px 10px;
+background:rgba(0, 0, 0, 0.418);
+border:1px solid rgba(255,255,255,0.2);
+color:#f2ead8;
+font:13px/1.2 "Times New Roman", Times, serif;
+text-align:center;
+display:flex;
+flex-direction:column;
+justify-content:center;
+gap:8px;
+}
+
+.level-button{
+min-width:110px;
+min-height:64px;
+padding:8px 12px;
+background:rgba(0, 0, 0, 0.418);
+border:1px solid rgba(255,255,255,0.2);
+color:#f2ead8;
+font:13px/1.2 "Times New Roman", Times, serif;
+cursor:pointer;
+}
+
+.level-button:disabled{
+opacity:0.5;
+cursor:default;
+}
+
+.volume-button label{
+display:block;
+}
+
+.volume-button input[type="range"]{
+width:100%;
+accent-color:#f7d88a;
+}
+
+.transition-vignette{
+position:absolute;
+inset:0;
+opacity:0;
+background:radial-gradient(circle at center,
+rgba(0,0,0,0) 22%,
+rgba(0,8,10,0.18) 40%,
+rgba(0,8,10,0.56) 66%,
+rgba(0,8,10,0.9) 100%);
+transition:opacity 1.2s ease;
+will-change:opacity;
+}
+
+.transition-vignette.active{
+opacity:1;
+}
+
+.transition-reveal{
+position:absolute;
+inset:0;
+opacity:0;
+background-size:var(--mandala-display-size) var(--mandala-display-size);
+background-repeat:no-repeat;
+background-image:url("mandala_celtic_nivel2.webp");
+transition:
+opacity 2.4s ease,
+transform 2.4s ease;
+transform:scale(1.01);
+will-change:opacity, transform;
+}
+
+.transition-reveal.active{
+opacity:1;
+transform:scale(1);
+}
+
+.help-popup{
+position:fixed;
+inset:0;
+display:none;
+align-items:center;
+justify-content:center;
+background:rgba(0, 0, 0, 0.45);
+z-index:40;
+}
+
+.help-popup.visible{
+display:flex;
+}
+
+.help-popup-card{
+width:min(520px, calc(100vw - 48px));
+padding:18px 20px;
+background:rgba(7, 19, 24, 0.94);
+border:1px solid rgba(255,255,255,0.28);
+color:#f2ead8;
+font:15px/1.45 Georgia, serif;
+box-shadow:0 20px 60px rgba(0,0,0,0.35);
+}
+
+.help-popup-title{
+margin:0 0 10px;
+font:18px/1.2 "Times New Roman", Times, serif;
+}
+
+.help-popup-actions{
+margin-top:14px;
+display:flex;
+justify-content:flex-end;
+}
+
+.help-popup-actions button{
+border:1px solid rgba(255,255,255,0.22);
+background:rgba(255,255,255,0.08);
+color:#f2ead8;
+padding:8px 14px;
+font:14px/1.2 "Times New Roman", Times, serif;
+cursor:pointer;
+}
+</style>
+</head>
+<body>
+<div id="wordMenu">
+<div id="menuHeader">
+<span class="title" id="menuTitle">Nos Celtas</span>
+<div class="right">
+<span id="counter"></span>
+<span class="info-wrapper">
+<button class="info-btn">i</button>
+<span class="tooltip" id="infoTooltip"></span>
+</span>
+<span class="info-wrapper">
+<button class="info-btn">?</button>
+<span class="tooltip help-tooltip" id="helpTooltip"></span>
+</span>
+<a class="menu-btn" href="/">☰</a>
+<button id="toggleMenu">-</button>
+</div>
+</div>
+
+<ul id="wordList"></ul>
+
+<div id="wordTooltip"></div>
+
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+</div>
+
+<div class="container">
+<img id="mandalaImage" src="mandala_celtic_nivel1.webp" usemap="#image-map" width="2048" height="2048" decoding="async" fetchpriority="high">
+<div id="answersOverlay"></div>
+<div id="regionHints"></div>
+<div class="transition-screen" id="transitionScreen">
+<img id="transitionFrame" src="transicao_1.webp" alt="Transicao entre niveis">
+<div class="transition-vignette" id="transitionVignette"></div>
+<div class="transition-reveal" id="transitionReveal"></div>
+</div>
+</div>
+
+<map name="image-map" id="image-map"></map>
+
+<audio id="level2FindSound" preload="auto">
+<source src="819418__robinhood76__13819-star-twinkle-ding.wav" type="audio/wav">
+</audio>
+
+<audio id="levelTransitionSound" preload="auto">
+<source src="476715__sergequadrado__harp-glissando-descending.wav" type="audio/wav">
+</audio>
+
+<div id="level2Footer" class="level2-footer">
+<div id="soundCredit" class="sound-credit">
+Sound effect: 13819 star twinkle ding by Robinhood76 --
+<a href="https://freesound.org/s/819418/" target="_blank" rel="noreferrer">https://freesound.org/s/819418/</a>
+-- License: Attribution NonCommercial 4.0
+<br>
+Transition sound: Harp Glissando Descending by SergeQuadrado --
+<a href="https://freesound.org/s/476715/" target="_blank" rel="noreferrer">https://freesound.org/s/476715/</a>
+-- License: Attribution NonCommercial 3.0
+</div>
+
+<div class="footer-controls">
+<div id="volumeButton" class="volume-button">
+<label for="volumeSlider" id="volumeLabel">Volume 50%</label>
+<input id="volumeSlider" type="range" min="0" max="100" step="1" value="50">
+</div>
+<button id="goToLevel1Button" class="level-button" type="button">Nivel 1</button>
+<button id="goToLevel2Button" class="level-button" type="button">Nivel 2</button>
+</div>
+</div>
+
+<div id="helpPopup" class="help-popup">
+<div class="help-popup-card">
+<h2 class="help-popup-title">Nivel 2</h2>
+<div id="helpPopupText"></div>
+<div class="help-popup-actions">
+<button id="helpPopupClose" type="button">Continuar</button>
+</div>
+</div>
+</div>
+
+<script>
+document.addEventListener("dragstart", e => e.preventDefault());
+
+const transitionFrames = [
+"transicao_1.webp",
+"transicao_2.webp",
+"transicao_3.webp",
+"transicao_4.webp",
+"transicao_5.webp",
+"transicao_zoom.png"
+];
+
+const levels = [
+{
+key: "nivel1",
+title: "Snaidhmeanna agus siombailí Ceilteacha eile",
+image: "mandala_celtic_nivel1.webp",
+overlays: ["mandala_gabarito_nivel1.webp"],
+infoText: "Nós e outros ícones celtas: Nós Celtas são padrões entrelaçados continuos, sem começo nem fim. Costumam simbolizar eternidade, proteção, ciclos da natureza e ligação entre corpo, mente e espirito.",
+helpText: "Encontre todos os Nós e demais elementos iconograficos celtas. Nem todos os Nós possuem nomes especificos; os que tradicionalmente não possuem nomeclatura estão listados separadamente sob nomes inventados. Boa Sorte!🍀",
+regions: [
+{ id: 1, minX: 1, maxX: 2044, minY: 4, maxY: 695 },
+{ id: 2, minX: -1, maxX: 2046, minY: 696, maxY: 1343 },
+{ id: 3, minX: 1, maxX: 2046, minY: 1347, maxY: 2043 }
+],
+categories: [
+{
+label: "Nós celtas (nomeados):",
+items: [
+{ id: "Snaidhm na Trionoide", group: "Trionoide", def: "Simbolo celta de três laços entrelaçados associado à eternidade, união e triade.", shape: "poly", coords: "578,575,631,582,663,607,638,643,602,662,584,625" },
+{ id: "snaidhm na Trionoide2", group: "Trionoide", shape: "poly", coords: "1382,604,1405,642,1441,662,1470,620,1470,573,1405,589" },
+{ id: "snaidhm na Trionoide3", group: "Trionoide", shape: "poly", coords: "577,1466,582,1412,604,1383,642,1408,662,1441,636,1466" },
+{ id: "snaidhm na Trionoide4", group: "Trionoide", shape: "poly", coords: "1382,1443,1405,1406,1443,1383,1467,1417,1472,1470,1416,1466" },
+
+{ id: "Triquetra", group: "triquetra", def: "Snaidhm na Trionoide: Símbolo celta de três laços entrelaçados associado à eternidade, à união e à tríade.", shape: "poly", coords: "645,645,654,675,656,713,680,706,683,684,707,677,716,659,705,654,680,652" },
+{ id: "Triquetra2", group: "triquetra", shape: "poly", coords: "1333,663,1336,674,1351,684,1364,684,1367,701,1373,703,1389,719,1398,708,1398,684,1398,665,1402,645,1367,652,1345,656" },
+{ id: "Triquetra3", group: "triquetra", shape: "poly", coords: "658,1334,651,1349,654,1370,645,1379,640,1399,643,1408,661,1410,676,1399,689,1399,710,1399,718,1383,692,1365,678,1347" },
+{ id: "Triquetra4", group: "triquetra", shape: "poly", coords: "1331,1384,1342,1391,1358,1393,1378,1399,1394,1404,1405,1402,1405,1380,1402,1353,1387,1330,1371,1341,1362,1362,1340,1373" },
+
+{id: "Cros na dTríonóidí",group: "crosNaDTrionoidi",def: "Cruz formada por quatro triquetras entrelaçadas. Também chamada de Cruz das Triquetras, é associada à eternidade, à união e à espiritualidade celta.",shape: "poly",coords: "831,844,854,827,871,832,885,847,888,878,871,890,851,890,831,878"},
+{id: "Cros na dTríonóidí2",group: "crosNaDTrionoidi",shape: "poly",coords: "851,1157,834,1171,834,1191,854,1212,871,1209,885,1194,885,1171,871,1157"},
+{id: "Cros na dTríonóidí3",group: "crosNaDTrionoidi",shape: "poly",coords: "1155,870,1161,841,1178,835,1198,835,1216,855,1216,873,1195,881,1181,890"},
+{id: "Cros na dTríonóidí4",group: "crosNaDTrionoidi",shape: "poly",coords: "1152,1174,1178,1151,1198,1154,1210,1171,1210,1194,1195,1217,1173,1209,1155,1194"},
+
+{ id: "Cruz Carolíngia", group: "cruzCarolingia", def: "Também chamada de Cruz das Triquetras, recebe o nome Carolíngia por aparecer na arte medieval do período carolíngio e é formada por quatro triquetras entrelaçadas.", shape: "poly", coords: "635,742,667,722,701,750,661,782" },
+{ id: "Cruz Carolíngia2", group: "cruzCarolingia", shape: "poly", coords: "719,673,750,701,788,664,747,635" },
+{ id: "Cruz Carolíngia3", group: "cruzCarolingia", shape: "poly", coords: "1259,664,1299,638,1328,670,1296,696" },
+{ id: "Cruz Carolíngia4", group: "cruzCarolingia", shape: "poly", coords: "1351,745,1388,785,1414,753,1379,719" },
+{ id: "Cruz Carolíngia5", group: "cruzCarolingia", shape: "poly", coords: "635,1293,673,1325,701,1293,667,1270" },
+{ id: "Cruz Carolíngia6", group: "cruzCarolingia", shape: "poly", coords: "719,1376,750,1408,779,1379,750,1351" },
+{ id: "Cruz Carolíngia7", group: "cruzCarolingia", shape: "poly", coords: "1328,1379,1299,1408,1267,1382,1299,1351" },
+{ id: "Cruz Carolíngia8", group: "cruzCarolingia", shape: "poly", coords: "1379,1325,1348,1296,1379,1270,1414,1299" },
+
+
+
+
+{ id: "Snaidhm Mairnéalach", group: "sailorsCelticKnot", def: "Ou 'Sailor's Knot' - Nó celta tradicional associado aos marinheiros, simbolizando proteção, união e ligação eterna.", shape: "poly", coords: "879,628,891,637,915,706,877,718,857,644,877,624,861,599,877,537,906,541,895,602,877,610" },
+{ id: "Snaidhm Mairnéalach2", group: "sailorsCelticKnot", shape: "poly", coords: "1141,547,1170,536,1184,598,1175,619,1186,645,1170,715,1137,706,1155,636,1170,618,1155,603" },
+{ id: "Snaidhm Mairnéalach3", group: "sailorsCelticKnot", shape: "poly", coords: "880,1429,895,1413,913,1341,882,1326,859,1402,880,1431,866,1447,866,1480,875,1509,906,1507,902,1475,893,1449,880,1429" },
+{ id: "Snaidhm Mairnéalach4", group: "sailorsCelticKnot", shape: "poly", coords: "1174,1420,1184,1449,1169,1513,1140,1504,1154,1446,1170,1417,1148,1408,1129,1334,1170,1328,1174,1362,1192,1399,1174,1420" },
+{ id: "Snaidhm Mairnéalach5", group: "sailorsCelticKnot", shape: "poly", coords: "573,905,609,894,624,876,638,894,709,912,718,880,649,855,620,878,596,862,533,878,540,912" },
+{ id: "Snaidhm Mairnéalach6", group: "sailorsCelticKnot", shape: "poly", coords: "596,1188,629,1165,645,1188,721,1168,707,1137,633,1155,627,1166,600,1157,546,1141,540,1174" },
+{ id: "Snaidhm Mairnéalach7", group: "sailorsCelticKnot", shape: "poly", coords: "1517,869,1494,865,1470,862,1452,858,1429,882,1405,858,1331,876,1340,918,1425,884,1445,894,1470,898,1492,905,1510,902,1517,882" },
+{ id: "Snaidhm Mairnéalach8", group: "sailorsCelticKnot", shape: "poly", coords: "1519,1173,1510,1142,1447,1148,1430,1166,1410,1149,1336,1135,1327,1169,1405,1189,1430,1168,1449,1186" },
+
+{ id: "Nó De Marinheiro", group: "noDeMarinheiro", def: "Nó decorativo de origem marítima associado à navegação, proteção e união. Existem várias formas de nó de marinheiro celta.", shape: "poly", coords: "978,411,984,429,987,443,976,458,958,449,964,434" },
+{ id: "Nó De Marinheiro2", group: "noDeMarinheiro", shape: "poly", coords: "1072,401,1060,444,1067,457,1083,457,1083,439,1083,423" },
+{ id: "Nó De Marinheiro3", group: "noDeMarinheiro", shape: "poly", coords: "417,980,432,963,450,967,461,978,446,988,430,982" },
+{ id: "Nó De Marinheiro4", group: "noDeMarinheiro", shape: "poly", coords: "406,1068,434,1065,443,1054,472,1083,432,1084,417,1077" },
+{ id: "Nó De Marinheiro5", group: "noDeMarinheiro", shape: "poly", coords: "976,1637,989,1606,978,1584,964,1592,964,1613" },
+{ id: "Nó De Marinheiro6", group: "noDeMarinheiro", shape: "poly", coords: "1079,1643,1085,1625,1087,1593,1069,1588,1056,1606,1067,1620,1065,1640" },
+{ id: "Nó De Marinheiro7", group: "noDeMarinheiro", shape: "poly", coords: "1588,967,1610,967,1635,967,1637,988,1622,981,1604,991,1586,976" },
+{ id: "Nó De Marinheiro8", group: "noDeMarinheiro", shape: "poly", coords: "1586,1072,1597,1064,1610,1061,1631,1063,1646,1068,1633,1083,1617,1083,1601,1086" },
+
+{ id: "Endless Sailors Knot", group: "sailorsKnot", def: "Variante do snaidhm mairnéalach. Existem diversos tipos de nós de marinheiro celtas, pois o símbolo representa uma família de padrões entrelaçados ligados ao mar, à união e à continuidade", 
+shape: "poly", coords: "1341,79,1120,30,809,41,588,125,412,240,283,361,156,513,90,720,35,919,30,1134,50,1254,87,1361,130,1449,162,1516,231,1607,306,1705,449,1834,622,1943,737,1975,901,2001,1096,2007,1280,1978,1494,1920,1641,1793,1756,1686,1897,1518,1977,1334,2020,1127,2020,1029,1966,1017,1917,1308,1839,1494,1724,1655,1566,1786,1413,1863,1195,1942,1013,1953,838,1936,654,1878,470,1771,332,1650,205,1483,128,1308,96,1107,96,923,128,721,211,548,326,390,481,254,645,168,829,113,1031,74,1203,110,1408,163,1580,264,1710,381,1830,542,1906,704,1960,1016,2037,1042,1980,694,1842,455,1583,191,1531,156,1468,122" },
+
+{ id: "Nó De Salomão", group: "noDeSalomao", def: "Símbolo milenar e um motivo decorativo. Representa eternidade, união e proteção espiritual. Embora encontrado em mosaicos romanos, foi adotado na arte celta, simbolizando laços inquebráveis entre indivíduos.", shape: "poly", coords: "989,394,985,490,1065,496,1058,396" },
+{ id: "Nó De Salomão2", group: "noDeSalomao", shape: "poly", coords: "399,1060,484,1062,490,982,392,990" },
+{ id: "Nó De Salomão3", group: "noDeSalomao", shape: "poly", coords: "987,1647,1058,1651,1063,1564,987,1564" },
+{ id: "Nó De Salomão4", group: "noDeSalomao", shape: "poly", coords: "1563,986,1648,986,1648,1058,1564,1066,1557,1026" },
+
+
+{ id: "Nó De Bowen", group: "noDeBowen", def: "Representa a união e lealdade. Recebe o nome do galês James Bowen (falecido em 1629), também é chamado de nó do verdadeiro amor Um símbolo Celta de amor eterno", shape: "poly", coords: "745,512,764,512,782,490,797,517,819,530,784,539,771,561,762,530" },
+{ id: "Nó De Bowen2", group: "noDeBowen", shape: "poly", coords: "516,741,510,763,488,785,512,793,532,817,536,785,558,771,538,767" },
+{ id: "Nó De Bowen3", group: "noDeBowen", shape: "poly", coords: "1234,1515,1258,1513,1282,1487,1285,1520,1311,1529,1282,1540,1265,1566,1256,1533" },
+{ id: "Nó De Bowen4", group: "noDeBowen", shape: "poly", coords: "1487,1276,1508,1256,1511,1232,1535,1250,1566,1265,1539,1278,1528,1309,1511,1285" },
+
+{ id: "Nó De Dara", group: "noDeDara", def: "Nó celta inspirado nas raízes do carvalho. O nome vem de 'doire', palavra irlandesa para carvalho, e simboliza força, sabedoria e resistência.", shape: "poly", coords: "720,716,705,760,731,791,777,798,795,763,791,719,749,705" },
+{ id: "Nó De Dara2", group: "noDeDara", shape: "poly", coords: "712,1325,709,1300,718,1263,756,1245,775,1254,788,1274,799,1296,795,1320,782,1335,747,1340" },
+{ id: "Nó De Dara3", group: "noDeDara", shape: "poly", coords: "1258,1265,1249,1285,1256,1316,1276,1338,1302,1346,1328,1335,1342,1303,1339,1283,1326,1256,1296,1243,1276,1248" },
+{ id: "Nó De Dara4", group: "noDeDara", shape: "poly", coords: "1260,778,1252,749,1267,714,1300,708,1326,719,1335,730,1339,760,1333,787,1302,802,1278,795" }
+
+
+]
+},
+
+{
+label: "Nós celtas (sem nomeclatura):",
+items: [
+
+{ id: "Nó Celta Quaternario", group: "cruzCarolingiaQuaternario", def: "Nó celta de quatro laços entrelaçados, associado aos quatro elementos, às estações, aos pontos cardeais e ao equilíbrio. Existem diversos tipos de nós celtas quaternários, variando no formato e no número de entrelaçamentos, e este é apenas um deles.", shape: "poly", coords: "989,285,980,294,957,334,980,368,1029,394,1060,374,1081,357,1086,328,1066,291,1058,279,989,279" },
+{ id: "Nó Celta Quaternario2", group: "cruzCarolingiaQuaternario", shape: "poly", coords: "288,986,276,1015,276,1049,299,1072,348,1075,371,1060,385,1026,383,992,362,969,328,969,308,971" },
+{ id: "Nó Celta Quaternario3", group: "cruzCarolingiaQuaternario", shape: "poly", coords: "1017,1767,992,1764,966,1733,966,1692,992,1667,1023,1661,1055,1667,1075,1684,1078,1713,1081,1741,1063,1756,1046,1764" },
+{ id: "Nó Celta Quaternario4", group: "cruzCarolingiaQuaternario", shape: "poly", coords: "1764,989,1770,1023,1767,1052,1750,1063,1724,1078,1690,1075,1669,1063,1658,1040,1661,1003,1675,983,1701,963,1724,966,1747,977" },
+
+{ id: "Nó Circular Celta", group: "noCircularCelta", def: "Nó celta circular sem início nem fim, símbolo de eternidade, continuidade e do ciclo da vida.", shape: "poly", coords: "380,441,380,495,428,537,488,555,537,525,555,489,543,414,491,378,416,387,431,423,491,417,521,456,500,501,437,507,413,462,449,417,464,372,404,402,380,429" },
+{ id: "Nó Circular Celta2", group: "noCircularCelta", shape: "poly", coords: "506,1650,512,1608,482,1632,434,1626,413,1596,425,1551,464,1530,512,1557,503,1656,543,1614,552,1584,537,1530,491,1493,449,1499,401,1514,377,1545,368,1590,386,1626,407,1656,434,1671,515,1659,506,1650,503,1656,515,1659" },
+{ id: "Nó Circular Celta3", group: "noCircularCelta", shape: "poly", coords: "1631,1605,1664,1623,1619,1674,1535,1662,1499,1626,1487,1584,1499,1548,1523,1518,1565,1496,1604,1499,1646,1518,1667,1566,1658,1638,1634,1602,1607,1530,1559,1536,1535,1581,1553,1620,1598,1626" },
+{ id: "Nó Circular Celta4", group: "noCircularCelta", shape: "poly", coords: "1610,372,1532,387,1499,441,1496,486,1523,519,1550,540,1586,549,1628,540,1655,513,1667,477,1670,435,1628,375,1547,381,1586,423,1616,432,1637,459,1631,501,1592,525,1559,513,1538,483,1538,435,1574,417" },
+
+{ id: "Flor Celta", group: "celticflower", shape: "poly", coords: "976,546,942,572,933,627,947,678,1028,722,1079,696,1105,653,1102,584,1056,546,1033,538" },
+{ id: "Flor Celta2", group: "celticflower", shape: "poly", coords: "620,946,580,960,542,1012,545,1060,605,1101,649,1098,689,1081,706,1032,700,986,674,960,654,951" },
+{ id: "Flor Celta3", group: "celticflower", shape: "poly", coords: "1016,1339,988,1348,962,1365,942,1417,962,1471,999,1497,1028,1500,1068,1488,1091,1463,1094,1420,1091,1382,1068,1351,1045,1345" },
+{ id: "Flor Celta4", group: "celticflower", shape: "poly", coords: "1416,941,1388,950,1362,967,1342,1019,1362,1073,1399,1099,1428,1102,1468,1090,1491,1065,1494,1022,1491,984,1468,953,1445,947" },
+]
+},
+
+{
+label: "Demais elementos da iconografia celta:",
+items: [
+
+{ id: "Crann Bethadh", group: "arvoreDaVida", def: "Símbolo celta que representa a ligação entre céu, terra e submundo, além de crescimento, equilíbrio e continuidade.", shape: "poly", coords: "837,960,791,989,777,1030,804,1070,839,1083,881,1074,905,1048,909,1004,876,973" },
+{ id: "Crann Bethadh2", group: "arvoreDaVida", shape: "poly", coords: "1192,960,1161,982,1146,1022,1153,1057,1186,1076,1208,1085,1236,1081,1263,1061,1267,1037,1269,1004,1247,978" },
+
+{ id: "Seamróg", group: "seamrog", def: "Icone tradicional irlandes associado a sorte, a natureza e ao simbolismo celta.", shape: "poly", coords: "240,1003,271,1017,233,1043,236,1077,193,1079,157,1025,160,999,193,974,231,969" },
+{ id: "Seamróg2", group: "seamrog", shape: "poly", coords: "1007,160,1036,160,1076,195,1072,227,1052,238,1016,265,1000,238,967,222,971,184" },
+{ id: "Seamróg3", group: "seamrog", shape: "poly", coords: "1778,1027,1812,1004,1821,967,1856,973,1883,1007,1883,1038,1863,1072,1823,1080,1809,1052" },
+{ id: "Seamróg4", group: "seamrog", shape: "poly", coords: "1029,1778,971,1816,967,1856,1003,1885,1038,1890,1076,1859,1083,1827" },
+
+{id: "Estrela De Oito Pontas", group: "estrelaDeOitoPontas", def: "Símbolo de oito pontas associado à Roda do Ano celta, aos oito festivais sazonais e ao equilíbrio. Existem diferentes versões da estrela celta de oito pontas, e este é apenas um de seus formatos.", shape: "poly", coords: "1023,778,1012,815,983,801,986,830,969,847,997,855,983,884,1012,867,1023,907,1038,867,1069,893,1049,853,1092,844,1052,835,1069,798,1038,821"},
+{id: "Estrela De Oito Pontas2", group: "estrelaDeOitoPontas", shape: "poly", coords: "1020,1137,1012,1174,980,1163,994,1189,966,1206,994,1214,977,1246,1012,1223,1026,1266,1035,1226,1069,1240,1055,1212,1092,1206,1055,1186,1063,1154,1038,1171"},
+
+{ id: "Malbon", group: "malbon", def: "Ícone associado a Mabon, festival de outono de origem galesa ligado à colheita e ao equilíbrio entre luz e escuridão.", shape: "poly", coords: "349,845,361,872,408,867,385,809" },
+{ id: "Malbon2", group: "malbon", shape: "poly", coords: "363,1172,410,1183,385,1233,343,1208,352,1186" },
+{ id: "Malbon3", group: "malbon", shape: "poly", coords: "806,385,866,412,882,363,844,347" },
+{ id: "Malbon4", group: "malbon", shape: "poly", coords: "1181,408,1170,362,1203,344,1235,384,1213,402" },
+{ id: "Malbon5", group: "malbon", shape: "poly", coords: "1669,816,1707,849,1693,877,1667,874,1637,859,1648,832" },
+{ id: "Malbon6", group: "malbon", shape: "poly", coords: "1640,1186,1648,1201,1655,1221,1662,1235,1684,1222,1704,1208,1700,1175,1680,1172,1658,1177" },
+{ id: "Malbon7", group: "malbon", shape: "poly", coords: "1170,1687,1174,1661,1181,1640,1203,1642,1231,1658,1224,1684,1210,1701,1192,1694" },
+{ id: "Malbon8", group: "malbon", shape: "poly", coords: "815,1663,841,1645,864,1637,877,1675,870,1692,857,1699,839,1699,824,1681" },
+
+{ id: "Triskele", group: "triskele", def: "Símbolo celta de três espirais associado ao movimento, aos ciclos da natureza e à tríade.", shape: "poly", coords: "1412,575,1405,558,1380,551,1358,560,1358,586,1373,604" },
+{ id: "Triskele2", group: "triskele", shape: "poly", coords: "1445,675,1482,632,1497,661,1500,687,1471,692" },
+{ id: "Triskele3", group: "triskele", shape: "poly", coords: "640,570,657,584,668,601,688,601,691,572,671,547" },
+{ id: "Triskele4", group: "triskele", shape: "poly", coords: "547,653,573,641,599,662,599,693,576,693,550,676" },
+{ id: "Triskele5", group: "triskele", shape: "poly", coords: "570,1414,593,1397,605,1365,582,1354,553,1357,547,1380,553,1397" },
+{ id: "Triskele6", group: "triskele", shape: "poly", coords: "637,1479,674,1445,697,1465,691,1497,657,1500" },
+{ id: "Triskele7", group: "triskele", shape: "poly", coords: "1376,1446,1419,1478,1393,1492,1361,1489,1356,1463" },
+{ id: "Triskele8", group: "triskele", shape: "poly", coords: "1445,1376,1462,1399,1488,1408,1500,1387,1494,1356,1468,1359" }
+
+]
+}
+]
+},
+
+{
+key: "nivel2",
+title: "Eilimintí na hÉireann",
+image: "mandala_celtic_nivel2.webp",
+overlays: ["mandala_gabarito_nivel2_1.webp"],
+infoText: "Elementos da Irlanda: Mandala e elementos inspirados na Irlanda, Gaeilge e tradições celtas",
+helpText: "Encontre palavras e elementos ligados à cultura Irlandesa. Nós celtas e demais ícones do nivel anterior NÃO constituem elementos aqui. Para dicas, clique com botão direito no mouse no menu. Primeira dica revela a área do elemento, segunda dica revela qual o nome do elemento/palavra secreta. Boa Sorte! ☘☘",
+regions: [
+{ id: 1, minX: 1, maxX: 2044, minY: 4, maxY: 695 },
+{ id: 2, minX: -1, maxX: 2046, minY: 696, maxY: 1343 },
+{ id: 3, minX: 1, maxX: 2046, minY: 1347, maxY: 2043 }
+],
+categories: [
+{
+label: "",
+items: [
+  {
+    id: "Aengus",
+    label: "Aengus",
+    hidden: "Aengus",
+    def: "Deus irlandês do amor, da juventude e da poesia, membro dos Tuatha Dé Danann.",
+    shape: "poly",
+    coords: "790,752,779,795,864,795,868,754"
+  },
+  {
+    id: "AosSi",
+    label: "Aos Sí",
+    hidden: "Aos Sí",
+    def: "Povo sobrenatural do folclore irlandês que habita os sídhe, frequentemente associado às fadas.",
+    shape: "poly",
+    coords: "464,909,455,931,444,944,461,966,486,958,497,938,486,915"
+  },
+  {
+    id: "BeanSi",
+    label: "Bean Sí",
+    hidden: "Bean Sí",
+    def: "Espírito feminino do folclore irlandês cujo lamento anuncia a morte de alguém; origem da banshee.",
+    shape: "poly",
+    coords: "768,1470,779,1512,868,1497,855,1458,812,1458,788,1458"
+  },
+  {
+    id: "Brigid",
+    label: "Brigid",
+    hidden: "Brigid",
+    def: "Deusa celta irlandesa ligada à cura, poesia, fogo e primavera; posteriormente associada a Santa Brígida.",
+    shape: "poly",
+    coords: "341,829,378,838,374,876,323,873,311,849"
+  },
+  {
+    id: "Cailleach",
+    label: "Cailleach",
+    hidden: "Cailleach",
+    def: "Figura mitológica irlandesa associada ao inverno, às montanhas e à natureza selvagem.",
+    shape: "poly",
+    coords: "1326,2024,1420,1997,1438,2026,1430,2047,1351,2047,1326,2047"
+  },
+  {
+    id: "Corvo",
+    label: "Corvo",
+    hidden: "Fiach Dubh",
+    def: "Ave frequentemente associada à deusa Morrígan e a presságios, guerra e magia na mitologia irlandesa.",
+    shape: "poly",
+    coords: "663,438,651,467,627,489,620,516,649,533,674,542,689,518,700,485,700,464,689,444"
+  },
+  {
+    id: "DianCecht",
+    label: "Dian Cecht",
+    hidden: "Dian Cecht",
+    def: "Deus irlandês da medicina e da cura entre os Tuatha Dé Danann.",
+    shape: "poly",
+    coords: "515,1621,582,1675,558,1706,479,1659"
+  },
+  {
+    id: "Draoi",
+    label: "Draoi",
+    hidden: "Draoi",
+    def: "Druida, sacerdote ou mago da tradição celta.",
+    shape: "poly",
+    coords: "1475,689,1511,692,1517,752,1470,748"
+  },
+  {
+    id: "Feasa",
+    label: "Feasa",
+    hidden: "Feasa",
+    def: "Termo irlandês relacionado a conhecimento, sabedoria e compreensão mística.",
+    shape: "poly",
+    coords: "1409,288,1467,327,1436,356,1380,327"
+  },
+  {
+    id: "Imbas",
+    label: "Imbas",
+    hidden: "Imbas",
+    def: "Conceito da tradição irlandesa que significa inspiração poética ou conhecimento profético.",
+    shape: "poly",
+    coords: "23,1202,32,1227,37,1256,25,1276,1,1285,-1,1253,-1,1207,-1,1189"
+  },
+  {
+    id: "Leipreachan",
+    label: "Leipreachán",
+    hidden: "Leipreachán",
+    def: "Pequena criatura do folclore associada a tesouros e travessuras.",
+    shape: "poly",
+    coords: "625,1810,618,1827,624,1848,643,1841,649,1823,640,1810"
+  },
+  {
+    id: "Lobo",
+    label: "Lobo",
+    hidden: "Mac Tíre",
+    def: "Animal ligado à natureza selvagem e a antigos mitos irlandeses, aparecendo em histórias de caçadores e metamorfos.",
+    shape: "poly",
+    coords: "-1,227,36,227,48,196,28,169,-1,178"
+  },
+  {
+    id: "Lucharachan",
+    label: "Lucharachán",
+    hidden: "Lucharachán",
+    def: "Pequeno espírito do folclore irlandês (novamente).",
+    shape: "poly",
+    coords: "2031,629,2015,616,2027,593,2046,604,2046,629"
+  },
+  {
+    id: "Lugh",
+    label: "Lugh",
+    hidden: "Lugh",
+    def: "Importante deus irlandês associado à luz, habilidade, guerra e artes; dá nome ao festival Lughnasadh.",
+    shape: "poly",
+    coords: "1,1980,23,1982,25,1942,36,1909,-1,1889"
+  },
+  {
+    id: "ManannanMacLir",
+    label: "Manannán mac Lir",
+    hidden: "Manannán mac Lir",
+    def: "Deus irlandês do mar, protetor de viajantes e figura central do folclore celta marítimo.",
+    shape: "poly",
+    coords: "1307,432,1336,423,1392,540,1356,548"
+  },
+  {
+    id: "Seamair",
+    label: "Seamair",
+    hidden: "Seamair",
+    def: "Planta ligada à Irlanda e à tradição de São Patrício.",
+    shape: "poly",
+    coords: "1405,1736,1420,1705,1447,1714,1438,1741"
+  },
+  {
+    id: "Seamrog",
+    label: "Seamróg",
+    hidden: "Seamróg",
+    def: "Planta símbolo da Irlanda... de novo.",
+    shape: "poly",
+    coords: "893,1152,899,1114,928,1120,928,1152"
+  },
+  {
+    id: "Shamrock",
+    label: "Shamrock",
+    hidden: "Shamrock",
+    def: "Símbolo tradicional da Irlanda e frequentemente associado à cultura celta... novamente.",
+    shape: "poly",
+    coords: "186,1200,162,1215,160,1242,189,1247,198,1225"
+  },
+  {
+    id: "Sí",
+    label: "Sí",
+    hidden: "Sí",
+    def: "Monte feérico ou reino sobrenatural das fadas - moderno.",
+    shape: "poly",
+    coords: "1271,1337,1329,1312,1345,1359,1293,1384"
+  },
+  {
+    id: "Sid",
+    label: "Síd",
+    hidden: "Síd",
+    def: "Monte feérico ou reino sobrenatural das fadas - antigo",
+    shape: "poly",
+    coords: "1485,1195,1487,1224,1485,1262,1512,1271,1535,1253,1543,1218,1525,1198,1508,1195"
+  },
+  {
+    id: "Sidhe",
+    label: "Sídhe",
+    hidden: "Sídhe",
+    def: "Montes feéricos e aos seres sobrenaturais que vivem neles.",
+    shape: "poly",
+    coords: "1953,630,1906,672,1980,722,2002,703"
+  },
+  {
+    id: "TuathaDeDanann",
+    label: "Tuatha Dé Danann",
+    hidden: "Tuatha Dé Danann",
+    def: "Povo divino da mitologia irlandesa, considerado ancestral dos deuses e espíritos da Irlanda.",
+    shape: "poly",
+    coords: "1070,1975,1125,1941,1166,1986,1101,2026"
+  }
+]
+}
+]
+
+}
+
+]
+;
+
+const unlockedLevelsKey = "CELTIC_unlocked_levels";
+const lastLevelKey = "CELTIC_last_level";
+
+const tooltip = document.getElementById("wordTooltip");
+const answersOverlay = document.getElementById("answersOverlay");
+const regionHints = document.getElementById("regionHints");
+const wordList = document.getElementById("wordList");
+const mandalaImage = document.getElementById("mandalaImage");
+const imageMap = document.getElementById("image-map");
+const transitionScreen = document.getElementById("transitionScreen");
+const transitionFrame = document.getElementById("transitionFrame");
+const transitionVignette = document.getElementById("transitionVignette");
+const transitionReveal = document.getElementById("transitionReveal");
+const level2FindSound = document.getElementById("level2FindSound");
+const levelTransitionSound = document.getElementById("levelTransitionSound");
+const level2Footer = document.getElementById("level2Footer");
+const soundCredit = document.getElementById("soundCredit");
+const volumeButton = document.getElementById("volumeButton");
+const volumeSlider = document.getElementById("volumeSlider");
+const volumeLabel = document.getElementById("volumeLabel");
+const goToLevel1Button = document.getElementById("goToLevel1Button");
+const goToLevel2Button = document.getElementById("goToLevel2Button");
+const helpPopup = document.getElementById("helpPopup");
+const helpPopupText = document.getElementById("helpPopupText");
+const helpPopupClose = document.getElementById("helpPopupClose");
+
+let currentVolume = 0.5;
+let pendingLevel2HelpPopup = false;
+
+function showHelpPopup(text){
+helpPopupText.textContent = text || "";
+helpPopup.classList.add("visible");
+}
+
+function hideHelpPopup(){
+helpPopup.classList.remove("visible");
+}
+
+function applySoundVolume(){
+level2FindSound.volume = currentVolume;
+levelTransitionSound.volume = currentVolume;
+level2FindSound.muted = currentVolume === 0;
+levelTransitionSound.muted = currentVolume === 0;
+}
+
+function updateSoundUI(){
+let unlockedLevels = getUnlockedLevels();
+let showSoundUi = unlockedLevels.includes("nivel2");
+level2Footer.classList.toggle("visible", showSoundUi);
+let volumePercent = Math.round(currentVolume * 100);
+volumeSlider.value = String(volumePercent);
+volumeLabel.textContent = "Volume " + volumePercent + "%";
+goToLevel1Button.disabled = !showSoundUi || currentLevel.key === "nivel1";
+goToLevel2Button.disabled = !unlockedLevels.includes("nivel2") || currentLevel.key === "nivel2";
+applySoundVolume();
+}
+
+let currentLevel = levels[0];
+let answerClips = {};
+let menuItems = {};
+let totalWords = 0;
+let activeRegionHintTimeout = null;
+let rotation = 0;
+let allowToggleOff = true;
+let isTransitioning = false;
+const transitionFrameCache = new Map();
+
+function preloadTransitionFrame(src){
+if(transitionFrameCache.has(src)){
+return transitionFrameCache.get(src);
+}
+
+let promise = new Promise(resolve => {
+let img = new Image();
+img.decoding = "async";
+img.onload = async () => {
+try{
+if(typeof img.decode === "function"){
+await img.decode();
+}
+}catch{
+}
+resolve(src);
+};
+img.onerror = () => resolve(src);
+img.src = src;
+});
+
+transitionFrameCache.set(src, promise);
+return promise;
+}
+
+function storageKeyFor(suffix){
+return "CELTIC_" + currentLevel.key + "_" + suffix;
+}
+
+function getUnlockedLevels(){
+try{
+return JSON.parse(localStorage.getItem(unlockedLevelsKey)) || [levels[0].key];
+}catch{
+return [levels[0].key];
+}
+}
+
+function unlockLevel(levelKey){
+let unlocked = new Set(getUnlockedLevels());
+unlocked.add(levelKey);
+localStorage.setItem(unlockedLevelsKey, JSON.stringify(Array.from(unlocked)));
+}
+
+function getLevelByKey(levelKey){
+return levels.find(level => level.key === levelKey) || levels[0];
+}
+
+function getSavedLevel(){
+let levelKey = localStorage.getItem(lastLevelKey);
+let unlocked = getUnlockedLevels();
+if(levelKey && unlocked.includes(levelKey)){
+return getLevelByKey(levelKey);
+}
+return levels[0];
+}
+
+function setCurrentLevel(levelKey){
+currentLevel = getLevelByKey(levelKey);
+localStorage.setItem(lastLevelKey, currentLevel.key);
+renderLevel();
+}
+
+function getAllItems(){
+return currentLevel.categories.flatMap(category => category.items).flat();
+}
+
+function findItemById(wordId){
+return getAllItems().find(item => item.id === wordId) || null;
+}
+
+function getMenuKeyForItem(item){
+return currentLevel.key === "nivel1" && item && item.group ? item.group : item.id;
+}
+
+function getMenuKeyForWordId(wordId){
+let item = findItemById(wordId);
+return item ? getMenuKeyForItem(item) : wordId;
+}
+
+function getLinkedWordIds(wordId){
+let item = findItemById(wordId);
+if(!item || !item.group || currentLevel.key !== "nivel1"){
+return [wordId];
+}
+
+return getAllItems()
+.filter(candidate => candidate.group === item.group)
+.map(candidate => candidate.id);
+}
+
+function getCounterKeys(){
+let items = getAllItems();
+
+if(currentLevel.key !== "nivel1"){
+return items.map(item => item.id);
+}
+
+return items.map(item => item.group || item.id).filter((key, index, list) => list.indexOf(key) === index);
+}
+
+function getFoundCount(){
+if(currentLevel.key !== "nivel1"){
+return document.querySelectorAll("#wordList li.found").length;
+}
+
+let foundGroups = new Set();
+getAllItems().forEach(item => {
+let menuWord = findMenuItemByWord(item.id);
+if(menuWord && menuWord.classList.contains("found")){
+foundGroups.add(item.group || item.id);
+}
+});
+return foundGroups.size;
+}
+
+function getCounterKeysForLevel(levelKey){
+let level = getLevelByKey(levelKey);
+let items = level.categories.flatMap(category => category.items).flat();
+
+if(levelKey !== "nivel1"){
+return items.map(item => item.id);
+}
+
+return items.map(item => item.group || item.id).filter((key, index, list) => list.indexOf(key) === index);
+}
+
+function getStoredFoundCountForLevel(levelKey){
+let saved;
+try{
+saved = JSON.parse(localStorage.getItem("CELTIC_" + levelKey + "_progress")) || [];
+}catch{
+saved = [];
+}
+if(!Array.isArray(saved)){
+saved = [];
+}
+
+let level = getLevelByKey(levelKey);
+let items = level.categories.flatMap(category => category.items).flat();
+let validIds = new Set(items.map(item => item.id));
+
+if(levelKey !== "nivel1"){
+return new Set(saved.filter(id => validIds.has(id))).size;
+}
+
+let groupById = new Map(items.map(item => [item.id, item.group || item.id]));
+return new Set(
+saved
+.filter(id => validIds.has(id))
+.map(id => groupById.get(id) || id)
+).size;
+}
+
+function buildRectPolygon(coords){
+let values = coords.split(",").map(Number);
+let minX = values[0];
+let minY = values[1];
+let maxX = values[2];
+let maxY = values[3];
+return [
+minX + "px " + minY + "px",
+maxX + "px " + minY + "px",
+maxX + "px " + maxY + "px",
+minX + "px " + maxY + "px"
+];
+}
+
+function getPolygonPoints(area){
+if(area.shape === "rect"){
+return buildRectPolygon(area.coords);
+}
+
+let coords = area.coords.split(",");
+let points = [];
+for(let i = 0; i < coords.length; i += 2){
+points.push(coords[i] + "px " + coords[i + 1] + "px");
+}
+return points;
+}
+
+function createClip(wordId, area){
+let clip = document.createElement("div");
+clip.className = "answerClip";
+clip.style.clipPath = "polygon(" + getPolygonPoints(area).join(",") + ")";
+
+currentLevel.overlays.forEach(overlaySrc => {
+let layer = document.createElement("div");
+layer.className = "answerClipLayer";
+layer.style.backgroundImage = "url('" + overlaySrc + "')";
+clip.appendChild(layer);
+});
+
+answersOverlay.appendChild(clip);
+answerClips[wordId] = clip;
+}
+
+function getHiddenLength(text){
+return Array.from(text || "").length;
+}
+
+function trimGuess(text, maxLength){
+return Array.from((text || "").replace(/\r?\n/g, "")).slice(0, maxLength).join("");
+}
+
+function getMaskedWord(li){
+return "?".repeat(getHiddenLength(li.dataset.hidden));
+}
+
+function renderMenuWord(li){
+if(!li.classList.contains("hidden-word")) return;
+
+let hintLevel = Number(li.dataset.hintLevel || 0);
+li.classList.toggle("hint-revealed", hintLevel >= 2 && !li.classList.contains("found"));
+
+if(li.classList.contains("found") || hintLevel >= 2){
+li.textContent = li.dataset.hidden;
+return;
+}
+
+let guess = li.dataset.guess || "";
+li.textContent = guess || getMaskedWord(li);
+}
+
+function placeCaretAtEnd(el){
+let range = document.createRange();
+let selection = window.getSelection();
+range.selectNodeContents(el);
+range.collapse(false);
+selection.removeAllRanges();
+selection.addRange(range);
+}
+
+function finishGuessEdit(item, keepCurrentText = true){
+if(item.contentEditable !== "true") return;
+
+let nextGuess = keepCurrentText
+? trimGuess(item.textContent, getHiddenLength(item.dataset.hidden))
+: (item.dataset.guess || "");
+
+item.contentEditable = "false";
+item.removeAttribute("data-editing");
+
+if(nextGuess){
+item.dataset.guess = nextGuess;
+}else{
+delete item.dataset.guess;
+}
+
+renderMenuWord(item);
+saveGuesses();
+}
+
+function findMenuItemByWord(wordId){
+return menuItems["menu-" + getMenuKeyForWordId(wordId)] || null;
+}
+
+function findAreaByWord(wordId){
+return imageMap.querySelector("area[data-word='" + wordId + "']");
+}
+
+function getAreaBounds(area){
+let coords = (area.coords || "").split(",").map(Number).filter(Number.isFinite);
+
+if(area.shape === "rect" && coords.length === 4){
+return { minX: coords[0], minY: coords[1], maxX: coords[2], maxY: coords[3] };
+}
+
+if(coords.length < 2) return null;
+
+let xs = [];
+let ys = [];
+for(let i = 0; i < coords.length; i += 2){
+xs.push(coords[i]);
+ys.push(coords[i + 1]);
+}
+
+if(!xs.length || !ys.length) return null;
+
+return {
+minX: Math.min(...xs),
+maxX: Math.max(...xs),
+minY: Math.min(...ys),
+maxY: Math.max(...ys)
+};
+}
+
+function getRegionForArea(area){
+let bounds = getAreaBounds(area);
+if(!bounds) return null;
+
+let centerX = (bounds.minX + bounds.maxX) / 2;
+let centerY = (bounds.minY + bounds.maxY) / 2;
+
+return currentLevel.regions.find(region =>
+centerX >= region.minX &&
+centerX <= region.maxX &&
+centerY >= region.minY &&
+centerY <= region.maxY
+) || currentLevel.regions.find(region =>
+bounds.maxY >= region.minY &&
+bounds.minY <= region.maxY
+) || null;
+}
+
+function centerViewportOnRegion(region){
+let container = document.querySelector(".container");
+if(!container) return;
+
+let rect = container.getBoundingClientRect();
+let scaleX = rect.width / 2048;
+let scaleY = rect.height / 2048;
+let regionCenterX = ((region.minX + region.maxX) / 2) * scaleX;
+let regionCenterY = ((region.minY + region.maxY) / 2) * scaleY;
+
+window.scrollTo({
+left: Math.max(0, window.scrollX + rect.left + regionCenterX - (window.innerWidth / 2)),
+top: Math.max(0, window.scrollY + rect.top + regionCenterY - (window.innerHeight / 2)),
+behavior: "smooth"
+});
+}
+
+function flashRegionHint(regionId){
+let regionEl = document.getElementById("regionHint-" + regionId);
+if(!regionEl) return;
+
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+
+if(activeRegionHintTimeout){
+clearTimeout(activeRegionHintTimeout);
+}
+
+regionEl.classList.add("active");
+activeRegionHintTimeout = setTimeout(() => {
+regionEl.classList.remove("active");
+}, 2200);
+}
+
+function applyHint(item, hintLevel){
+let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
+item.dataset.hintLevel = String(Math.min(nextLevel, 2));
+
+if(hintLevel === 1){
+let area = findAreaByWord(item.dataset.wordId);
+let region = area ? getRegionForArea(area) : null;
+if(region){
+centerViewportOnRegion(region);
+flashRegionHint(region.id);
+}
+}
+
+renderMenuWord(item);
+saveHints();
+}
+
+function attachMenuEvents(item){
+item.addEventListener("mouseenter", () => {
+let text = item.dataset.def;
+if(!text) return;
+tooltip.textContent = text;
+tooltip.style.opacity = "1";
+});
+
+item.addEventListener("mousemove", e => {
+tooltip.style.left = (e.clientX + 10) + "px";
+tooltip.style.top = (e.clientY + 10) + "px";
+});
+
+item.addEventListener("mouseleave", () => {
+tooltip.style.opacity = "0";
+});
+
+item.addEventListener("click", e => {
+if(e.button !== 0) return;
+if(!item.classList.contains("hidden-word")) return;
+if(item.classList.contains("found")) return;
+if(Number(item.dataset.hintLevel || 0) >= 2) return;
+
+item.contentEditable = "true";
+item.dataset.editing = "true";
+item.textContent = item.dataset.guess || "";
+placeCaretAtEnd(item);
+});
+
+item.addEventListener("input", () => {
+if(item.contentEditable !== "true") return;
+let trimmed = trimGuess(item.textContent, getHiddenLength(item.dataset.hidden));
+if(item.textContent !== trimmed){
+item.textContent = trimmed;
+placeCaretAtEnd(item);
+}
+});
+
+item.addEventListener("keydown", e => {
+if(item.contentEditable !== "true") return;
+if(e.key === "Enter"){
+e.preventDefault();
+finishGuessEdit(item);
+}
+if(e.key === "Escape"){
+e.preventDefault();
+finishGuessEdit(item, false);
+}
+});
+
+item.addEventListener("blur", () => {
+finishGuessEdit(item);
+});
+
+item.addEventListener("contextmenu", e => {
+e.preventDefault();
+
+if(!item.classList.contains("hidden-word")) return;
+if(item.classList.contains("found")) return;
+
+finishGuessEdit(item);
+
+let currentHint = Number(item.dataset.hintLevel || 0);
+if(currentHint >= 2){
+alert("Essa palavra ja recebeu todas as dicas.");
+return;
+}
+
+let nextHint = currentHint + 1;
+if(!confirm("Deseja a " + nextHint + " dica?")) return;
+applyHint(item, nextHint);
+});
+}
+
+function renderMenu(){
+wordList.innerHTML = "";
+menuItems = {};
+
+currentLevel.categories.forEach(category => {
+let label = document.createElement("span");
+label.className = "menu-label";
+label.textContent = category.label;
+wordList.appendChild(label);
+
+let renderedKeys = new Set();
+
+category.items.forEach(item => {
+let menuKey = getMenuKeyForItem(item);
+if(renderedKeys.has(menuKey)) return;
+renderedKeys.add(menuKey);
+
+let li = document.createElement("li");
+li.id = "menu-" + menuKey;
+li.dataset.wordId = item.id;
+li.dataset.def = item.def || "";
+
+if(item.hidden){
+li.classList.add("hidden-word");
+li.dataset.hidden = item.hidden;
+li.spellcheck = false;
+renderMenuWord(li);
+}else{
+li.textContent = item.label || item.id;
+}
+
+attachMenuEvents(li);
+menuItems[li.id] = li;
+wordList.appendChild(li);
+});
+});
+}
+
+function renderMap(){
+imageMap.innerHTML = "";
+
+getAllItems().forEach(item => {
+let area = document.createElement("area");
+area.id = item.id;
+area.shape = item.shape || "poly";
+area.coords = item.coords;
+area.dataset.word = item.id;
+area.href = "#";
+area.addEventListener("click", e => {
+e.preventDefault();
+toggleAnswer(area, item.id);
+});
+imageMap.appendChild(area);
+});
+}
+
+function renderRegions(){
+regionHints.innerHTML = "";
+currentLevel.regions.forEach(region => {
+let regionEl = document.createElement("div");
+regionEl.id = "regionHint-" + region.id;
+regionEl.className = "hint-region";
+regionEl.style.left = region.minX + "px";
+regionEl.style.top = region.minY + "px";
+regionEl.style.width = (region.maxX - region.minX) + "px";
+regionEl.style.height = (region.maxY - region.minY) + "px";
+regionHints.appendChild(regionEl);
+});
+}
+
+function saveProgress(){
+localStorage.setItem(
+storageKeyFor("progress"),
+JSON.stringify(Object.keys(answerClips).filter(wordId => answerClips[wordId].classList.contains("visible")))
+);
+}
+
+function saveGuesses(){
+let guesses = {};
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+if(li.dataset.guess){
+guesses[li.id] = li.dataset.guess;
+}
+});
+localStorage.setItem(storageKeyFor("guesses"), JSON.stringify(guesses));
+}
+
+function saveHints(){
+let hints = {};
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+let hintLevel = Number(li.dataset.hintLevel || 0);
+if(hintLevel > 0){
+hints[li.id] = hintLevel;
+}
+});
+localStorage.setItem(storageKeyFor("hints"), JSON.stringify(hints));
+}
+
+function loadGuesses(){
+let saved = localStorage.getItem(storageKeyFor("guesses"));
+if(!saved) return;
+
+let guesses;
+try{
+guesses = JSON.parse(saved);
+}catch{
+return;
+}
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+let savedGuess = guesses[li.id];
+if(!savedGuess) return;
+li.dataset.guess = trimGuess(savedGuess, getHiddenLength(li.dataset.hidden));
+renderMenuWord(li);
+});
+}
+
+function loadHints(){
+let saved = localStorage.getItem(storageKeyFor("hints"));
+if(!saved) return;
+
+let hints;
+try{
+hints = JSON.parse(saved);
+}catch{
+return;
+}
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+let savedHint = Number(hints[li.id] || 0);
+if(savedHint <= 0) return;
+li.dataset.hintLevel = String(Math.min(savedHint, 2));
+renderMenuWord(li);
+});
+}
+
+function loadProgress(){
+let saved = localStorage.getItem(storageKeyFor("progress"));
+if(!saved) return;
+
+let words;
+try{
+words = JSON.parse(saved);
+}catch{
+return;
+}
+
+words.forEach(wordId => {
+let area = findAreaByWord(wordId);
+if(area && (!answerClips[wordId] || !answerClips[wordId].classList.contains("visible"))){
+toggleAnswer(area, wordId, true);
+}
+});
+}
+
+function toggleAnswer(area, wordId, forceOn = false){
+if(!area.coords) return;
+
+let linkedWordIds = getLinkedWordIds(wordId);
+let shouldActivate = linkedWordIds.some(id => {
+let clip = answerClips[id];
+return !clip || !clip.classList.contains("visible");
+});
+
+if(forceOn){
+shouldActivate = true;
+}
+
+linkedWordIds.forEach(linkedId => {
+let linkedArea = findAreaByWord(linkedId);
+if(!linkedArea) return;
+
+if(!answerClips[linkedId]){
+createClip(linkedId, linkedArea);
+}
+
+let menuWord = findMenuItemByWord(linkedId);
+if(!menuWord) return;
+
+if(shouldActivate){
+answerClips[linkedId].classList.add("visible");
+menuWord.classList.add("found");
+
+if(menuWord.classList.contains("hidden-word")){
+finishGuessEdit(menuWord, false);
+menuWord.textContent = menuWord.dataset.hidden;
+}
+}else if(allowToggleOff && !forceOn){
+answerClips[linkedId].classList.remove("visible");
+menuWord.classList.remove("found");
+
+if(menuWord.classList.contains("hidden-word")){
+renderMenuWord(menuWord);
+}
+}
+});
+
+if(shouldActivate && currentLevel.key === "nivel2" && !forceOn){
+level2FindSound.currentTime = 0;
+level2FindSound.play().catch(() => {});
+}
+
+updateCounter();
+saveProgress();
+}
+
+async function playLevelCompleteTransition(){
+if(isTransitioning) return;
+isTransitioning = true;
+const frameDuration = 1000;
+const revealDelay = 1500;
+const transitionEndDelay = 220;
+const levelSwapLeadTime = 650;
+let levelSwapped = false;
+
+function swapToLevel2(){
+if(levelSwapped) return;
+levelSwapped = true;
+unlockLevel("nivel2");
+setCurrentLevel("nivel2");
+pendingLevel2HelpPopup = true;
+}
+
+transitionScreen.classList.add("active");
+transitionVignette.classList.add("active");
+transitionReveal.style.backgroundImage = "url('mandala_celtic_nivel2.webp')";
+transitionReveal.classList.remove("active");
+levelTransitionSound.currentTime = 0;
+levelTransitionSound.play().catch(() => {});
+transitionFrame.classList.remove("active");
+
+setTimeout(() => {
+transitionReveal.classList.add("active");
+}, revealDelay);
+
+setTimeout(() => {
+swapToLevel2();
+}, Math.max(0, transitionFrames.length * frameDuration - levelSwapLeadTime));
+
+for(let index = 0; index < transitionFrames.length; index += 1){
+let frame = transitionFrames[index];
+await preloadTransitionFrame(frame);
+transitionFrame.classList.remove("active");
+await new Promise(resolve => setTimeout(resolve, 90));
+transitionFrame.src = frame;
+transitionFrame.classList.add("active");
+await new Promise(resolve => setTimeout(resolve, frameDuration));
+}
+
+swapToLevel2();
+await new Promise(resolve => setTimeout(resolve, transitionEndDelay));
+transitionScreen.classList.remove("active");
+transitionFrame.classList.remove("active");
+transitionVignette.classList.remove("active");
+transitionReveal.classList.remove("active");
+transitionFrame.removeAttribute("src");
+transitionReveal.style.backgroundImage = "none";
+window.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+if(pendingLevel2HelpPopup){
+pendingLevel2HelpPopup = false;
+showHelpPopup(getLevelByKey("nivel2").helpText);
+}
+isTransitioning = false;
+}
+
+function updateCounter(){
+let found = getFoundCount();
+let counterText = "";
+
+if(currentLevel.key === "nivel1"){
+counterText = found + " / ?";
+}else{
+let combinedFound = getStoredFoundCountForLevel("nivel1") + found;
+let combinedTotal = getCounterKeysForLevel("nivel1").length + getCounterKeysForLevel("nivel2").length;
+counterText = combinedFound + " / " + combinedTotal;
+}
+
+document.getElementById("counter").textContent = counterText;
+
+if(found === totalWords && totalWords > 0){
+if(currentLevel.key === "nivel1"){
+if(getUnlockedLevels().includes("nivel2")){
+updateSoundUI();
+}else{
+setTimeout(playLevelCompleteTransition, 220);
+}
+}else{
+setTimeout(() => {
+alert("fim!");
+}, 200);
+}
+}
+}
+
+function clearAll(){
+Object.values(answerClips).forEach(clip => clip.remove());
+answerClips = {};
+
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+
+document.querySelectorAll("#wordList li").forEach(li => {
+li.classList.remove("found");
+li.classList.remove("hint-revealed");
+finishGuessEdit(li, false);
+delete li.dataset.guess;
+delete li.dataset.hintLevel;
+
+if(li.classList.contains("hidden-word")){
+renderMenuWord(li);
+}
+});
+
+localStorage.removeItem(storageKeyFor("progress"));
+localStorage.removeItem(storageKeyFor("guesses"));
+localStorage.removeItem(storageKeyFor("hints"));
+updateCounter();
+}
+
+function confirmReset(){
+if(confirm("Reset?")){
+for(let i = 0; i < levels.length; i += 1){
+localStorage.removeItem("CELTIC_" + levels[i].key + "_progress");
+localStorage.removeItem("CELTIC_" + levels[i].key + "_guesses");
+localStorage.removeItem("CELTIC_" + levels[i].key + "_hints");
+}
+
+localStorage.removeItem(unlockedLevelsKey);
+localStorage.removeItem(lastLevelKey);
+pendingLevel2HelpPopup = false;
+hideHelpPopup();
+transitionScreen.classList.remove("active");
+transitionFrame.classList.remove("active");
+transitionVignette.classList.remove("active");
+transitionReveal.classList.remove("active");
+transitionFrame.removeAttribute("src");
+transitionReveal.style.backgroundImage = "none";
+isTransitioning = false;
+setCurrentLevel("nivel1");
+}
+}
+
+function resetRotation(){
+rotation = 0;
+document.querySelector(".container").style.transform = "rotate(0deg)";
+rotateMandala.textContent = "Rotate (0°)";
+}
+
+function renderLevel(){
+answersOverlay.innerHTML = "";
+answerClips = {};
+tooltip.style.opacity = "0";
+
+document.getElementById("menuTitle").textContent = currentLevel.title;
+document.getElementById("infoTooltip").textContent = currentLevel.infoText;
+document.getElementById("helpTooltip").textContent = currentLevel.helpText;
+mandalaImage.src = currentLevel.image;
+
+renderRegions();
+renderMenu();
+renderMap();
+
+totalWords = getAllItems().length;
+totalWords = getCounterKeys().length;
+resetRotation();
+loadGuesses();
+loadHints();
+loadProgress();
+updateCounter();
+updateSoundUI();
+
+if(typeof imageMapResize === "function"){
+imageMapResize();
+}
+}
+
+toggleClickMode.onclick = function(){
+allowToggleOff = !allowToggleOff;
+this.textContent = allowToggleOff ? "Desmarcar: ON" : "Desmarcar: OFF";
+};
+
+volumeSlider.oninput = function(){
+currentVolume = Number(this.value) / 100;
+updateSoundUI();
+};
+
+goToLevel1Button.onclick = function(){
+setCurrentLevel("nivel1");
+window.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+};
+
+goToLevel2Button.onclick = function(){
+if(!getUnlockedLevels().includes("nivel2")) return;
+setCurrentLevel("nivel2");
+window.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+};
+
+helpPopupClose.onclick = function(){
+hideHelpPopup();
+};
+
+helpPopup.onclick = function(e){
+if(e.target === helpPopup){
+hideHelpPopup();
+}
+};
+
+let menu = wordMenu;
+let header = menuHeader;
+let offsetX;
+let offsetY;
+let dragging = false;
+
+header.onmousedown = e => {
+dragging = true;
+offsetX = e.clientX - menu.offsetLeft;
+offsetY = e.clientY - menu.offsetTop;
+};
+
+document.onmousemove = e => {
+if(!dragging) return;
+menu.style.left = (e.clientX - offsetX) + "px";
+menu.style.top = (e.clientY - offsetY) + "px";
+};
+
+document.onmouseup = () => dragging = false;
+
+toggleMenu.onclick = () => wordMenu.classList.toggle("collapsed");
+
+rotateMandala.onclick = function(){
+rotation = (rotation + 90) % 360;
+document.querySelector(".container").style.transform = "rotate(" + rotation + "deg)";
+this.textContent = "Rotate (" + rotation + "°)";
+};
+
+let isDragging = false;
+let startX;
+let startY;
+let scrollLeft;
+let scrollTop;
+
+document.addEventListener("mousedown", e => {
+if(e.target.closest("#wordMenu") || isTransitioning) return;
+
+isDragging = true;
+document.body.classList.add("dragging");
+startX = e.clientX;
+startY = e.clientY;
+scrollLeft = window.scrollX;
+scrollTop = window.scrollY;
+});
+
+document.addEventListener("mousemove", e => {
+if(!isDragging) return;
+
+window.scrollTo(
+scrollLeft - (e.clientX - startX),
+scrollTop - (e.clientY - startY)
+);
+});
+
+document.addEventListener("mouseup", () => {
+isDragging = false;
+document.body.classList.remove("dragging");
+});
+
+window.addEventListener("load", () => {
+currentLevel = getSavedLevel();
+renderLevel();
+});
+</script>
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>imageMapResize();</script>
+</body>
+</html>

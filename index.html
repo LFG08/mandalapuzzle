@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>vários nadas</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+body{
+margin:0;
+font-family: Georgia, serif;
+background:#3b1200;
+color:#f5e6d3;
+
+}
+
+/* HEADER IMAGE */
+
+.header{
+width:100%;
+height:220px; /* adjust height */
+background-image:url("mandala_header.jpg");
+opacity:0.8;
+  
+background-size:cover;
+background-position:center;
+
+position:relative; /* IMPORTANT */
+overflow:hidden;
+}
+
+.header::after{
+content:"";
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+
+background:radial-gradient(circle at center,
+rgba(32, 12, 6, 0.60) 0%,
+rgba(56, 22, 10, 0.50) 46%,
+rgba(73, 31, 13, 0.20) 100%); /* darker center behind title, lighter edges */
+
+z-index:1; /* stays below text */
+}
+
+/* TITLE */
+
+.title{
+text-align:center;
+margin-top:-150px;
+margin-bottom:48px;
+position:relative;
+z-index:2; /* above overlay */
+}
+
+.title h1{
+font-size:48px;
+margin:10px 0;
+}
+
+.subtitle{
+font-size:20px;
+opacity:0.9;
+}
+
+/* GRID */
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+gap:20px;
+padding:40px;
+}
+
+/* ===== CARD ===== */
+
+.card{
+text-align:center;
+padding:10px;
+background:#4a1a05;
+transition:0.3s;
+cursor:pointer;
+display:block;
+text-decoration:none;
+color:inherit;
+}
+
+.card:hover{
+transform:scale(1.03);
+background:#5c2208;
+}
+
+/* ===== THUMB (CIRCLE) ===== */
+
+.thumb{
+width:220px;
+height:220px;
+border-radius:50%;
+overflow:hidden;
+margin:0 auto 10px auto;
+
+/* optional styling */
+box-shadow:0 0 15px rgba(0,0,0,0.6);
+border:2px solid rgba(255,255,255,0.2);
+}
+
+.thumb.progress-complete{
+border:1px hidden #ff7b00;
+box-shadow:
+0 0 12px rgba(255, 215, 0, 0.6),
+0 0 24px rgba(255, 240, 150, 0.45);
+animation:goldShine 2.2s linear infinite;
+}
+
+@keyframes goldShine{
+0%{ filter:brightness(1); }
+50%{ filter:brightness(1.2); }
+100%{ filter:brightness(1); }
+}
+
+.thumb img{
+width:100%;
+height:100%;
+object-fit:cover;
+display:block;
+}
+
+#celticThumb{
+opacity:0;
+transition:opacity 0.15s ease;
+}
+
+#celticThumb.ready{
+opacity:1;
+}
+
+.thumb:hover{
+box-shadow:0 0 25px rgba(255,200,100,0.4);
+}
+
+/* ===== TEXT ===== */
+
+.tags{
+font-size:12px;
+margin-top:4px;
+opacity:0.7;
+}
+
+.status{
+font-size:12px;
+margin-top:6px;
+opacity:0.8;
+color:#f5e6d3;
+}
+/* ===== MOBILE ===== */
+  @media (max-width: 900px) and (hover: none) and (pointer: coarse){
+
+  /* Header image: taller + more zoom */
+  #header{
+    height: 180px;
+    overflow: hidden;
+  }
+
+  #header img{
+    width: 150%;
+    height: 150%;
+    object-fit: cover;
+    object-position: center 35%;
+    transform: scale(1.35);
+  }
+
+  /* Bigger title and subtitle */
+  #header h1{
+    font-size: 2.7rem;
+    margin-bottom: 0.15em;
+  }
+
+  #header p{
+    font-size: 1.15rem;
+  }
+
+  /* Smaller mandala cards */
+  .mandala-preview img,
+  .mandala-card img,
+  .menu-item img{
+    width: 72vw;
+    max-width: 300px;
+    height: auto;
+  }
+
+  /* Slightly reduce the card padding so more fits on screen */
+  .mandala-preview,
+  .mandala-card,
+  .menu-item{
+    padding: 12px 0;
+  }
+}
+
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header"></div>
+
+<div class="title">
+<h1>vários nadas</h1>
+<div class="subtitle">✨puzzles em mandalas✨</div>
+</div>
+
+<div class="grid">
+
+<a href="goya" class="card"
+data-key="goyaPuzzleProgress"
+data-total="18">
+
+  <div class="thumb">
+    <img src="thumb_goya.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#Bruxas #Pinturas #El Aquelarre</div>
+  <div class="status"></div>
+  
+</a>
+
+<a href="TARITS" class="card"
+data-key="TARITSPuzzleProgress"
+data-total="20">
+
+  <div class="thumb">
+    <img src="thumb_TARITS.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#ThereAreRiversInTheSky #Livros</div>
+  <div class="status"></div>
+  
+</a>
+
+<a href="unrealunearth-main" class="card"
+data-key="unrealPuzzleProgress"
+data-total="23">
+
+  <div class="thumb">
+    <img src="thumb_hozier.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#UnrealUnearth #Hozier</div>
+  <div class="status"></div>
+
+</a>
+
+<a href="PRANTAS" class="card"
+data-key="prantasPuzzleProgress"
+data-total="25">
+  
+  <div class="thumb">
+    <img src="thumb_vegana.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#VibeVegana #Verde #Plantas</div>
+  <div class="status"></div>
+  
+</a>
+
+<a href="MARGREGO" class="card"
+data-key="marPuzzleProgress"
+data-total="26">
+  
+  <div class="thumb">
+    <img src="MARGREGO/thumb_mar.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#MarGrego #MitologiaGrega #Mar</div>
+  <div class="status"></div>
+  
+</a>
+
+  <a href="AJNA" class="card"
+data-key="ajnaPuzzleProgress"
+data-total="27">
+
+  <div class="thumb">
+    <img src="thumb_ajna.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#Yoga #Chakras #Ajna</div>
+  <div class="status"></div>
+  
+</a>
+
+<a href="bichanos" class="card"
+data-key="gatosPuzzleProgress"
+data-total="34">
+
+  <div class="thumb">
+    <img src="thumb_bichanos.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#gatos #caçatudomenospalavras</div>
+  <div class="status"></div>
+  
+</a>
+  
+<a href="CELTIC" class="card" id="celticCard"
+data-celtic="true"
+data-total="40">
+
+  <div class="thumb">
+    <img id="celticThumb" loading="lazy">
+  </div>
+
+  <div class="tags">#Celtic #Irlanda #NósDemais</div>
+  <div class="status"></div>
+
+</a>
+
+<a href="SILK" class="card"
+data-key="silkPuzzleProgress"
+data-total="50">
+
+  <div class="thumb">
+    <img src="thumb_SILK.png" loading="lazy">
+  </div>
+  
+  <div class="tags">#RotaDaSeda #História #ÁsiaCentral</div>
+  <div class="status"></div>
+
+</a>
+
+<a href="JIGSAW" class="card"
+data-key="luciferJigsawProgress"
+data-total="138">
+
+  <div class="thumb">
+    <img src="lucifer_thumb.png" loading="lazy">
+  </div>
+
+  <div class="tags">#jigsawpuzzle #quebra-cabeça #Lucifer, 1890</div>
+  <div class="status"></div>
+
+</a>
+  
+</div>
+<script>
+function safeParseStoredArray(key){
+try{
+let parsed = JSON.parse(localStorage.getItem(key) || "[]");
+return Array.isArray(parsed) ? parsed : [];
+}catch{
+return [];
+}
+}
+
+function getStoredProgressCount(key){
+try{
+let parsed = JSON.parse(localStorage.getItem(key) || "[]");
+if(Array.isArray(parsed)) return parsed.length;
+if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds.length;
+return 0;
+}catch{
+return 0;
+}
+}
+
+async function getCelticCounterMeta(){
+try{
+let response = await fetch("CELTIC/index.html", { cache: "no-store" });
+if(!response.ok) throw new Error("Falha ao carregar CELTIC/index.html");
+let html = await response.text();
+
+let levelsStart = html.indexOf('const levels = [');
+let nivel1Start = html.indexOf('key: "nivel1"', levelsStart);
+let nivel2Start = html.indexOf('key: "nivel2"', nivel1Start);
+let levelsEnd = html.indexOf('\n]\n;', nivel2Start);
+
+if(levelsStart === -1 || nivel1Start === -1 || nivel2Start === -1 || levelsEnd === -1){
+throw new Error("Estrutura dos niveis nao encontrada");
+}
+
+let nivel1Block = html.slice(nivel1Start, nivel2Start);
+let nivel2Block = html.slice(nivel2Start, levelsEnd);
+let itemRegex = /\{\s*id:\s*"([^"]+)"[\s\S]*?\}/g;
+
+let groupById = {};
+let match;
+while((match = itemRegex.exec(nivel1Block)) !== null){
+let itemBlock = match[0];
+let id = match[1];
+let groupMatch = itemBlock.match(/group:\s*"([^"]+)"/);
+groupById[id] = groupMatch ? groupMatch[1] : id;
+}
+
+let level1Total = new Set(Object.values(groupById)).size;
+let level1Ids = Object.keys(groupById);
+let level2Ids = [];
+let level2Regex = /\{\s*id:\s*"([^"]+)"/g;
+let level2Match;
+while((level2Match = level2Regex.exec(nivel2Block)) !== null){
+level2Ids.push(level2Match[1]);
+}
+let level2Total = level2Ids.length;
+
+return {
+groupById,
+level1Ids,
+level2Ids,
+combinedTotal: level1Total + level2Total
+};
+}catch{
+return null;
+}
+}
+
+function getCelticStatus(meta, totalFallback){
+let lastLevel = localStorage.getItem("CELTIC_last_level") || "nivel1";
+let nivel1Progress = safeParseStoredArray("CELTIC_nivel1_progress");
+let nivel2Progress = safeParseStoredArray("CELTIC_nivel2_progress");
+
+let uniqueNivel1Found = nivel1Progress.length;
+let combinedTotal = totalFallback;
+
+if(meta && meta.groupById){
+if(Array.isArray(meta.level1Ids)){
+let validLevel1Ids = new Set(meta.level1Ids);
+nivel1Progress = nivel1Progress.filter(id => validLevel1Ids.has(id));
+}
+let mapped = nivel1Progress.map(id => meta.groupById[id] || id);
+uniqueNivel1Found = new Set(mapped).size;
+combinedTotal = meta.combinedTotal;
+
+if(Array.isArray(meta.level2Ids)){
+let validLevel2Ids = new Set(meta.level2Ids);
+nivel2Progress = nivel2Progress.filter(id => validLevel2Ids.has(id));
+}
+}
+
+if(lastLevel === "nivel2"){
+let found = uniqueNivel1Found + nivel2Progress.length;
+return {
+thumb: "CELTIC/thumbceltic2.png",
+counter: found + " / " + combinedTotal,
+found,
+total: combinedTotal
+};
+}
+
+return {
+thumb: "CELTIC/thumbceltic1.png",
+counter: uniqueNivel1Found + " / " + combinedTotal,
+found: uniqueNivel1Found,
+total: combinedTotal
+};
+}
+
+
+function renderStatus(statusEl, found, total){
+if(!statusEl) return;
+
+statusEl.style.color = "#f5e6d3";
+statusEl.style.opacity = "0.8";
+
+if(found === total && total > 0){
+statusEl.textContent = "✔ completo";
+statusEl.style.color = "#f1c501";
+statusEl.style.opacity = "1";
+return;
+}
+
+statusEl.textContent = found + " / " + total;
+
+if(found === 0 && total === 0){
+statusEl.style.opacity = "0.7";
+}
+}
+
+function applyThumbBorder(card, percentage){
+let thumb = card.querySelector(".thumb");
+if(!thumb) return;
+
+thumb.classList.remove("progress-complete");
+
+if(percentage < 100) return;
+thumb.classList.add("progress-complete");
+}
+
+window.addEventListener("DOMContentLoaded", function(){
+
+document.querySelectorAll(".card").forEach(card => {
+
+if(card.dataset.celtic === "true"){
+let statusEl = card.querySelector(".status");
+let thumbEl = document.getElementById("celticThumb");
+let totalFallback = parseInt(card.dataset.total);
+let initial = getCelticStatus(null, totalFallback);
+thumbEl.src = initial.thumb;
+thumbEl.classList.add("ready");
+renderStatus(statusEl, initial.found, initial.total);
+let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
+applyThumbBorder(card, initialPercentage);
+
+getCelticCounterMeta().then(meta => {
+let updated = getCelticStatus(meta, totalFallback);
+thumbEl.src = updated.thumb;
+renderStatus(statusEl, updated.found, updated.total);
+let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
+applyThumbBorder(card, updatedPercentage);
+});
+return;
+}
+
+let key = card.dataset.key;
+let total = parseInt(card.dataset.total);
+
+/* SKIP cards without progress data */
+if(!key || Number.isNaN(total)) return;
+
+let statusEl = card.querySelector(".status");
+let found = getStoredProgressCount(key);
+renderStatus(statusEl, found, total);
+
+let percentage = total > 0 ? (found / total) * 100 : 0;
+applyThumbBorder(card, percentage);
+
+});
+
+});
+</script>
+</body>
+</html>

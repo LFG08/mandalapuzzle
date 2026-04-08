@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Rota de Seda</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+<link rel="preload" as="image" href="mandala_silk_4096.webp"><!-- UPDATED: preload the main mandala image so large source files start loading earlier -->
+<link rel="preload" as="image" href="mandala_gabarito_1.webp"><!-- UPDATED: preload the default answer overlay because it is used on first load -->
+
+<style>
+
+:root{
+--mandala-display-size:4096px; /* UPDATED: true 4096 display size for the final mandala, overlays, and coords */
+}
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:var(--mandala-display-size); /* UPDATED: single source of truth for displayed puzzle size */
+height:var(--mandala-display-size); /* UPDATED: single source of truth for displayed puzzle size */
+contain:layout paint;
+transition:transform 0.25s ease;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size); /* UPDATED: render the main mandala at full 4096 display size for fine detail */
+height:var(--mandala-display-size); /* UPDATED: render the main mandala at full 4096 display size for fine detail */
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size); /* UPDATED: keep overlay size tied to the displayed puzzle size */
+height:var(--mandala-display-size); /* UPDATED: keep overlay size tied to the displayed puzzle size */
+pointer-events:none;
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size); /* UPDATED: each clipped answer matches the displayed puzzle size */
+height:var(--mandala-display-size); /* UPDATED: each clipped answer matches the displayed puzzle size */
+
+background-image:url("mandala_gabarito_1.webp");
+background-size:var(--mandala-display-size) var(--mandala-display-size); /* UPDATED: keep every full-size overlay aligned with the 4096 mandala */
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+
+.hint-region{
+position:absolute;
+pointer-events:none;
+border:3px dashed rgba(255,255,255,0.92);
+background:rgba(255,255,255,0.18);
+opacity:0;
+transition:opacity 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(1.01);}
+}
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(95, 29, 3);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+  position:fixed;
+  top:120px;
+  left:30px;   /* ← anchor it here */
+  width: 250px;;
+
+  max-height:70vh;
+
+  background:rgba(0,0,0,0.418);
+  border:1px solid white;
+  color:white;
+
+  font-family:Times New Roman, Times, serif;
+  font-size:0.9rem;
+
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+}
+
+#menuHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+}
+/* LEFT SIDE */
+.title {
+  flex-shrink:inherit;
+  margin-right: 4px;
+  margin-left: 8px;
+  margin-top: 8px;
+}
+
+/* RIGHT SIDE GROUP */
+.right{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0; /* prevents collapsing weirdness */
+  margin-right: 8px;
+  margin-top: 6px;
+}
+
+/* COUNTER */
+#counter {
+  white-space: nowrap;
+}
+
+/* ================= INFO ================= */
+
+.info-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.info-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 6px; /* invisible bridge */
+}
+
+.info-btn,
+.menu-btn{
+
+  display: flex;              /* KEY */
+  align-items: center;        /* vertical center */
+  justify-content: center;    /* horizontal center */
+
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  background: #ccc;
+  line-height: 16px;
+  padding: 0;
+  margin-right: 4px;
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 180px;
+  margin-top: 4px; /* small, safe gap */
+
+  background: rgba(0,0,0,0.85);
+  color: white;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, 0.45),
+    0 0 16px rgba(255, 226, 120, 0.35),
+    inset 0 0 6px rgba(255, 255, 255, 0.2);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+}
+
+/* show tooltip when hovering button OR tooltip itself */
+.info-wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  }
+
+.tooltip a {
+  text-decoration: none;
+}
+
+.tooltip a:hover {
+  text-decoration: none; /* optional: add back on hover */
+}
+
+.highlight {
+  color: #d8c200;
+  text-decoration: none
+}
+
+.highlight:hover{
+  text-decoration: none;
+}
+
+#wordList{
+flex:1;
+overflow-y:auto;
+
+list-style:none;
+margin:0;
+padding:8px;
+line-height:1.4;
+}
+
+#wordList li{
+padding:4px 0;
+}
+
+#wordList a[href] {
+  color: rgb(247, 62, 5);
+  text-decoration: underline;
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+/* hidden words - when found */
+.hidden-word.found{
+color:#f5e6d3;
+text-decoration: line-through;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#wordTooltip{
+position:fixed;
+background:rgba(0,0,0,0.85);
+color:#f5e6d3;
+padding:6px 10px;
+font-size:12px;
+font-family:Georgia, serif;
+border:1px solid #f5e6d3;
+pointer-events:none;
+opacity:0;
+transition:opacity 0.15s;
+z-index:999;
+}
+
+#overlaySelector,
+#clearButton,
+#toggleClickMode,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:8px;
+font-family:Times New Roman, Times, serif;
+cursor:pointer;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class="title">Rota da Seda</span><!-- UPDATED: menu title changed to match the Silk Roads theme -->
+
+<div class="right">
+<span id="counter"></span>
+
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+
+    <span class="tooltip">
+      Termos e elementos ligados à <a  class= highlight href="https://pt.wikipedia.org/wiki/Rota_da_Seda">Rota de Seda</a>.
+    </span>
+  </span>
+  <span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite.
+      Para dicas, clique com o botão direito do mouse no menu.
+      1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!
+    </span>
+  </span>
+  <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleMenu">–</button>
+</div>
+</div>
+
+<!-- ===== SILK ROAD ===== -->
+
+<ul id="wordList">
+
+<li id="menu-Asia" data-def="Continente atravessado pela maior parte da Rota da Seda.">Ásia</li>
+<li id="menu-BaciaDeTarim" data-def="Região do oeste da China cercada pelo Deserto de Taklamakan.">Bacia de Tarim</li>
+<li id="menu-Bukhara" data-def="Importante cidade-oásis e centro religioso no atual Uzbequistão.">Bukhara</li>
+<li id="menu-Caravancarai" data-def="Estalagem onde caravanas descansavam e comerciavam.">Caravançarai</li>
+<li id="menu-CavernasDeDunhuang" data-def="Conjunto de cavernas budistas próximo à fronteira ocidental chinesa.">Cavernas de Dunhuang</li>
+<li id="menu-Cha" data-def="Mercadoria importante exportada da China para o oeste.">Chá</li>
+<li id="menu-China" data-def="Extremidade oriental tradicional da Rota da Seda.">China</li>
+<li id="menu-CorredorDeHexi" data-def="Faixa estratégica que ligava Chang'an às Regiões do Oeste.">Corredor de Hexi</li>
+<li id="menu-Deserto" data-def="Paisagem dominante em vários trechos da rota.">Deserto</li>
+<li id="menu-DesertoDeTaklamakan" data-def="Grande deserto da Ásia Central atravessado pelas caravanas.">Deserto de Taklamakan</li>
+<li id="menu-DinastiaHan" data-def="Dinastia chinesa que iniciou a Rota da Seda.">Dinastia Han</li>
+<li id="menu-Especiarias" data-def="Mercadorias valiosas como canela, pimenta e noz-moscada.">Especiarias</li>
+<li id="menu-GhengisKhan" data-def="Líder mongol que unificou grande parte da Rota da Seda.">Ghengis Khan</li>
+<li id="menu-GrutasDeMogao" data-def="Famosas grutas budistas decoradas perto de Dunhuang.">Grutas de Mogao</li>
+<li id="menu-Jade" data-def="Pedra preciosa transportada da Ásia Central para a China.">Jade</li>
+<li id="menu-Kashgar" data-def="Cidade-oásis no extremo oeste da China.">Kashgar</li>
+<li id="menu-MarcoPolo" data-def="Viajante veneziano associado à Rota da Seda.">Marco Polo</li>
+<li id="menu-Merv" data-def="Grande cidade-oásis histórica no Turcomenistão.">Merv</li>
+<li id="menu-Mongolia" data-def="Região ligada ao Império Mongol e às estepes.">Mongolia</li>
+<li id="menu-Oasis" data-def="Ponto de parada e abastecimento no meio dos desertos.">Oásis</li>
+<li id="menu-Papel" data-def="Invenção chinesa que se espalhou para o Ocidente pela Rota da Seda.">Papel</li>
+<li id="menu-Persa" data-def="Relacionado à Pérsia, uma das grandes civilizações da rota.">Persa</li>
+<li id="menu-PorcelanaChinesa" data-def="Produto de luxo chinês exportado para o Ocidente.">Porcelana Chinesa</li>
+<li id="menu-RabatiMalik" data-def="Famoso caravançarai medieval entre Samarkand e Bukhara.">Rabati Malik</li>
+<li id="menu-RotaDasEstepes" data-def="Rota ao norte que passava pelas estepes da Eurásia.">Rota das estepes</li>
+<li id="menu-RotaDeSeda" data-def="Rede de rotas comerciais entre a China, a Ásia Central e a Europa.">Rota de Seda</li>
+<li id="menu-Samarkand" data-def="Uma das mais importantes cidades da Rota da Seda.">Samarkand</li>
+<li id="menu-Seda" data-def="Mercadoria mais famosa e valiosa da rota.">Seda</li>
+<li id="menu-Sogdianos" data-def="Povo mercador da Ásia Central especializado no comércio da rota.">Sogdianos</li>
+<li id="menu-Turfan" data-def="Cidade-oásis na Bacia do Tarim.">Turfan</li>
+<li id="menu-Vidro" data-def="Produto de luxo importado do mundo romano e persa.">Vidro</li>
+<li id="menu-Xian" data-def="Cidade chinesa conhecida historicamente como Chang'an, ponto inicial da rota.">Xi'an</li>
+<li id="menu-ZiangQian" data-def="Explorador Han que abriu contato chinês com as Regiões do Oeste.">Ziang Qian</li>
+
+<!-- ===== SILK ROAD HIDDEN ===== -->
+
+<li id="menu-130ac" class="hidden-word" data-hidden="130 ac" data-def="Abertura oficial da Rota da Seda pela Dinastia Han."></li>
+<li id="menu-YangGuan" class="hidden-word" data-hidden="阳关 | Yangguan" data-def= "Antigo posto fronteiriço perto de Dunhuang na saída para as Regiões do Oeste."></li>
+<li id="menu-CameloDeCarga" class="hidden-word" data-hidden="Camelo de Carga" data-def="Usado nas caravanas como animal de carga da Rota da Seda entre a China e a Ásia Central."></li>
+<li id="menu-Iaque" class="hidden-word" data-hidden="Iaque" data-def="Animal de carga usado nas rotas montanhosas do Tibete e Pamir."></li>
+<li id="menu-CameloGuia" class="hidden-word" data-hidden="Camelo Guia" data-def="Lidera a caravana; costumava ir à frente dos outros, às vezes com sino ou decoração, guiando o caminho entre oásis e através do Deserto de Taklamakan."></li>
+<li id="menu-Cavalo" class="hidden-word" data-hidden="Cavalo" data-def="de Ferghana, muito valorizados pela Dinastia Han."></li>
+<li id="menu-Cobra" class="hidden-word" data-hidden="Cobra" data-def="Animal comum nas regiões áridas atravessadas pela Rota da Seda."></li>
+<li id="menu-Escorpiao" class="hidden-word" data-hidden="Escorpião" data-def="Animal típico dos desertos percorridos pelas caravanas."></li>
+<li id="menu-Serpente" class="hidden-word" data-hidden="Serpente" data-def="Animal típico dos desertos e oásis da Ásia Central."></li>
+<li id="menu-DragaoChines" class="hidden-word" data-hidden="Dragão Chines" data-def="Símbolo imperial chinês frequentemente visto em seda, porcelana e arte da Rota da Seda."></li>
+<li id="menu-RaposaDoDeserto" class="hidden-word" data-hidden="Raposa do Deserto" data-def="Encontrada nas estepes e desertos da Ásia Central."></li>
+<li id="menu-Gaviao" class="hidden-word" data-hidden="Gavião" data-def="Ave usada em falcoaria pelos povos da Ásia Central."></li>
+<li id="menu-Feneco" class="hidden-word" data-hidden="Feneco" data-def="Animal ligado às regiões áridas da Rota da Seda."></li>
+<li id="menu-Pavao" class="hidden-word" data-hidden="Pavão" data-def="Ave presente em arte persa e budista ao longo da Rota da Seda."></li>
+<li id="menu-Gato" class="hidden-word" data-hidden="Gato" data-def="Protegiam alimentos e mercadorias dos ratos nas cidades-oásis e caravançarais."></li>
+<li id="menu-YumenGuan" class="hidden-word" data-hidden="玉门关 | Yumenguan, o Portão de Jade" data-def="Passagem estratégica na fronteira oeste da China."></li>
+<li id="menu-1453dc" class="hidden-word" data-hidden="1453 dc" data-def="Queda de Constantinopla, frequentemente visto como o fim da rota tradicional."></li>
+
+</ul>
+
+<div id="wordTooltip"></div>
+
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+
+<select id="overlaySelector">
+<option value="mandala_gabarito_1.webp">Roxo</option>
+<option value="mandala_gabarito_2.webp">Vermelho</option>
+<option value="mandala_gabarito_3.webp">Verde</option>
+</select>
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container">
+
+<img src="mandala_silk_4096.webp" usemap="#image-map" width="4096" height="4096" decoding="async" fetchpriority="high"><!-- UPDATED: explicit 4096 dimensions for the real full-resolution mandala -->
+
+<div id="answersOverlay"></div>
+
+  <div id="regionHint-1" class="hint-region" style="left:1px;top:0;width:4093px;height:16.6667%;"></div>
+  <div id="regionHint-2" class="hint-region" style="left:1px;top:16.6667%;width:4093px;height:16.6667%;"></div>
+  <div id="regionHint-3" class="hint-region" style="left:1px;top:33.3334%;width:4093px;height:16.6667%;"></div>
+  <div id="regionHint-4" class="hint-region" style="left:1px;top:50.0001%;width:4093px;height:16.6667%;"></div>
+  <div id="regionHint-5" class="hint-region" style="left:1px;top:66.6668%;width:4093px;height:16.6667%;"></div>
+  <div id="regionHint-6" class="hint-region" style="left:1px;top:83.3335%;width:4093px;height:16.6665%;"></div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
+
+<map name="image-map">
+    <area id="area-Asia"
+    coords="2117,1137,2148,1110,2183,1128,2165,1159"
+    shape="poly" onclick="toggleAnswer(this,'Asia'); return false;">
+
+    <area id="area-BaciaDeTarim"
+    coords="847,1478,904,1386,926,1403,873,1500"
+    shape="poly" onclick="toggleAnswer(this,'BaciaDeTarim'); return false;">
+
+    <area id="area-Bukhara"
+    coords="2394,3629,2468,3611,2482,3646,2407,3668"
+    shape="poly" onclick="toggleAnswer(this,'Bukhara'); return false;">
+
+    <area id="area-Caravancarai"
+    coords="1937,1609,2029,1644,2016,1673,1928,1635"
+    shape="poly" onclick="toggleAnswer(this,'Caravancarai'); return false;">
+
+    <area id="area-CavernasDeDunhuang"
+    coords="3673,163,3914,163,3914,237,3664,233"
+    shape="poly" onclick="toggleAnswer(this,'CavernasDeDunhuang'); return false;">
+
+    <area id="area-Cha"
+    coords="3651,3681,3695,3651,3730,3659,3739,3681,3756,3734,3730,3752,3703,3743,3677,3730"
+    shape="poly" onclick="toggleAnswer(this,'Cha'); return false;">
+
+    <area id="area-China"
+    coords="3044,593,3071,571,3114,611,3075,629"
+    shape="poly" onclick="toggleAnswer(this,'China'); return false;">
+
+    <area id="area-CorredorDeHexi"
+    coords="1040,3662,943,3570,974,3544,1075,3649"
+    shape="poly" onclick="toggleAnswer(this,'CorredorDeHexi'); return false;">
+
+    <area id="area-Deserto"
+    coords="2596,945,2627,927,2684,963,2657,989"
+    shape="poly" onclick="toggleAnswer(this,'Deserto'); return false;">
+
+    <area id="area-DesertoDeTaklamakan"
+    coords="4090,1332,4090,1446,4042,1433,4046,1327"
+    shape="poly" onclick="toggleAnswer(this,'DesertoDeTaklamakan'); return false;">
+
+    <area id="area-DinastiaHan"
+    coords="4090,2958,4064,2958,4064,3024,4059,3072,4090,3081"
+    shape="poly" onclick="toggleAnswer(this,'DinastiaHan'); return false;">
+
+    <area id="area-Especiarias"
+    coords="4007,2190,4011,2225,4046,2234,4090,2221,4090,2155,4055,2142,4015,2146"
+    shape="poly" onclick="toggleAnswer(this,'Especiarias'); return false;">
+
+    <area id="area-GhengisKhan"
+    coords="2517,4048,2508,3998,2455,4008,2460,3958,2565,3964,2561,4004,2552,4042"
+    shape="poly" onclick="toggleAnswer(this,'GhengisKhan'); return false;">
+
+    <area id="area-GrutasDeMogao"
+    coords="675,3037,715,3054,776,3076,776,3107,724,3116,680,3103,658,3063"
+    shape="poly" onclick="toggleAnswer(this,'GrutasDeMogao'); return false;">
+
+    <area id="area-Jade"
+    coords="21,3947,56,3929,78,3960,60,3995,29,3973"
+    shape="poly" onclick="toggleAnswer(this,'Jade'); return false;">
+
+    <area id="area-Kashgar"
+    coords="2802,1333,2807,1360,2855,1367,2895,1377,2882,1338,2802,1333,2842,1329"
+    shape="poly" onclick="toggleAnswer(this,'Kashgar'); return false;">
+
+    <area id="area-MarcoPolo"
+    coords="3295,2621,3255,2669,3233,2700,3251,2731,3176,2800,3185,2836,3224,2814,3246,2722,3290,2700,3299,2682"
+    shape="poly" onclick="toggleAnswer(this,'MarcoPolo'); return false;">
+
+    <area id="area-Merv"
+    coords="73,3072,122,3054,135,3107,91,3116" shape="poly" onclick="toggleAnswer(this,'Merv'); return false;">
+
+    <area id="area-Mongolia"
+    coords="1550,2751,1567,2734,1655,2782,1629,2798"
+    shape="poly" onclick="toggleAnswer(this,'Mongolia'); return false;">
+
+    <area id="area-Oasis"
+    coords="4002,463,4051,460,4046,546,4002,546"
+    shape="poly" onclick="toggleAnswer(this,'Oasis'); return false;">
+
+    <area id="area-Papel"
+    coords="324,1525,363,1472,398,1490,355,1543"
+    shape="poly" onclick="toggleAnswer(this,'Papel'); return false;">
+
+    <area id="area-Persa"
+    coords="3325,3772,3308,3807,3365,3869,3396,3851,3400,3807"
+    shape="poly" onclick="toggleAnswer(this,'Persa'); return false;">
+
+    <area id="area-PorcelanaChinesa"
+    coords="680,2177,667,2208,662,2260,693,2278,719,2256,706,2225,706,2181"
+    shape="poly" onclick="toggleAnswer(this,'PorcelanaChinesa'); return false;">
+
+    <area id="area-RabatiMalik"
+    coords="1190,2797,1247,2794,1242,2838,1198,2849,1172,2823"
+    shape="poly" onclick="toggleAnswer(this,'RabatiMalik'); return false;">
+
+    <area id="area-RotaDasEstepes"
+    coords="3536,1535,3576,1548,3589,1592,3611,1607,3580,1642,3536,1672,3519,1610,3523,1575"
+    shape="poly" onclick="toggleAnswer(this,'RotaDasEstepes'); return false;">
+
+    <area id="area-RotaDeSeda"
+    coords="2394,3277,2482,3251,2512,3299,2403,3321"
+    shape="poly" onclick="toggleAnswer(this,'RotaDeSeda'); return false;">
+
+    <area id="area-Samarkand"
+    coords="196,948,192,921,223,891,306,854,350,889,359,921,337,935,302,921,275,935,267,979,236,992,214,996" shape="poly" onclick="toggleAnswer(this,'Samarkand'); return false;">
+
+    <area id="area-Seda"
+    coords="3765,4065,3857,4074,3844,4035,3769,4035"
+    shape="poly" onclick="toggleAnswer(this,'Seda'); return false;">
+
+    <area id="area-Sogdianos"
+    coords="390,2114,425,2117,434,2218,398,2214"
+    shape="poly" onclick="toggleAnswer(this,'Sogdianos'); return false;">
+
+    <area id="area-Turfan"
+    coords="1400,2798,1418,2763,1458,2767,1480,2785,1444,2807"
+    shape="poly" onclick="toggleAnswer(this,'Turfan'); return false;">
+
+    <area id="area-Vidro"
+    coords="1717,875,1748,857,1800,835,1796,870,1787,875,1778,910,1752,907,1730,898"
+    shape="poly" onclick="toggleAnswer(this,'Vidro'); return false;">
+
+    <area id="area-Xian"
+    coords="2271,1840,2236,1875,2183,1849,2139,1827,2148,1778,2222,1800"
+    shape="poly" onclick="toggleAnswer(this,'Xian'); return false;">
+
+    <area id="area-ZiangQian"
+    coords="3339,1948,3369,1953,3378,2063,3339,2054"
+    shape="poly" onclick="toggleAnswer(this,'ZiangQian'); return false;">
+
+    <area id="area-130ac"
+    coords="543,37,513,32,495,-3,557,-3"
+    shape="poly" onclick="toggleAnswer(this,'130ac'); return false;">
+
+    <area id="area-YangGuan"
+    coords="2271,356,2315,356,2315,426,2271,426"
+    shape="poly" onclick="toggleAnswer(this,'YangGuan'); return false;">
+
+    <area id="area-CameloDeCarga"
+    coords="1172,659,1233,637,1260,703,1207,734,1150,725,1119,699"
+    shape="poly" onclick="toggleAnswer(this,'CameloDeCarga'); return false;">
+
+    <area id="area-Iaque"
+    coords="29,107,82,116,69,186,21,190,12,147"
+    shape="poly" onclick="toggleAnswer(this,'Iaque'); return false;">
+
+    <area id="area-CameloGuia"
+    coords="2271,1261,2310,1235,2332,1254,2301,1297"
+    shape="poly" onclick="toggleAnswer(this,'CameloGuia'); return false;">
+
+    <area id="area-Cavalo"
+    coords="1919,3284,1989,3276,2003,3301,1967,3336,1919,3327"
+    shape="poly" onclick="toggleAnswer(this,'Cavalo'); return false;">
+
+    <area id="area-Cobra"
+    coords="2064,2486,2139,2543,2117,2565,2055,2512"
+    shape="poly" onclick="toggleAnswer(this,'Cobra'); return false;">
+
+    <area id="area-Escorpiao"
+    coords="1269,1831,1313,1849,1326,1880,1282,1891,1247,1861"
+    shape="poly" onclick="toggleAnswer(this,'Escorpiao'); return false;">
+
+    <area id="area-Serpente"
+    coords="1172,907,1185,863,1216,872,1247,832,1247,889,1225,907,1190,924"
+    shape="poly" onclick="toggleAnswer(this,'Serpente'); return false;">
+
+    <area id="area-DragaoChines"
+    coords="2359,930,2403,889,2442,917,2429,943,2398,961,2350,974"
+    shape="poly" onclick="toggleAnswer(this,'DragaoChines'); return false;">
+
+    <area id="area-RaposaDoDeserto"
+    coords="2284,2353,2297,2326,2359,2331,2345,2375,2306,2375"
+    shape="poly" onclick="toggleAnswer(this,'RaposaDoDeserto'); return false;">
+
+    <area id="area-Gaviao"
+    coords="1998,-1,2047,69,2090,43,2060,-1,2011,-1"
+    shape="poly" onclick="toggleAnswer(this,'Gaviao'); return false;">
+
+    <area id="area-Feneco"
+    coords="3598,3446,3664,3418,3668,3459,3615,3473"
+    shape="poly" onclick="toggleAnswer(this,'Feneco'); return false;">
+
+    <area id="area-Pavao"
+    coords="2921,2041,2939,2006,2965,2014,2983,2050,2969,2085,2934,2080"
+    shape="poly" onclick="toggleAnswer(this,'Pavao'); return false;">
+
+    <area id="area-Gato"
+    coords="715,3928,746,3947,746,3963,732,3980,697,3972,680,3945,689,3936"
+    shape="poly" onclick="toggleAnswer(this,'Gato'); return false;">
+
+    <area id="area-YumenGuan"
+    coords="1717,2231,1761,2284,1730,2301,1704,2266"
+    shape="poly" onclick="toggleAnswer(this,'YumenGuan'); return false;">
+
+    <area id="area-1453dc"
+    coords="3361,1191,3405,1190,3405,1251,3361,1250"
+    shape="poly" onclick="toggleAnswer(this,'1453dc'); return false;">
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+/* prevent image dragging */
+document.addEventListener("dragstart", e=>e.preventDefault());
+
+
+const hintStorageKey = "SILK_wordHints";
+const baseMandalaSize = 4096;
+const areaRegionMap = {};
+
+function clamp(value, min, max){
+return Math.min(max, Math.max(min, value));
+}
+
+function computeAreaRegion(coordsText){
+let coords = coordsText.split(",").map(Number).filter(n => !Number.isNaN(n));
+if(coords.length < 4) return 3;
+let ys = [];
+for(let i=1;i<coords.length;i+=2){
+ys.push(coords[i]);
+}
+let avgY = ys.reduce((acc, y) => acc + y, 0) / ys.length;
+let regionHeight = baseMandalaSize / 6;
+let region = Math.floor(avgY / regionHeight) + 1;
+return clamp(region, 1, 6);
+}
+
+function findAreaByWord(word){
+return Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area => {
+let handler = area.getAttribute("onclick") || "";
+return handler.includes("'" + word + "'");
+}) || null;
+}
+
+function getAreaBounds(area){
+let coords = (area?.coords || "").split(",").map(Number).filter(Number.isFinite);
+if(coords.length < 2) return null;
+let xs = [];
+let ys = [];
+for(let i = 0; i < coords.length; i += 2){
+xs.push(coords[i]);
+ys.push(coords[i + 1]);
+}
+if(!xs.length || !ys.length) return null;
+return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+}
+
+function centerViewOnArea(area){
+let bounds = getAreaBounds(area);
+if(!bounds) return;
+let container = document.querySelector(".container");
+if(!container) return;
+let containerRect = container.getBoundingClientRect();
+let areaCenterX = (bounds.minX + bounds.maxX) / 2;
+let areaCenterY = (bounds.minY + bounds.maxY) / 2;
+let targetX = window.scrollX + containerRect.left + areaCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + containerRect.top + areaCenterY - (window.innerHeight / 2);
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+window.scrollTo({ left: clamp(targetX, 0, maxX), top: clamp(targetY, 0, maxY), behavior: "smooth" });
+}
+
+let activeRegionHintTimeout = null;
+
+function centerViewOnRegion(regionEl){
+if(!regionEl) return;
+let container = document.querySelector(".container");
+if(!container) return;
+
+let containerRect = container.getBoundingClientRect();
+let left = Number(regionEl.style.left.replace("px", "")) || 0;
+let top = Number(regionEl.style.top.replace("px", "")) || 0;
+let width = Number(regionEl.style.width.replace("px", "")) || regionEl.offsetWidth;
+let height = Number(regionEl.style.height.replace("px", "")) || regionEl.offsetHeight;
+let regionCenterX = left + (width / 2);
+let regionCenterY = top + (height / 2);
+
+let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
+
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+window.scrollTo({
+left: Math.min(Math.max(targetX, 0), maxX),
+top: Math.min(Math.max(targetY, 0), maxY),
+behavior: "smooth"
+});
+}
+
+function showRegionHint(regionId){
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+let el = document.getElementById("regionHint-" + regionId);
+if(!el) return;
+
+if(activeRegionHintTimeout){
+clearTimeout(activeRegionHintTimeout);
+}
+
+el.classList.add("active");
+centerViewOnRegion(el);
+
+activeRegionHintTimeout = setTimeout(() => el.classList.remove("active"), 2200);
+}
+
+function saveHints(){
+let hints = {};
+document.querySelectorAll("#wordList li").forEach(li => {
+if(Number(li.dataset.hintLevel || 0) > 0){
+hints[li.id] = 1;
+}
+});
+localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+let raw = localStorage.getItem(hintStorageKey);
+if(!raw) return;
+let hints;
+try{
+hints = JSON.parse(raw);
+}catch{
+return;
+}
+document.querySelectorAll("#wordList li").forEach(li => {
+if(hints[li.id]){
+li.dataset.hintLevel = "1";
+}
+});
+}
+
+
+/* load */
+window.addEventListener("load", function(){
+
+/* ===== hidden words: show ???? ===== */
+document.querySelectorAll(".hidden-word").forEach(li => {
+
+let word = li.dataset.hidden;
+li.textContent = "?".repeat(word.length);
+
+});
+
+updateCounter();
+
+const overlayStorageKey = "SILK_selectedOverlay";
+const defaultOverlay = "mandala_gabarito_1.webp";
+
+/* restore overlay OR set default */
+let savedOverlay = localStorage.getItem(overlayStorageKey);
+let validOverlays = Array.from(overlaySelector.options).map(option => option.value);
+
+if(savedOverlay && validOverlays.includes(savedOverlay)){
+  currentOverlay = savedOverlay;
+  overlaySelector.value = savedOverlay;
+}else{
+  // FIRST TIME → force option 1
+  currentOverlay = defaultOverlay;
+  overlaySelector.value = defaultOverlay;
+}
+
+/* apply overlay immediately */
+overlaySelector.dispatchEvent(new Event("change"));
+
+/* load answers AFTER overlay is ready */
+loadProgress();
+loadHints();
+});
+
+
+/* ===== toggle mode ===== */
+
+let allowToggleOff=true;
+
+toggleClickMode.onclick=function(){
+
+allowToggleOff=!allowToggleOff;
+
+this.textContent=allowToggleOff
+? "Desmarcar: ON"
+: "Desmarcar: OFF";
+};
+
+//* OVERLAY */
+
+overlaySelector.onchange = function(){
+
+currentOverlay = this.value;
+
+Object.values(answerClips).forEach(clip=>{
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+});
+
+localStorage.setItem("SILK_selectedOverlay", currentOverlay);
+};
+
+/* ===== menu items ===== */
+
+const menuItems={};
+
+document.querySelectorAll("#wordList li").forEach(li=>{
+menuItems[li.id]=li;
+li.addEventListener("contextmenu", e => {
+e.preventDefault();
+let word = li.id.replace("menu-", "");
+let regionId = areaRegionMap[word];
+let area = findAreaByWord(word);
+if(area){
+centerViewOnArea(area);
+}
+if(regionId){
+li.dataset.hintLevel = "1";
+saveHints();
+showRegionHint(regionId);
+}
+});
+});
+
+document.querySelectorAll("area").forEach(area => {
+let onclickText = area.getAttribute("onclick") || "";
+let match = onclickText.match(/'([^']+)'/);
+if(!match) return;
+areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
+});
+
+/* ===== menu definitions ===== */
+
+const tooltip = document.getElementById("wordTooltip");
+
+document.querySelectorAll("#wordList li").forEach(item => {
+
+item.addEventListener("mouseenter", e => {
+
+let text = item.dataset.def;
+if(!text) return;
+
+tooltip.textContent = text;
+tooltip.style.opacity = "1";
+
+});
+
+item.addEventListener("mousemove", e => {
+
+tooltip.style.left = (e.clientX + 10) + "px";
+tooltip.style.top = (e.clientY + 10) + "px";
+
+});
+
+item.addEventListener("mouseleave", () => {
+
+tooltip.style.opacity = "0";
+
+});
+
+});
+
+/* ===== answer highlights ===== */
+
+const answerClips={};
+
+function toggleAnswer(area,word){
+
+if(!area.coords) return;
+
+if(!answerClips[word]){
+
+let coords=area.coords.split(",");
+let points=[];
+
+for(let i=0;i<coords.length;i+=2){
+points.push(coords[i]+"px "+coords[i+1]+"px");
+}
+
+let clip = document.createElement("div");
+clip.className = "answerClip";
+clip.style.clipPath = "polygon(" + points.join(",") + ")";
+clip.style.backgroundImage = "url(" + currentOverlay + ")";
+
+const answersOverlay = document.getElementById("answersOverlay");
+
+answersOverlay.appendChild(clip);
+
+answerClips[word]=clip;
+}
+
+let menuWord = menuItems["menu-"+word];
+let isVisible = answerClips[word].classList.contains("visible");
+
+if(!isVisible){
+
+  answerClips[word].classList.add("visible");
+  menuItems["menu-"+word].classList.add("found");
+
+  if(menuWord.classList.contains("hidden-word")){
+  menuWord.textContent = menuWord.dataset.hidden;
+ }
+}
+
+else if(allowToggleOff){
+
+  answerClips[word].classList.remove("visible");
+  menuItems["menu-"+word].classList.remove("found");
+
+  if(menuWord.classList.contains("hidden-word")){
+    menuWord.textContent = "?".repeat(menuWord.dataset.hidden.length);
+  };
+}
+
+updateCounter();
+saveProgress();
+}
+
+/*counter*/
+const totalWords = document.querySelectorAll("#wordList li").length;
+
+function updateCounter(){
+
+let found = document.querySelectorAll("#wordList li.found").length;
+
+document.getElementById("counter").textContent =
+found + " / " + totalWords;
+
+  /* PUZZLE COMPLETE MESSAGE */
+
+if(found === totalWords && totalWords > 0){
+
+setTimeout(function(){
+alert("fim! 🎉🎉");
+},200);
+}
+}
+
+/* SAVE PROGRESS */
+
+function loadProgress(){
+
+let saved = localStorage.getItem("silkPuzzleProgress");
+if(!saved) return;
+
+let words = JSON.parse(saved);
+
+words.forEach(word => {
+
+let area = document.getElementById("area-" + word);
+
+if(area){
+
+// ONLY toggle if its not already visible
+if(!answerClips[word] ||
+   !answerClips[word].classList.contains("visible")){
+
+toggleAnswer(area, word);
+}
+}
+});
+}
+
+/* ===== reset ===== */
+
+function clearAll(){
+
+/* remove highlights */
+for(let word in answerClips){
+answerClips[word].classList.remove("visible");
+
+}
+
+/* reset menu */
+document.querySelectorAll("#wordList li").forEach(li => {
+
+  li.classList.remove("found");
+
+  /* 👇 THIS IS THE FIX */
+  if(li.classList.contains("hidden-word")){
+    let word = li.dataset.hidden;
+    li.textContent = "?".repeat(word.length);
+  }
+
+});
+
+localStorage.removeItem("silkPuzzleProgress");
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+localStorage.removeItem(hintStorageKey);
+updateCounter();
+}
+
+function confirmReset(){
+
+if(confirm("Reset?")){
+clearAll();
+localStorage.removeItem("silkPuzzleProgress");
+}
+
+  }
+
+/* ===== menu drag ===== */
+
+let menu=wordMenu;
+let header=menuHeader;
+
+let offsetX,offsetY,dragging=false;
+
+header.onmousedown=e=>{
+dragging=true;
+offsetX=e.clientX-menu.offsetLeft;
+offsetY=e.clientY-menu.offsetTop;
+};
+
+document.onmousemove=e=>{
+if(!dragging) return;
+menu.style.left=(e.clientX-offsetX)+"px";
+menu.style.top=(e.clientY-offsetY)+"px";
+};
+
+document.onmouseup=()=>dragging=false;
+
+/* ===== collapse menu ===== */
+
+toggleMenu.onclick=()=>wordMenu.classList.toggle("collapsed");
+
+/* ===== rotate mandala ===== */
+
+let rotation=0;
+
+rotateMandala.onclick=function(){
+
+rotation=(rotation+90)%360;
+
+document.querySelector(".container")
+.style.transform="rotate("+rotation+"deg)";
+
+this.textContent="Rotate ("+rotation+"°)";
+
+};
+
+/* ===== drag scroll ===== */
+
+let isDragging=false,startX,startY,scrollLeft,scrollTop;
+
+document.addEventListener("mousedown",e=>{
+
+if(e.target.closest("#wordMenu")) return;
+
+isDragging=true;
+document.body.classList.add("dragging");
+
+startX=e.clientX;
+startY=e.clientY;
+
+scrollLeft=window.scrollX;
+scrollTop=window.scrollY;
+
+});
+
+document.addEventListener("mousemove",e=>{
+
+if(!isDragging) return;
+
+window.scrollTo(
+scrollLeft-(e.clientX-startX),
+scrollTop-(e.clientY-startY)
+);
+
+});
+
+document.addEventListener("mouseup",()=>{
+isDragging=false;
+document.body.classList.remove("dragging");
+});
+
+/* ===== savePuzzleProgress ===== */
+
+function saveProgress(){
+
+localStorage.setItem(
+"silkPuzzleProgress",
+JSON.stringify(Object.keys(answerClips)
+.filter(w => answerClips[w].classList.contains("visible")))
+);
+
+}
+
+</script>
+
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>imageMapResize();</script>
+
+</body>
+</html>

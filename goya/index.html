@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>El Aquelarre</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preload" as="image" href="mandala_goya.png">
+<link rel="preload" as="image" href="mandala_gabarito_1.png">
+
+<style>
+
+:root{
+--mandala-display-size:2048px;
+--mandala-render-size:var(--mandala-display-size);
+--mobile-menu-fixed-mobile-scale:0.82;
+--mobile-menu-ui-scale:1;
+--mobile-menu-base-width:250px;
+}
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:var(--mandala-display-size); /* UPDATED: single source of truth for displayed puzzle size */
+height:var(--mandala-display-size); /* UPDATED: single source of truth for displayed puzzle size */
+contain:layout paint;
+transition:transform 0.25s ease;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size); /* UPDATED: render the main mandala at full 2048 display size for fine detail */
+height:var(--mandala-display-size); /* UPDATED: render the main mandala at full 2048 display size for fine detail */
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size); /* UPDATED: keep overlay size tied to the displayed puzzle size */
+height:var(--mandala-display-size); /* UPDATED: keep overlay size tied to the displayed puzzle size */
+pointer-events:none;
+}
+
+#regionHints{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+z-index:3;
+}
+
+.hint-region{
+position:absolute;
+border:6px solid rgba(255, 230, 120, 0);
+box-shadow:0 0 0 rgba(255, 230, 120, 0);
+opacity:0;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(255, 230, 120, 0.95);
+box-shadow:0 0 26px rgba(255, 230, 120, 0.95), inset 0 0 18px rgba(255, 230, 120, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(0.996);}
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size); /* UPDATED: each clipped answer matches the displayed puzzle size */
+height:var(--mandala-display-size); /* UPDATED: each clipped answer matches the displayed puzzle size */
+
+background-image:url("mandala_gabarito_1.png");
+background-size:var(--mandala-display-size) var(--mandala-display-size); /* UPDATED: keep every full-size overlay aligned with the 2048 mandala */
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(2, 34, 43);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+  position:fixed;
+  top:120px;
+  left:30px;   /* ← anchor it here */
+  width:calc(var(--mobile-menu-base-width) * var(--mobile-menu-ui-scale));
+
+  max-height:70vh;
+
+  background:rgba(0,0,0,0.418);
+  border:1px solid white;
+  color:white;
+
+  font-family:Times New Roman, Times, serif;
+  font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+
+
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+  box-sizing:border-box;
+}
+
+#wordMenu.mobile-pinned{
+  left:auto;
+  right:auto;
+  top:auto;
+  bottom:auto;
+}
+
+#menuHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  touch-action:none;
+}
+/* LEFT SIDE */
+.title {
+  flex-shrink:inherit;
+
+  white-space: nowrap;
+
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  margin-left:calc(8px * var(--mobile-menu-ui-scale));
+  margin-top:calc(8px * var(--mobile-menu-ui-scale));
+  margin-bottom:calc(8px * var(--mobile-menu-ui-scale));
+  
+  display:flex;
+  align-items:center;
+  gap:calc(6px * var(--mobile-menu-ui-scale));
+  flex-shrink:0;
+}
+
+/* COUNTER */
+#counter {
+  white-space: nowrap;
+}
+
+/* ================= INFO ================= */
+
+.info-btn,
+.menu-btn,
+#toggleMenu{
+  
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  
+  width:calc(14px * var(--mobile-menu-ui-scale));
+  height:calc(14px * var(--mobile-menu-ui-scale));
+  border-radius:50%;
+  border:none;
+  font-size:calc(11px * var(--mobile-menu-ui-scale));
+  cursor:pointer;
+  background:#ccc;
+  line-height:calc(14px * var(--mobile-menu-ui-scale));
+  padding:0;
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+}
+  .menu-btn{
+  font-size:calc(8px * var(--mobile-menu-ui-scale));
+  }
+
+
+.info-wrapper{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.tooltip{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+
+  min-width:180px;
+  max-width:min(320px, 80vw);
+
+  padding:8px 10px;
+  border-radius:6px;
+
+  background:rgba(0,0,0,0.92);
+  color:white;
+  font-size:12px;
+  line-height:1.35;
+
+  white-space:normal;
+  overflow-wrap:break-word;
+  word-break:break-word;
+
+  box-sizing:border-box;
+  z-index:9999;
+
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .18s ease, visibility .18s ease;
+}
+
+.tooltip.help-tooltip{
+  width:max-content;
+  max-width:min(320px, 80vw);
+}
+
+/* desktop */
+.info-wrapper:hover .tooltip,
+.info-wrapper:focus-within .tooltip{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+/* mobile/touch */
+.info-wrapper.active .tooltip{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+  
+.tooltip a,
+.highlight {
+  text-decoration: none;
+}
+
+.highlight {
+  color: #d8c200;
+}
+
+.highlight:hover{
+  text-decoration: none;
+}
+
+#wordList{
+flex:1;
+overflow-y:auto;
+
+list-style:none;
+margin:0;
+padding:8px;
+line-height:1.4;
+}
+
+#wordList li{
+padding:4px 0;
+}
+
+#wordList li.hidden-word{
+cursor:text;
+}
+
+#wordList li[data-editing="true"]{
+background:rgba(255,255,255,0.12);
+outline:1px dashed rgba(255,255,255,0.4);
+}
+
+#wordList a[href] {
+  color: rgb(172, 141, 3);
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+/* hidden words - when found */
+.hidden-word.found{
+color:#f5e6d3;
+text-decoration: line-through;
+}
+
+.hidden-word.hint-revealed{
+color:#f5e6d3;
+text-decoration:none;
+opacity:1;
+}
+
+.hidden-word.found.hint-revealed{
+text-decoration:line-through;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#wordTooltip{
+position:fixed;
+background:rgba(0,0,0,0.85);
+color:#f5e6d3;
+padding:6px 10px;
+font-size:12px;
+font-family:Georgia, serif;
+border:1px solid #f5e6d3;
+pointer-events:none;
+opacity:0;
+transition:opacity 0.15s;
+z-index:999;
+}
+
+#overlaySelector,
+#clearButton,
+#toggleClickMode,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:8px;
+font-family:Times New Roman, Times, serif;
+cursor:pointer;
+
+}
+
+#mobileMenuOptions{
+display:none;
+border-top:1px solid white;
+padding:calc(8px * var(--mobile-menu-ui-scale));
+gap:calc(6px * var(--mobile-menu-ui-scale));
+flex-direction:column;
+font-size:inherit;
+font-family:inherit;
+}
+
+#mobileMenuOptions label{
+display:flex;
+flex-direction:column;
+gap:calc(4px * var(--mobile-menu-ui-scale));
+font-size:inherit;
+}
+
+#mobileMenuOptions input,
+#mobileMenuOptions select{
+width:100%;
+font-size:inherit;
+font-family:inherit;
+}
+
+
+@media (max-width: 900px) and (any-pointer: coarse){
+  :root{
+    --mobile-menu-ui-scale:2;
+    --mobile-menu-base-width:250px;
+  }
+
+  #wordMenu{
+    width:fit-content;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+
+  #menuHeader{
+    gap:1px;
+    padding-right:1px;
+  }
+
+  .title{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+    margin-left:2px;
+    margin-right:1px;
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+
+  #counter{
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+    white-space:nowrap;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .info-btn,
+  .menu-btn,
+  #toggleMenu{
+    width:10px;
+    height:10px;
+    min-width:10px;
+    font-size:calc(0.3rem * var(--mobile-menu-ui-scale));
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    
+    line-height:1;
+    margin-right:1px;
+    overflow:hidden;
+  }
+  
+  #wordMenu.pinned-bottom-collapsed{
+    left:8px !important;
+    right:auto !important;
+    bottom:auto !important;
+    top:2056px !important;
+    max-height:none;
+  }
+
+  #wordMenu.pinned-top-left{
+    top:8px !important;
+    left:8px !important;
+    right:auto !important;
+    bottom:auto !important;
+  }
+
+  #wordMenu.pinned-top-right{
+    top:8px !important;
+    left:1850px !important;
+    right:auto !important;
+    bottom:auto !important;
+  }
+
+  #mobileMenuOptions{
+    display:flex;
+  }
+
+  #mobileMenuOptions label{
+    font-size: inherit
+  }
+
+  .tooltip.help-tooltip{
+    width:230px;
+  }
+
+
+  #overlaySelector,
+  #clearButton,
+  #toggleClickMode,
+  #rotateMandala{
+    padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+}
+
+</style>
+
+
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class="title">El Aquelarre</span>
+
+<div class="title">
+<span id="counter"></span>
+
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+
+    <span class="tooltip">
+      Mandala inspirada em <a href="https://pt.wikipedia.org/wiki/El_Aquelarre_(1798)" class= highlight>"El Aquelarre" de Goya (1797-1798)</a>.
+    </span>
+  </span>
+  <span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras e elementos escondidos. Clique em uma palavra escondida para editar seu palpite no menu.
+      Para dicas, clique com o botão direito do mouse na palavra escondida.
+      Palavras escondidas têm 2 dicas: 1° dica mostra a região aproximada e 2° dica revela o nome no menu.
+      Palavras já expostas no menu têm somente 1 dica (região).
+    </span>
+  </span>
+  <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleMenu">–</button>
+</div>
+</div>
+
+<ul id="wordList">
+
+<li id="menu-Agua">Água</li>
+<li id="menu-Ar">Ar</li>
+<li id="menu-Baphomet" data-def="Figura simbólica associada ao ocultismo e à dualidade.">Baphomet</li>
+<li id="menu-Bruxa">Bruxa</li>
+<li id="menu-Coven">Coven</li>
+<li id="menu-El Aquelarre" data-def="Obra de Goya que representa um sabá de bruxas."><a href="https://pt.wikipedia.org/wiki/El_Aquelarre_(1798)">El Aquelarre</a></li>
+<li id="menu-Elementos">Elementos</li>
+<li id="menu-Familiar" data-def="Entidade ou animal que auxilia uma bruxa.">Familiar</li>
+<li id="menu-Fogo">Fogo</li>
+<li id="menu-Goya" data-def="Pintor espanhol conhecido por obras sombrias."><a href="https://pt.wikipedia.org/wiki/Francisco_de_Goya">Goya</a></li>
+<li id="menu-Lua">Lua</li>
+<li id="menu-Pacto">Pacto</li>
+<li id="menu-Ritual">Ritual</li>
+<li id="menu-Sabbath" data-def="Encontro ritualístico associado à bruxaria.">Sabbath</li>
+<li id="menu-Terra">Terra</li>
+
+<li id="menu-Gato" class="hidden-word" data-hidden="Gato" data-def="um ser misterioso"></li>
+<li id="menu-Corvo" class="hidden-word" data-hidden="Corvo" data-def="um segundo ser misterioso"></li>
+<li id="menu-Pentagrama" class="hidden-word" data-hidden="Pentagrama" data-def="um simbolo escondido"></li>
+
+</ul>
+
+<div id="mobileMenuOptions">
+  <label for="mobileMenuPin">
+    Fixação menu (mobile)
+    <select id="mobileMenuPin">
+      <option value="free">Livre (arrastar)</option>
+      <option value="bottom-collapsed">Recolhido inferior</option>
+      <option value="top-left">Superior esquerdo</option>
+      <option value="top-right">Superior direito</option>
+    </select>
+  </label>
+</div>
+
+<div id="wordTooltip"></div>
+
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+
+<select id="overlaySelector">
+<option value="mandala_gabarito_1.png">Verde</option>
+<option value="mandala_gabarito_2.png">Verde só que diferente</option>
+</select>
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container">
+
+<img src="mandala_goya.png" usemap="#image-map" width="2048" height="2048" decoding="async" fetchpriority="high">
+
+<div id="answersOverlay"></div>
+<div id="regionHints">
+  <div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
+  <div id="regionHint-2" class="hint-region" style="left:1px;top:693px;width:2045px;height:667px;"></div>
+  <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
+</div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
+
+<map name="image-map">
+
+<area coords="1425,1416,1443,1428,1463,1400,1447,1389"
+shape="poly"
+onclick="toggleAnswer(this,'Agua'); return false;">
+
+<area coords="367,1559,358,1572,385,1585,389,1570"
+shape="poly"
+onclick="toggleAnswer(this,'Ar'); return false;">
+
+<area coords="633,1933,655,1950,681,1893,659,1882"
+shape="poly"
+onclick="toggleAnswer(this,'Baphomet'); return false;">
+
+<area coords="1840,1379,1864,1363,1895,1396,1875,1414"
+shape="poly"
+onclick="toggleAnswer(this,'Bruxa'); return false;">
+
+<area coords="789,1563,786,1596,837,1594,830,1565"
+shape="poly"
+onclick="toggleAnswer(this,'Coven'); return false;">
+
+<area coords="1675,1216,1691,1242,1697,1262,1717,1253,1733,1223,1724,1203,1700,1194"
+shape="poly"
+onclick="toggleAnswer(this,'El Aquelarre'); return false;">
+
+<area coords="97,1275,69,1280,121,1335,139,1321"
+shape="poly"
+onclick="toggleAnswer(this,'Elementos'); return false;">
+
+<area coords="688,970,716,972,723,1088,688,1090"
+shape="poly"
+onclick="toggleAnswer(this,'Familiar'); return false;">
+
+<area coords="699,1383,716,1376,736,1416,710,1422"
+shape="poly"
+onclick="toggleAnswer(this,'Fogo'); return false;">
+
+<area coords="1164,1308,1193,1297,1219,1266,1195,1248,1173,1253,1149,1262,1131,1279,1138,1305"
+shape="poly"
+onclick="toggleAnswer(this,'Goya'); return false;">
+
+<area coords="1074,796,1102,796,1116,822,1078,837"
+shape="poly"
+onclick="toggleAnswer(this,'Lua'); return false;">
+
+<area coords="648,1129,633,1177,582,1148,600,1126"
+shape="poly"
+onclick="toggleAnswer(this,'Pacto'); return false;">
+
+<area coords="1045,1727,1030,1745,1076,1771,1085,1749"
+shape="poly"
+onclick="toggleAnswer(this,'Ritual'); return false;">
+
+<area coords="152,4,183,7,183,73,148,71"
+shape="poly"
+onclick="toggleAnswer(this,'Sabbath'); return false;">
+
+<area coords="1394,65,1416,76,1401,116,1377,109"
+shape="poly"
+onclick="toggleAnswer(this,'Terra'); return false;">
+
+<area coords="1601,2008,1599,2032,1662,2032,1664,2006"
+shape="poly"
+onclick="toggleAnswer(this,'Gato'); return false;">
+
+<area coords="1877,30,1864,48,1913,81,1930,63"
+shape="poly"
+onclick="toggleAnswer(this,'Corvo'); return false;">
+
+<area coords="1024,970,1013,1006,971,1007,1002,1028,995,1068,1024,1041,1056,1070,1048,1030,1074,1006,1039,1006,1039,996"
+shape="poly"
+onclick="toggleAnswer(this,'Pentagrama'); return false;">
+
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+/* prevent image dragging */
+document.addEventListener("dragstart", e=>e.preventDefault());
+
+const overlayStorageKey = "GOYA_selectedOverlay";
+const guessStorageKey = "GOYA_wordGuesses";
+const hintStorageKey = "GOYA_wordHints";
+const progressStorageKey = "goyaPuzzleProgress";
+const mobileMenuSizeKey = "GOYA_mobileMenuSize";
+const mobileMenuPinKey = "GOYA_mobileMenuPin";
+const defaultOverlay = "mandala_gabarito_1.png";
+const minMandalaZoom = 1;
+const maxMandalaZoom = 3;
+const mandalaZoomStep = 0.1;
+
+const hintRegionMapCoords = [
+{ id: 1, coords: [1, 2, 2046, 692] },
+{ id: 2, coords: [1, 693, 2046, 1360] },
+{ id: 3, coords: [1, 1361, 2046, 2046] }
+];
+
+const baseMandalaSize = 2048;
+let regionDefinitions = [];
+let mandalaZoom = 1;
+
+function applyContainerTransform(){
+let container = document.querySelector(".container");
+if(!container) return;
+container.style.transform = "rotate(" + rotation + "deg)";
+}
+
+function setMandalaZoom(nextZoom){
+mandalaZoom = clamp(nextZoom, minMandalaZoom, maxMandalaZoom);
+document.documentElement.style.setProperty("--mandala-zoom", mandalaZoom.toFixed(2));
+layoutHintRegions();
+
+if(typeof imageMapResize === "function"){
+  imageMapResize();
+}
+}
+
+function getHintScale(){
+let container = document.querySelector(".container");
+if(!container) return 1;
+return container.clientWidth / baseMandalaSize;
+}
+
+function normalizeBounds(x1, y1, x2, y2){
+return {
+  minX: Math.min(x1, x2),
+  maxX: Math.max(x1, x2),
+  minY: Math.min(y1, y2),
+  maxY: Math.max(y1, y2)
+};
+}
+
+function rebuildRegionDefinitions(){
+
+let scale = getHintScale();
+
+regionDefinitions = hintRegionMapCoords.map(region => {
+let [x1, y1, x2, y2] = region.coords;
+let scaled = normalizeBounds(x1 * scale, y1 * scale, x2 * scale, y2 * scale);
+
+return {
+  id: region.id,
+  ...scaled
+};
+});
+}
+
+function layoutHintRegions(){
+
+let scale = getHintScale();
+
+hintRegionMapCoords.forEach(region => {
+let regionEl = document.getElementById("regionHint-" + region.id);
+if(!regionEl) return;
+
+let [x1, y1, x2, y2] = region.coords;
+let bounds = normalizeBounds(x1, y1, x2, y2);
+
+regionEl.style.left = (bounds.minX * scale) + "px";
+regionEl.style.top = (bounds.minY * scale) + "px";
+regionEl.style.width = ((bounds.maxX - bounds.minX) * scale) + "px";
+regionEl.style.height = ((bounds.maxY - bounds.minY) * scale) + "px";
+});
+
+rebuildRegionDefinitions();
+}
+
+/* load */
+window.addEventListener("load", function(){
+
+/* ===== hidden words: show ???? ===== */
+document.querySelectorAll(".hidden-word").forEach(li => {
+
+let word = li.dataset.hidden;
+li.textContent = "?".repeat(word.length);
+li.spellcheck = false;
+
+});
+
+loadGuesses();
+loadHints();
+updateCounter();
+initMobileMenuOptions();
+
+setMandalaZoom(1);
+
+/* restore overlay OR set default */
+let savedOverlay = localStorage.getItem(overlayStorageKey);
+let validOverlays = Array.from(overlaySelector.options).map(option => option.value);
+
+if(savedOverlay && validOverlays.includes(savedOverlay)){
+  currentOverlay = savedOverlay;
+  overlaySelector.value = savedOverlay;
+}else{
+  currentOverlay = defaultOverlay;
+  overlaySelector.value = defaultOverlay;
+}
+
+/* apply overlay immediately */
+overlaySelector.dispatchEvent(new Event("change"));
+layoutHintRegions();
+applyMenuBounds();
+applyContainerTransform();
+
+/* load answers AFTER overlay is ready */
+loadProgress();
+});
+
+window.addEventListener("resize", () => {
+if(isMobileViewport()){
+  if(mandalaZoom !== 1){
+    setMandalaZoom(1);
+  }
+}else{
+  setMandalaZoom(mandalaZoom);
+}
+layoutHintRegions();
+let sizeInput = document.getElementById("mobileMenuSize");
+if(sizeInput){
+  setMobileMenuScaleVars(Number(sizeInput.value || 0.25));
+}else{
+  let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+  let fallbackScale = Number.isFinite(savedScale) ? clamp(savedScale, 0.20, 0.60) : 0.25;
+  setMobileMenuScaleVars(fallbackScale);
+}
+let pinSelect = document.getElementById("mobileMenuPin");
+if(pinSelect){
+  applyMobileMenuPin(pinSelect.value);
+}
+applyMenuBounds();
+});
+
+
+
+  
+
+/* desktop intentionally uses browser-native zoom behavior (same as other mandalas) */
+
+/* ===== toggle mode ===== */
+
+let allowToggleOff=true;
+
+toggleClickMode.onclick=function(){
+
+allowToggleOff=!allowToggleOff;
+
+this.textContent=allowToggleOff
+? "Desmarcar: ON"
+: "Desmarcar: OFF";
+};
+
+/* OVERLAY */
+
+overlaySelector.onchange = function(){
+
+currentOverlay = this.value;
+
+Object.values(answerClips).forEach(clip=>{
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+});
+
+localStorage.setItem(overlayStorageKey, currentOverlay);
+};
+
+/* ===== menu items ===== */
+
+const menuItems={};
+
+document.querySelectorAll("#wordList li").forEach(li=>{
+menuItems[li.id]=li;
+});
+
+/* ===== menu definitions ===== */
+
+const tooltip = document.getElementById("wordTooltip");
+
+function getHiddenLength(text){
+return Array.from(text || "").length;
+}
+
+function trimGuess(text, maxLength){
+return Array.from((text || "").replace(/\r?\n/g, "")).slice(0, maxLength).join("");
+}
+
+function getMaskedWord(li){
+return "?".repeat(getHiddenLength(li.dataset.hidden));
+}
+
+function renderMenuWord(li){
+
+if(!li.classList.contains("hidden-word")) return;
+
+let hintLevel = Number(li.dataset.hintLevel || 0);
+li.classList.toggle("hint-revealed", hintLevel >= 2 && !li.classList.contains("found"));
+
+if(li.classList.contains("found")){
+  li.textContent = li.dataset.hidden;
+  return;
+}
+
+if(hintLevel >= 2){
+  li.textContent = li.dataset.hidden;
+  return;
+}
+
+let guess = li.dataset.guess || "";
+li.textContent = guess || getMaskedWord(li);
+}
+
+function saveGuesses(){
+
+let guesses = {};
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+if(li.dataset.guess){
+  guesses[li.id] = li.dataset.guess;
+}
+});
+
+localStorage.setItem(guessStorageKey, JSON.stringify(guesses));
+}
+
+function loadGuesses(){
+
+let guesses = readStoredObject(guessStorageKey);
+if(!guesses) return;
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+
+let savedGuess = guesses[li.id];
+if(!savedGuess) return;
+
+li.dataset.guess = trimGuess(savedGuess, getHiddenLength(li.dataset.hidden));
+renderMenuWord(li);
+
+});
+}
+
+function saveHints(){
+
+let hints = {};
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+let hintLevel = Number(li.dataset.hintLevel || 0);
+if(hintLevel > 0){
+  hints[li.id] = hintLevel;
+}
+});
+
+localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+
+let hints = readStoredObject(hintStorageKey);
+if(!hints) return;
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+
+let savedHint = Number(hints[li.id] || 0);
+if(savedHint <= 0) return;
+
+li.dataset.hintLevel = String(Math.min(savedHint, 2));
+renderMenuWord(li);
+
+});
+}
+
+function readStoredObject(storageKey){
+
+let saved = localStorage.getItem(storageKey);
+if(!saved) return null;
+
+try{
+let parsed = JSON.parse(saved);
+return parsed && typeof parsed === "object" ? parsed : null;
+}catch{
+return null;
+}
+}
+
+function findAreaByWord(word){
+return Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area => {
+let handler = area.getAttribute("onclick") || "";
+return handler.includes("'" + word + "'");
+}) || null;
+}
+
+function getAreaBounds(area){
+
+let coords = (area.coords || "").split(",").map(Number).filter(Number.isFinite);
+if(coords.length < 2) return null;
+
+let xs = [];
+let ys = [];
+
+for(let i=0;i<coords.length;i+=2){
+xs.push(coords[i]);
+ys.push(coords[i + 1]);
+}
+
+if(!xs.length || !ys.length) return null;
+
+return {
+  minX: Math.min(...xs),
+  maxX: Math.max(...xs),
+  minY: Math.min(...ys),
+  maxY: Math.max(...ys)
+};
+}
+
+function getRegionForArea(area){
+
+let bounds = getAreaBounds(area);
+if(!bounds) return null;
+
+let centerX = (bounds.minX + bounds.maxX) / 2;
+let centerY = (bounds.minY + bounds.maxY) / 2;
+
+let centerMatch = regionDefinitions.find(region =>
+centerX >= region.minX &&
+centerX <= region.maxX &&
+centerY >= region.minY &&
+centerY <= region.maxY
+);
+
+if(centerMatch) return centerMatch;
+
+let overlapRanked = regionDefinitions
+.map(region => {
+  let overlapY = Math.min(bounds.maxY, region.maxY) - Math.max(bounds.minY, region.minY);
+  return { region, overlapY };
+})
+.filter(item => item.overlapY >= 0)
+.sort((a, b) => b.overlapY - a.overlapY);
+
+return overlapRanked.length ? overlapRanked[0].region : null;
+}
+
+let activeRegionHintTimeout = null;
+
+function flashRegionHint(regionId){
+
+let regionEl = document.getElementById("regionHint-" + regionId);
+if(!regionEl) return;
+
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+
+if(activeRegionHintTimeout){
+  clearTimeout(activeRegionHintTimeout);
+}
+
+regionEl.classList.add("active");
+
+activeRegionHintTimeout = setTimeout(() => {
+  regionEl.classList.remove("active");
+}, 2200);
+}
+
+function centerViewOnRegion(region){
+
+if(!region) return;
+
+let container = document.querySelector(".container");
+if(!container) return;
+
+let containerRect = container.getBoundingClientRect();
+let regionCenterX = (region.minX + region.maxX) / 2;
+let regionCenterY = (region.minY + region.maxY) / 2;
+
+let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
+
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+window.scrollTo({
+left: Math.min(Math.max(targetX, 0), maxX),
+top: Math.min(Math.max(targetY, 0), maxY),
+behavior: "smooth"
+});
+}
+
+function applyHint(item, hintLevel, hintWord=null){
+
+let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
+item.dataset.hintLevel = String(Math.min(nextLevel, 2));
+let word = hintWord || item.dataset.hidden;
+let area = word ? findAreaByWord(word) : null;
+let region = area ? getRegionForArea(area) : null;
+
+if(hintLevel >= 1 && region){
+  flashRegionHint(region.id);
+  centerViewOnRegion(region);
+}
+
+renderMenuWord(item);
+saveHints();
+}
+
+function getWordFromMenuItem(item){
+if(item.classList.contains("hidden-word")) return item.dataset.hidden;
+let idWord = (item.id || "").replace(/^menu-/, "");
+return idWord || item.textContent.trim();
+}
+
+function placeCaretAtEnd(el){
+
+let range = document.createRange();
+let selection = window.getSelection();
+
+range.selectNodeContents(el);
+range.collapse(false);
+selection.removeAllRanges();
+selection.addRange(range);
+}
+
+function finishGuessEdit(item, keepCurrentText=true){
+
+if(item.contentEditable !== "true") return;
+
+let nextGuess = keepCurrentText
+? trimGuess(item.textContent, getHiddenLength(item.dataset.hidden))
+: (item.dataset.guess || "");
+
+item.contentEditable = "false";
+item.removeAttribute("data-editing");
+
+if(nextGuess){
+  item.dataset.guess = nextGuess;
+}else{
+  delete item.dataset.guess;
+}
+
+renderMenuWord(item);
+saveGuesses();
+}
+
+document.querySelectorAll("#wordList li").forEach(item => {
+
+item.addEventListener("mouseenter", e => {
+
+let text = item.dataset.def;
+if(!text) return;
+
+tooltip.textContent = text;
+tooltip.style.opacity = "1";
+
+});
+
+item.addEventListener("mousemove", e => {
+
+tooltip.style.left = (e.clientX + 10) + "px";
+tooltip.style.top = (e.clientY + 10) + "px";
+
+});
+
+item.addEventListener("mouseleave", () => {
+
+tooltip.style.opacity = "0";
+
+});
+
+item.addEventListener("click", e => {
+
+if(e.button !== 0) return;
+if(!item.classList.contains("hidden-word")) return;
+if(item.classList.contains("found")) return;
+if(Number(item.dataset.hintLevel || 0) >= 2) return;
+
+item.contentEditable = "true";
+item.dataset.editing = "true";
+item.textContent = item.dataset.guess || "";
+placeCaretAtEnd(item);
+});
+
+item.addEventListener("input", () => {
+
+if(item.contentEditable !== "true") return;
+
+let trimmed = trimGuess(item.textContent, getHiddenLength(item.dataset.hidden));
+
+if(item.textContent !== trimmed){
+  item.textContent = trimmed;
+  placeCaretAtEnd(item);
+}
+});
+
+item.addEventListener("keydown", e => {
+
+if(item.contentEditable !== "true") return;
+
+if(e.key === "Enter"){
+  e.preventDefault();
+  finishGuessEdit(item);
+}
+
+if(e.key === "Escape"){
+  e.preventDefault();
+  finishGuessEdit(item, false);
+}
+});
+
+item.addEventListener("blur", () => {
+finishGuessEdit(item);
+});
+
+item.addEventListener("contextmenu", e => {
+
+e.preventDefault();
+
+if(item.classList.contains("found")) return;
+
+finishGuessEdit(item);
+
+let currentHint = Number(item.dataset.hintLevel || 0);
+let maxHintLevel = item.classList.contains("hidden-word") ? 2 : 1;
+let wordForHint = getWordFromMenuItem(item);
+
+if(currentHint >= maxHintLevel){
+  if(maxHintLevel === 1){
+    alert("Essa palavra já recebeu sua única dica.");
+  }else{
+    alert("Essa palavra já recebeu todas as dicas.");
+  }
+  return;
+}
+
+let nextHint = currentHint + 1;
+let wantsHint = confirm("Deseja a " + nextHint + "° dica?");
+
+if(!wantsHint) return;
+
+applyHint(item, nextHint, wordForHint);
+});
+
+});
+
+/* ===== answer highlights ===== */
+
+const answerClips={};
+
+function toggleAnswer(area,word,options={}){
+
+let forceVisible = options.forceVisible;
+let persist = options.persist !== false;
+
+if(!area.coords) return;
+
+if(!answerClips[word]){
+
+let coords=area.coords.split(",");
+let points=[];
+
+for(let i=0;i<coords.length;i+=2){
+points.push(coords[i]+"px "+coords[i+1]+"px");
+}
+
+let clip = document.createElement("div");
+clip.className = "answerClip";
+clip.style.clipPath = "polygon(" + points.join(",") + ")";
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+
+const answersOverlay = document.getElementById("answersOverlay");
+
+answersOverlay.appendChild(clip);
+
+answerClips[word]=clip;
+}
+
+let menuWord = menuItems["menu-"+word];
+let isVisible = answerClips[word].classList.contains("visible");
+let shouldShow = forceVisible === true ? true : !isVisible;
+
+if(shouldShow && !isVisible){
+
+  answerClips[word].classList.add("visible");
+  if(menuWord){
+    menuWord.classList.add("found");
+  }
+
+  if(menuWord && menuWord.classList.contains("hidden-word")){
+    renderMenuWord(menuWord);
+  }
+}
+
+else if(!shouldShow && allowToggleOff){
+
+  answerClips[word].classList.remove("visible");
+  if(menuWord){
+    menuWord.classList.remove("found");
+  }
+
+  if(menuWord && menuWord.classList.contains("hidden-word")){
+    renderMenuWord(menuWord);
+  }
+}
+
+updateCounter();
+if(persist){
+  saveProgress();
+}
+}
+
+/*counter*/
+function updateCounter(){
+
+let found = document.querySelectorAll("#wordList li.found").length;
+let total = document.querySelectorAll("#wordList li").length;
+
+document.getElementById("counter").textContent =
+found + " / " + total;
+
+if(found === total && total > 0){
+
+setTimeout(function(){
+alert("fim! 🎉🎉");
+},200);
+}
+}
+
+/* SAVE PROGRESS */
+
+function loadProgress(){
+
+let savedProgress = readStoredObject(progressStorageKey);
+if(!savedProgress) return;
+
+let words = Array.isArray(savedProgress)
+? savedProgress
+: Object.entries(savedProgress)
+  .filter(([, isFound]) => Boolean(isFound))
+  .map(([word]) => word);
+
+if(!words.length) return;
+
+words.forEach(word => {
+
+let area = findAreaByWord(word) || document.getElementById("area-" + word);
+
+if(area){
+
+if(!answerClips[word] || !answerClips[word].classList.contains("visible")){
+
+toggleAnswer(area, word, { forceVisible: true, persist: false });
+}
+}
+});
+
+updateCounter();
+}
+
+/* ===== reset ===== */
+
+function clearAll(){
+
+for(let word in answerClips){
+answerClips[word].classList.remove("visible");
+
+}
+
+document.querySelectorAll("#wordList li").forEach(li => {
+
+  li.classList.remove("found", "hint-revealed");
+  finishGuessEdit(li, false);
+
+  if(li.classList.contains("hidden-word")){
+    delete li.dataset.guess;
+    delete li.dataset.hintLevel;
+    renderMenuWord(li);
+  }
+
+});
+
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+
+localStorage.removeItem(progressStorageKey);
+localStorage.removeItem(guessStorageKey);
+localStorage.removeItem(hintStorageKey);
+updateCounter();
+}
+
+function confirmReset(){
+
+if(confirm("Reset?")){
+clearAll();
+}
+
+}
+
+function isMobileViewport(){
+return window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
+}
+
+function clamp(value, min, max){
+return Math.min(Math.max(value, min), max);
+}
+
+function getViewportSize(){
+if(window.visualViewport){
+  return {
+    width: window.visualViewport.width,
+    height: window.visualViewport.height
+  };
+}
+
+return {
+  width: window.innerWidth,
+  height: window.innerHeight
+};
+}
+
+function applyMenuBounds(){
+if(wordMenu.classList.contains("mobile-pinned")) return;
+
+let currentLeft = wordMenu.offsetLeft;
+let currentTop = wordMenu.offsetTop;
+let viewport = getViewportSize();
+let maxLeft = Math.max(0, viewport.width - wordMenu.offsetWidth);
+let maxTop = Math.max(0, viewport.height - wordMenu.offsetHeight);
+let boundedLeft = clamp(currentLeft, 0, maxLeft);
+let boundedTop = clamp(currentTop, 0, maxTop);
+
+wordMenu.style.left = boundedLeft + "px";
+wordMenu.style.top = boundedTop + "px";
+wordMenu.style.right = "auto";
+wordMenu.style.bottom = "auto";
+}
+
+function applyMobileMenuPin(pinMode){
+wordMenu.classList.remove("pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right", "mobile-pinned");
+
+if(!isMobileViewport() || pinMode === "free"){
+  /* keep current collapsed/expanded state when menu is free (desktop/browser zoom triggers resize) */
+  localStorage.setItem(mobileMenuPinKey, "free");
+  return;
+}
+
+wordMenu.classList.add("mobile-pinned");
+
+if(pinMode === "bottom-collapsed"){
+  wordMenu.classList.add("pinned-bottom-collapsed", "collapsed");
+}else if(pinMode === "top-left"){
+  wordMenu.classList.add("pinned-top-left");
+  wordMenu.classList.remove("collapsed");
+}else if(pinMode === "top-right"){
+  wordMenu.classList.add("pinned-top-right");
+  wordMenu.classList.remove("collapsed");
+}
+
+localStorage.setItem(mobileMenuPinKey, pinMode);
+requestAnimationFrame(autoFitMobileMenuContent);
+}
+
+function getBaseMobileUiScale(scale){
+return clamp((scale / 0.25) * 0.62, 0.36, 1.2);
+}
+
+function autoFitMobileMenuContent(){
+if(!isMobileViewport()) return;
+
+let currentScale = Number(getComputedStyle(document.documentElement).getPropertyValue("--mobile-menu-scale")) || 0.25;
+let uiScale = getBaseMobileUiScale(currentScale);
+let minUiScale = 0.40;
+let menu = wordMenu;
+
+document.documentElement.style.setProperty("--mobile-menu-ui-scale", uiScale.toFixed(2));
+
+for(let i = 0; i < 24; i++){
+  if(menu.scrollHeight <= menu.clientHeight + 1) break;
+  if(uiScale <= minUiScale) break;
+  uiScale = Math.max(minUiScale, uiScale - 0.04);
+  document.documentElement.style.setProperty("--mobile-menu-ui-scale", uiScale.toFixed(2));
+}
+}
+
+function setMobileMenuScaleVars(scale){
+let boundedScale = clamp(scale, 0.20, 0.60);
+let uiScale = isMobileViewport()
+? getBaseMobileUiScale(boundedScale)
+: mandalaZoom;
+
+document.documentElement.style.setProperty("--mobile-menu-scale", boundedScale.toFixed(2));
+document.documentElement.style.setProperty("--mobile-menu-ui-scale", uiScale.toFixed(2));
+
+if(isMobileViewport()){
+  requestAnimationFrame(autoFitMobileMenuContent);
+}
+}
+
+function initMobileMenuOptions(){
+let sizeInput = document.getElementById("mobileMenuSize");
+let pinSelect = document.getElementById("mobileMenuPin");
+if(!pinSelect) return;
+
+let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+let nextScale = Number.isFinite(savedScale) ? clamp(savedScale, 0.20, 0.60) : 0.25;
+setMobileMenuScaleVars(nextScale);
+if(sizeInput){
+  sizeInput.value = nextScale.toFixed(2);
+  sizeInput.addEventListener("input", function(){
+    let scale = clamp(Number(this.value), 0.20, 0.60);
+    setMobileMenuScaleVars(scale);
+    localStorage.setItem(mobileMenuSizeKey, scale.toFixed(2));
+    applyMenuBounds();
+  });
+}
+
+let savedPin = localStorage.getItem(mobileMenuPinKey) || "free";
+pinSelect.value = savedPin;
+applyMobileMenuPin(savedPin);
+
+pinSelect.addEventListener("change", function(){
+  applyMobileMenuPin(this.value);
+  if(this.value === "free"){
+    applyMenuBounds();
+  }
+});
+}
+
+/* ===== menu drag ===== */
+
+let menu=wordMenu;
+let header=menuHeader;
+
+let offsetX,offsetY,dragging=false,dragPointerId=null;
+
+header.addEventListener("pointerdown", e => {
+if(e.target.closest("button, a, input, select")) return;
+if(wordMenu.classList.contains("mobile-pinned")) return;
+dragging=true;
+dragPointerId=e.pointerId;
+offsetX=e.clientX-menu.offsetLeft;
+offsetY=e.clientY-menu.offsetTop;
+if(header.setPointerCapture){
+  header.setPointerCapture(e.pointerId);
+}
+});
+
+document.addEventListener("pointermove", e => {
+if(!dragging) return;
+if(dragPointerId !== null && e.pointerId !== dragPointerId) return;
+
+let nextLeft = e.clientX - offsetX;
+let nextTop = Math.max(e.clientY - offsetY, 0);
+  
+menu.style.left=nextLeft+"px";
+menu.style.top=nextTop+"px";
+menu.style.bottom="auto";
+menu.style.right="auto";
+});
+
+function stopMenuDrag(e){
+if(!dragging) return;
+if(e && dragPointerId !== null && e.pointerId !== dragPointerId) return;
+dragging=false;
+dragPointerId=null;
+applyMenuBounds();
+}
+
+document.addEventListener("pointerup", stopMenuDrag);
+document.addEventListener("pointercancel", stopMenuDrag);
+
+/* ===== collapse menu ===== */
+
+toggleMenu.onclick=()=>{
+  if(wordMenu.classList.contains("pinned-bottom-collapsed")) return;
+  wordMenu.classList.toggle("collapsed");
+  applyMenuBounds();
+  requestAnimationFrame(autoFitMobileMenuContent);
+};
+
+/* ===== rotate mandala ===== */
+
+let rotation=0;
+
+rotateMandala.onclick=function(){
+
+rotation=(rotation+90)%360;
+
+applyContainerTransform();
+
+this.textContent="Rotate ("+rotation+"°)";
+
+};
+
+/* ===== drag scroll ===== */
+
+let isDragging=false,startX,startY,scrollLeft,scrollTop;
+
+document.addEventListener("mousedown",e=>{
+
+if(e.target.closest("#wordMenu")) return;
+
+isDragging=true;
+document.body.classList.add("dragging");
+
+startX=e.clientX;
+startY=e.clientY;
+
+scrollLeft=window.scrollX;
+scrollTop=window.scrollY;
+
+});
+
+document.addEventListener("mousemove",e=>{
+
+if(!isDragging) return;
+
+window.scrollTo(
+scrollLeft-(e.clientX-startX),
+scrollTop-(e.clientY-startY)
+);
+
+});
+
+document.addEventListener("mouseup",()=>{
+isDragging=false;
+document.body.classList.remove("dragging");
+});
+
+/* ===== savePuzzleProgress ===== */
+
+function saveProgress(){
+
+let foundWords = Array.from(document.querySelectorAll("#wordList li.found"))
+.map(item => (item.id || "").replace(/^menu-/, ""))
+.filter(Boolean);
+
+localStorage.setItem(progressStorageKey, JSON.stringify(foundWords));
+
+}
+
+</script>
+
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>imageMapResize();</script>
+
+</body>
+</html>

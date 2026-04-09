@@ -535,6 +535,11 @@
       font-size: calc(11px * var(--mobile-menu-ui-scale));
     }
 
+    .margrego-home {
+      text-decoration: none;
+      font-size: calc(8px * var(--mobile-menu-ui-scale));
+    }
+
     .margrego-tooltip-wrap {
       position: relative;
       display: inline-flex;
@@ -596,13 +601,6 @@
       text-align: center;
     }
 
-    #hiddenZoomValue {
-      min-width: 58px;
-      text-align: center;
-      font-size: 0.92em;
-      color: #f6eee2;
-    }
-
     .hidden-menu-button {
       padding: 8px;
       color: white;
@@ -627,6 +625,7 @@
       width: var(--board-size);
       height: var(--board-size);
       overflow: hidden;
+      touch-action: none;
       background: transparent;
       border: none;
       box-shadow: none;
@@ -687,19 +686,6 @@
       stroke-width: 2;
       filter: drop-shadow(0 0 14px rgba(255, 230, 120, 0.92));
       animation: hidden-box-in 0.25s ease;
-    }
-
-    .hidden-hint-shape {
-      fill: rgba(162, 240, 255, 0.18);
-      stroke: rgba(200, 252, 255, 0.98);
-      stroke-width: 3;
-      filter: drop-shadow(0 0 18px rgba(167, 247, 255, 1));
-      animation: hint-pulse 0.85s ease-in-out 4;
-    }
-
-    @keyframes hint-pulse {
-      0%, 100% { opacity: 0.2; }
-      50% { opacity: 1; }
     }
 
     @keyframes hidden-box-in {
@@ -952,15 +938,12 @@
           <span id="hiddenCounter">0 / 35</span>
           <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">i</button><span class="margrego-tooltip">do mar.. ou de água doce pois alguns seres são muito fofos</span></span>
           <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">?</button><span class="margrego-tooltip">Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite. Para dicas, clique com o botão direito do mouse no menu. 1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!</span></span>
+          <a id="hiddenHomeButton" class="margrego-info margrego-home" href="/" aria-label="Voltar ao menu principal" title="Menu principal">☰</a>
           <button id="toggleHiddenMenu" type="button">-</button>
         </div>
       </div>
       <div class="hidden-menu-actions">
-        <button id="hiddenTipButton" class="hidden-menu-button" type="button">Dica ✨</button>
-        <button id="hiddenZoomOutButton" class="hidden-menu-button" type="button">Zoom -</button>
-        <button id="hiddenZoomInButton" class="hidden-menu-button" type="button">Zoom +</button>
-        <span id="hiddenZoomValue">100%</span>
-        <button id="hiddenHomeButton" class="hidden-menu-button" type="button">Menu ☰</button>
+        <button id="hiddenTipButton" class="hidden-menu-button" type="button">Centralizar Dica</button>
       </div>
       <button id="hiddenResetButton" class="hidden-menu-button" type="button">Reset</button>
     </div>
@@ -1500,10 +1483,6 @@
     const hiddenContent = document.getElementById("hiddenContent");
     const hiddenResetButton = document.getElementById("hiddenResetButton");
     const hiddenTipButton = document.getElementById("hiddenTipButton");
-    const hiddenZoomOutButton = document.getElementById("hiddenZoomOutButton");
-    const hiddenZoomInButton = document.getElementById("hiddenZoomInButton");
-    const hiddenZoomValue = document.getElementById("hiddenZoomValue");
-    const hiddenHomeButton = document.getElementById("hiddenHomeButton");
     const toggleHiddenMenu = document.getElementById("toggleHiddenMenu");
     const journeyFooter = document.getElementById("journeyFooter");
     const goToLevel1Button = document.getElementById("goToLevel1Button");
@@ -1608,18 +1587,16 @@
       resetButton.addEventListener("click", resetJourney);
       hiddenResetButton.addEventListener("click", resetHiddenStage);
       hiddenTipButton.addEventListener("click", showHiddenHint);
-      hiddenZoomOutButton.addEventListener("click", () => adjustHiddenZoom(-0.15));
-      hiddenZoomInButton.addEventListener("click", () => adjustHiddenZoom(0.15));
-      hiddenHomeButton.addEventListener("click", () => { window.location.href = "/"; });
       goToLevel1Button.addEventListener("click", () => navigateToStage("levelOne"));
       goToLevel2Button.addEventListener("click", () => navigateToStage("levelTwo"));
       goToLevel3Button.addEventListener("click", () => navigateToStage("levelThree"));
       document.addEventListener("dragstart", (event) => {
         if (state.stage === "hidden") event.preventDefault();
       });
-      hiddenViewport.addEventListener("mousedown", onHiddenPanMouseDown);
-      document.addEventListener("mousemove", onHiddenPanMouseMove);
-      document.addEventListener("mouseup", onHiddenPanMouseUp);
+      hiddenViewport.addEventListener("pointerdown", onHiddenPanPointerDown);
+      hiddenViewport.addEventListener("pointermove", onHiddenPanPointerMove);
+      hiddenViewport.addEventListener("pointerup", onHiddenPanPointerUp);
+      hiddenViewport.addEventListener("pointercancel", onHiddenPanPointerUp);
       hiddenViewport.addEventListener("wheel", onHiddenStageWheel, { passive: false });
 
       toggleHiddenMenu.addEventListener("click", () => {
@@ -1997,16 +1974,15 @@
         window.scrollTo({left:0,top:0,behavior:"smooth"});
       }
     }
-    function applyHiddenViewTransform(){hiddenContent.style.transform=`translate(${state.hiddenPan.x}px, ${state.hiddenPan.y}px) scale(${state.hiddenZoom})`;hiddenZoomValue.textContent=`${Math.round(state.hiddenZoom*100)}%`}
+    function applyHiddenViewTransform(){hiddenContent.style.transform=`translate(${state.hiddenPan.x}px, ${state.hiddenPan.y}px) scale(${state.hiddenZoom})`}
     function clampHiddenPan(panX, panY, zoom = state.hiddenZoom){const scaledSize=BOARD_SIZE*zoom;const minX=Math.min(0,hiddenViewport.clientWidth-scaledSize);const minY=Math.min(0,hiddenViewport.clientHeight-scaledSize);return {x:Math.min(0,Math.max(minX,panX)),y:Math.min(0,Math.max(minY,panY))}}
     function setHiddenZoom(nextZoom, anchorClientX, anchorClientY){const oldZoom=state.hiddenZoom;const clampedZoom=Math.max(1,Math.min(3,Number(nextZoom)||1));const viewportRect=hiddenViewport.getBoundingClientRect();const anchorX=anchorClientX??(viewportRect.left+viewportRect.width/2);const anchorY=anchorClientY??(viewportRect.top+viewportRect.height/2);const relativeX=(anchorX-viewportRect.left-state.hiddenPan.x)/oldZoom;const relativeY=(anchorY-viewportRect.top-state.hiddenPan.y)/oldZoom;state.hiddenZoom=clampedZoom;const nextPanX=anchorX-viewportRect.left-relativeX*clampedZoom;const nextPanY=anchorY-viewportRect.top-relativeY*clampedZoom;state.hiddenPan=clampHiddenPan(nextPanX,nextPanY,clampedZoom);applyHiddenViewTransform()}
-    function adjustHiddenZoom(delta){setHiddenZoom(state.hiddenZoom+delta)}
     function onHiddenStageWheel(event){if(state.stage!=="hidden")return;event.preventDefault();setHiddenZoom(state.hiddenZoom+(event.deltaY<0?0.1:-0.1),event.clientX,event.clientY)}
-    function showHiddenHint(){if(state.stage!=="hidden")return;const remaining=HIDDEN_TARGETS.filter(target=>!state.hiddenFound.has(target.id));if(!remaining.length)return;const target=remaining[Math.floor(Math.random()*remaining.length)];const hintMarker=createHiddenMarker(target,"hidden-hint-shape");setTimeout(()=>hintMarker.remove(),2800)}
-    function onHiddenPanMouseDown(event){if(state.stage!=="hidden"||event.button!==0)return;if(event.target.closest("#hiddenMenu"))return;state.hiddenPanDrag={startX:event.clientX,startY:event.clientY,startPanX:state.hiddenPan.x,startPanY:state.hiddenPan.y,moved:false};hiddenContent.classList.add("dragging")}
-    function onHiddenPanMouseMove(event){if(!state.hiddenPanDrag)return;const deltaX=event.clientX-state.hiddenPanDrag.startX,deltaY=event.clientY-state.hiddenPanDrag.startY;if(Math.abs(deltaX)>3||Math.abs(deltaY)>3)state.hiddenPanDrag.moved=true;state.hiddenPan=clampHiddenPan(state.hiddenPanDrag.startPanX+deltaX,state.hiddenPanDrag.startPanY+deltaY);applyHiddenViewTransform()}
-    function onHiddenPanMouseUp(){if(!state.hiddenPanDrag)return;if(state.hiddenPanDrag.moved)state.hiddenSuppressClickUntil=Date.now()+120;state.hiddenPanDrag=null;hiddenContent.classList.remove("dragging")}
-    function onHiddenMenuMouseDown(event){if(state.stage!=="hidden"||event.button!==0)return;if(event.target.closest("button") && !event.target.isSameNode(toggleHiddenMenu))return;state.hiddenMenuDrag={offsetX:event.clientX-hiddenMenu.offsetLeft,offsetY:event.clientY-hiddenMenu.offsetTop};event.preventDefault()}
+    function showHiddenHint(){if(state.stage!=="hidden")return;const remaining=HIDDEN_TARGETS.filter(target=>!state.hiddenFound.has(target.id));if(!remaining.length)return;const target=remaining[Math.floor(Math.random()*remaining.length)];const centerX=(target.bounds.minX+target.bounds.maxX)/2,centerY=(target.bounds.minY+target.bounds.maxY)/2;const viewportCenterX=hiddenViewport.clientWidth/2,viewportCenterY=hiddenViewport.clientHeight/2;state.hiddenPan=clampHiddenPan(viewportCenterX-centerX*state.hiddenZoom,viewportCenterY-centerY*state.hiddenZoom);applyHiddenViewTransform()}
+    function onHiddenPanPointerDown(event){if(state.stage!=="hidden"||event.button!==0)return;if(event.target.closest("#hiddenMenu"))return;state.hiddenPanDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPanX:state.hiddenPan.x,startPanY:state.hiddenPan.y,moved:false};hiddenViewport.setPointerCapture(event.pointerId);hiddenContent.classList.add("dragging")}
+    function onHiddenPanPointerMove(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;const deltaX=event.clientX-state.hiddenPanDrag.startX,deltaY=event.clientY-state.hiddenPanDrag.startY;if(Math.abs(deltaX)>3||Math.abs(deltaY)>3)state.hiddenPanDrag.moved=true;state.hiddenPan=clampHiddenPan(state.hiddenPanDrag.startPanX+deltaX,state.hiddenPanDrag.startPanY+deltaY);applyHiddenViewTransform()}
+    function onHiddenPanPointerUp(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;if(state.hiddenPanDrag.moved)state.hiddenSuppressClickUntil=Date.now()+120;if(hiddenViewport.hasPointerCapture(event.pointerId))hiddenViewport.releasePointerCapture(event.pointerId);state.hiddenPanDrag=null;hiddenContent.classList.remove("dragging")}
+    function onHiddenMenuMouseDown(event){if(state.stage!=="hidden"||event.button!==0)return;if((event.target.closest("button") && !event.target.isSameNode(toggleHiddenMenu))||event.target.closest("a"))return;state.hiddenMenuDrag={offsetX:event.clientX-hiddenMenu.offsetLeft,offsetY:event.clientY-hiddenMenu.offsetTop};event.preventDefault()}
     function onHiddenMenuMouseMove(event){if(!state.hiddenMenuDrag)return;hiddenMenu.style.left=`${event.clientX-state.hiddenMenuDrag.offsetX}px`;hiddenMenu.style.top=`${event.clientY-state.hiddenMenuDrag.offsetY}px`}
     function onHiddenMenuMouseUp(){if(!state.hiddenMenuDrag)return;state.hiddenMenuDrag=null}
   </script>

@@ -499,7 +499,7 @@ font-family:inherit;
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite.
       Para dicas, clique com o botão direito do mouse no menu.
-      1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!
+      1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
     </span>
   </span>
   <a class="menu-btn" href="/" >☰</a>
@@ -805,14 +805,14 @@ function renderMenuWord(li){
 if(!li.classList.contains("hidden-word")) return;
 
 let hintLevel = Number(li.dataset.hintLevel || 0);
-li.classList.toggle("hint-revealed", hintLevel >= 2 && !li.classList.contains("found"));
+li.classList.toggle("hint-revealed", hintLevel >= 1 && !li.classList.contains("found"));
 
 if(li.classList.contains("found")){
   li.textContent = li.dataset.hidden;
   return;
 }
 
-if(hintLevel >= 2){
+if(hintLevel >= 1){
   li.textContent = li.dataset.hidden;
   return;
 }
@@ -1052,11 +1052,11 @@ item.dataset.hintLevel = String(Math.min(nextLevel, 2));
 let area = findAreaByWord(item.dataset.hidden);
 let region = area ? getRegionForArea(area) : null;
 
-if(hintLevel >= 1 && region){
+if(hintLevel >= 2 && region){
   flashRegionHint(region.id);
 }
 
-if(hintLevel >= 1 && region){
+if(hintLevel >= 2 && region){
   centerViewOnRegion(region);
 }
 

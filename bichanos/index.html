@@ -312,7 +312,7 @@ cursor:pointer;
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite.
       Para dicas, clique com o botão direito do mouse no menu.
-      1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!
+      1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
     </span>
   </span>
   <a class="menu-btn" href="/" >☰</a>
@@ -624,8 +624,9 @@ activeRegionHintTimeout = setTimeout(() => el.classList.remove("active"), 2200);
 function saveHints(){
 let hints = {};
 document.querySelectorAll("#wordList li").forEach(li => {
-if(Number(li.dataset.hintLevel || 0) > 0){
-hints[li.id] = 1;
+let hintLevel = Number(li.dataset.hintLevel || 0);
+if(hintLevel > 0){
+hints[li.id] = Math.min(hintLevel, 2);
 }
 });
 localStorage.setItem(hintStorageKey, JSON.stringify(hints));
@@ -641,10 +642,18 @@ hints = JSON.parse(raw);
 return;
 }
 document.querySelectorAll("#wordList li").forEach(li => {
-if(hints[li.id]){
-li.dataset.hintLevel = "1";
+let savedHint = Number(hints[li.id] || 0);
+if(savedHint > 0){
+li.dataset.hintLevel = String(Math.min(savedHint, 2));
+renderMenuWord(li);
 }
 });
+}
+
+function renderMenuWord(li){
+if(!li.classList.contains("hidden-word") || li.classList.contains("found")) return;
+let hintLevel = Number(li.dataset.hintLevel || 0);
+li.textContent = hintLevel >= 1 ? li.dataset.hidden : "?".repeat(li.dataset.hidden.length);
 }
 
 
@@ -653,9 +662,7 @@ window.addEventListener("load", function(){
 
 /* ===== hidden words: show ???? ===== */
 document.querySelectorAll(".hidden-word").forEach(li => {
-
-let word = li.dataset.hidden;
-li.textContent = "?".repeat(word.length);
+renderMenuWord(li);
 
 });
 
@@ -723,12 +730,23 @@ e.preventDefault();
 let word = li.id.replace("menu-", "");
 let regionId = areaRegionMap[word];
 let area = findAreaByWord(word);
+let currentHint = Number(li.dataset.hintLevel || 0);
+let maxHint = li.classList.contains("hidden-word") ? 2 : 1;
+if(currentHint >= maxHint){
+alert(maxHint === 1 ? "Essa palavra já recebeu sua única dica." : "Essa palavra já recebeu todas as dicas.");
+return;
+}
+let nextHint = currentHint + 1;
+li.dataset.hintLevel = String(nextHint);
+saveHints();
+
 if(area){
 centerViewOnArea(area);
 }
-if(regionId){
-li.dataset.hintLevel = "1";
-saveHints();
+if(li.classList.contains("hidden-word") && nextHint === 1){
+renderMenuWord(li);
+}
+if(regionId && (!li.classList.contains("hidden-word") || nextHint >= 2)){
 showRegionHint(regionId);
 }
 });
@@ -820,7 +838,7 @@ else if(allowToggleOff){
   menuItems["menu-"+word].classList.remove("found");
 
   if(menuWord.classList.contains("hidden-word")){
-    menuWord.textContent = "?".repeat(menuWord.dataset.hidden.length);
+    renderMenuWord(menuWord);
   };
 }
 

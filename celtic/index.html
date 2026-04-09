@@ -713,7 +713,7 @@ title: "Eilimintí na hÉireann",
 image: "mandala_celtic_nivel2.webp",
 overlays: ["mandala_gabarito_nivel2_1.webp"],
 infoText: "Elementos da Irlanda: Mandala e elementos inspirados na Irlanda, Gaeilge e tradições celtas",
-helpText: "Encontre palavras e elementos ligados à cultura Irlandesa. Nós celtas e demais ícones do nivel anterior NÃO constituem elementos aqui. Para dicas, clique com botão direito no mouse no menu. Primeira dica revela a área do elemento, segunda dica revela qual o nome do elemento/palavra secreta. Boa Sorte! ☘☘",
+helpText: "Encontre palavras e elementos ligados à cultura Irlandesa. Nós celtas e demais ícones do nivel anterior NÃO constituem elementos aqui. Para dicas, clique com botão direito no mouse no menu. Primeira dica revela qual o nome do elemento/palavra secreta, segunda dica revela a área do elemento. Boa Sorte! ☘☘",
 regions: [
 { id: 1, minX: 1, maxX: 2044, minY: 4, maxY: 695 },
 { id: 2, minX: -1, maxX: 2046, minY: 696, maxY: 1343 },
@@ -1187,9 +1187,9 @@ function renderMenuWord(li){
 if(!li.classList.contains("hidden-word")) return;
 
 let hintLevel = Number(li.dataset.hintLevel || 0);
-li.classList.toggle("hint-revealed", hintLevel >= 2 && !li.classList.contains("found"));
+li.classList.toggle("hint-revealed", hintLevel >= 1 && !li.classList.contains("found"));
 
-if(li.classList.contains("found") || hintLevel >= 2){
+if(li.classList.contains("found") || hintLevel >= 1){
 li.textContent = li.dataset.hidden;
 return;
 }
@@ -1316,7 +1316,7 @@ function applyHint(item, hintLevel){
 let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
 item.dataset.hintLevel = String(Math.min(nextLevel, 2));
 
-if(hintLevel === 1){
+if(hintLevel >= 2){
 let area = findAreaByWord(item.dataset.wordId);
 let region = area ? getRegionForArea(area) : null;
 if(region){

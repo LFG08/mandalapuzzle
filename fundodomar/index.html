@@ -15,6 +15,7 @@
       --muted: #8cb2b7;
       --accent-green: #2b8578;
       --board-size: 1280px;
+      --hidden-stage-zoom: 1.42;
       --mobile-menu-fixed-mobile-scale: 0.82;
       --mobile-menu-ui-scale: 1;
       --mobile-menu-base-width: 250px;
@@ -592,8 +593,27 @@
     }
 
     .margrego-menu.collapsed #hiddenList,
+    .margrego-menu.collapsed .hidden-menu-actions,
     .margrego-menu.collapsed .hidden-menu-button {
       display: none;
+    }
+
+    .hidden-menu-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.28);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+      flex-wrap: wrap;
+    }
+
+    .hidden-menu-actions .hidden-menu-button {
+      flex: 1 1 46%;
+      min-width: 88px;
+      border-top: none;
+      padding: 6px 8px;
+      text-align: center;
     }
 
     .hidden-menu-button {
@@ -609,7 +629,8 @@
 
     .margrego-stage-wrap {
       position: relative;
-      min-height: var(--board-size);
+      min-width: calc(var(--board-size) * var(--hidden-stage-zoom));
+      min-height: calc(var(--board-size) * var(--hidden-stage-zoom));
       margin: 0;
       overflow: visible;
     }
@@ -622,6 +643,8 @@
       background: transparent;
       border: none;
       box-shadow: none;
+      transform: scale(var(--hidden-stage-zoom));
+      transform-origin: top left;
     }
 
     .margrego-container {
@@ -746,29 +769,20 @@
       z-index: 9999;
       pointer-events: none;
       opacity: 0;
-      --clear-radius: 85vmax;
-      background:
-        radial-gradient(
-          circle at 50% 50%,
-          rgba(7, 18, 30, 0) 0 var(--clear-radius),
-          rgba(5, 12, 22, 0.58) calc(var(--clear-radius) + 14vmax),
-          rgba(3, 9, 18, 0.92) 100%
-        );
-      transition:
-        opacity 700ms ease,
-        --clear-radius 3100ms cubic-bezier(0.2, 0.72, 0.22, 1);
+      background: radial-gradient(circle at 50% 42%, rgba(4, 12, 22, 0.98), rgba(1, 5, 10, 0.99));
+      transition: opacity 4000ms ease-in-out;
     }
 
     .stage-transition-overlay.active {
-      opacity: 1;
+      opacity: 0;
     }
 
-    .stage-transition-overlay.contract {
-      --clear-radius: 0vmax;
+    .stage-transition-overlay.active.descend {
+      opacity: 0.96;
     }
 
-    .stage-transition-overlay.expand {
-      --clear-radius: 85vmax;
+    .stage-transition-overlay.active.ascend {
+      opacity: 0;
     }
 
     @media (max-width: 1740px) {
@@ -927,15 +941,20 @@
   <section id="hiddenStage" class="hidden-stage">
     <div id="hiddenMenu" class="margrego-menu">
       <div class="margrego-header">
-        <span class="margrego-title">...tinha um Polvo</span>
+        <span class="margrego-title">E outras criaturas... </span>
         <div class="margrego-right">
           <span id="hiddenCounter">0 / 35</span>
-          <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">i</button><span class="margrego-tooltip">Encontre todos os elementos escondidos no mandala final.</span></span>
-          <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">?</button><span class="margrego-tooltip">Clique nas areas escondidas. Cada area encontrada acende no desenho.</span></span>
+          <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">i</button><span class="margrego-tooltip">do mar.. ou de água doce pois alguns seres são muito fofos</span></span>
+          <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">?</button><span class="margrego-tooltip">Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite. Para dicas, clique com o botão direito do mouse no menu. 1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!</span></span>
           <button id="toggleHiddenMenu" type="button">-</button>
         </div>
       </div>
       <ul id="hiddenList"></ul>
+      <div class="hidden-menu-actions">
+        <button id="hiddenToLevel1Button" class="hidden-menu-button" type="button">Nivel 1</button>
+        <button id="hiddenToLevel2Button" class="hidden-menu-button" type="button">Nivel 2</button>
+        <button id="hiddenHomeButton" class="hidden-menu-button" type="button">Menu ☰</button>
+      </div>
       <button id="hiddenResetButton" class="hidden-menu-button" type="button">Reset</button>
     </div>
     <div class="margrego-stage-wrap">
@@ -1472,6 +1491,9 @@
     const hiddenAreas = document.getElementById("hiddenAreas");
     const hiddenMarkers = document.getElementById("hiddenMarkers");
     const hiddenResetButton = document.getElementById("hiddenResetButton");
+    const hiddenToLevel1Button = document.getElementById("hiddenToLevel1Button");
+    const hiddenToLevel2Button = document.getElementById("hiddenToLevel2Button");
+    const hiddenHomeButton = document.getElementById("hiddenHomeButton");
     const toggleHiddenMenu = document.getElementById("toggleHiddenMenu");
     const journeyFooter = document.getElementById("journeyFooter");
     const goToLevel1Button = document.getElementById("goToLevel1Button");
@@ -1508,6 +1530,7 @@
       unlockedStages: ["levelOne"],
       hiddenScrollDrag: null,
       hiddenSuppressClickUntil: 0,
+      hiddenTouchDragId: null,
       hiddenMenuDrag: null,
       hiddenFound: new Set(),
       stage: "jigsaw",
@@ -1573,6 +1596,9 @@
 
       resetButton.addEventListener("click", resetJourney);
       hiddenResetButton.addEventListener("click", resetHiddenStage);
+      hiddenToLevel1Button.addEventListener("click", () => navigateToStage("levelOne"));
+      hiddenToLevel2Button.addEventListener("click", () => navigateToStage("levelTwo"));
+      hiddenHomeButton.addEventListener("click", () => { window.location.href = "/"; });
       goToLevel1Button.addEventListener("click", () => navigateToStage("levelOne"));
       goToLevel2Button.addEventListener("click", () => navigateToStage("levelTwo"));
       goToLevel3Button.addEventListener("click", () => navigateToStage("levelThree"));
@@ -1582,6 +1608,10 @@
       document.addEventListener("mousedown", onHiddenStageMouseDown);
       document.addEventListener("mousemove", onHiddenStageMouseMove);
       document.addEventListener("mouseup", onHiddenStageMouseUp);
+      document.addEventListener("touchstart", onHiddenStageTouchStart, { passive: false });
+      document.addEventListener("touchmove", onHiddenStageTouchMove, { passive: false });
+      document.addEventListener("touchend", onHiddenStageTouchEnd, { passive: true });
+      document.addEventListener("touchcancel", onHiddenStageTouchEnd, { passive: true });
 
       toggleHiddenMenu.addEventListener("click", () => {
         hiddenMenu.classList.toggle("collapsed");
@@ -1793,15 +1823,15 @@
     function playHiddenFindSound(){hiddenFindSound.currentTime=0;hiddenFindSound.play().catch(()=>{})}
     function clearStageTransitionOverlay() {
       if (!stageTransitionOverlay) return;
-      stageTransitionOverlay.classList.remove("active", "contract", "expand");
+      stageTransitionOverlay.classList.remove("active", "descend", "ascend");
     }
-    function playLevelTransitionSound(durationMs = 1050) {
+    function playLevelTransitionSound(durationMs = 1050, startTime = 3) {
       if (transitionSoundStopTimer) {
         clearTimeout(transitionSoundStopTimer);
         transitionSoundStopTimer = null;
       }
       levelTransitionSound.pause();
-      levelTransitionSound.currentTime = 3;
+      levelTransitionSound.currentTime = Math.max(0, startTime);
       levelTransitionSound.play().catch(() => {});
       transitionSoundStopTimer = setTimeout(() => {
         levelTransitionSound.pause();
@@ -1826,20 +1856,23 @@
     }
     async function playLevelTwoToThreeTransition() {
       if (!stageTransitionOverlay) return;
-      stageTransitionOverlay.classList.add("active", "contract");
-      stageTransitionOverlay.classList.remove("expand");
-      playLevelTransitionSound(4200);
-      await new Promise((resolve) => setTimeout(resolve, 3100));
+      stageTransitionOverlay.classList.remove("descend", "ascend");
+      stageTransitionOverlay.classList.add("active");
+      requestAnimationFrame(() => {
+        stageTransitionOverlay.classList.add("descend");
+      });
+      playLevelTransitionSound(8000, 0);
+      await new Promise((resolve) => setTimeout(resolve, 4000));
       unlockStage("levelThree");
       state.stage = "hidden";
       saveProgress();
       showHiddenStage();
       requestAnimationFrame(() => {
-        stageTransitionOverlay.classList.remove("contract");
-        stageTransitionOverlay.classList.add("expand");
+        stageTransitionOverlay.classList.remove("descend");
+        stageTransitionOverlay.classList.add("ascend");
       });
-      await new Promise((resolve) => setTimeout(resolve, 3200));
-      stageTransitionOverlay.classList.remove("active", "expand");
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      stageTransitionOverlay.classList.remove("active", "descend", "ascend");
     }
     function placePiece(piece){board.appendChild(piece.element);piece.element.style.position="absolute";piece.element.classList.add("placed");piece.element.style.left=`${piece.targetX}px`;piece.element.style.top=`${piece.targetY}px`;piece.placed=true;updatePieceAppearance(piece);playPlaceSound();compactTrayPieces();updateJigsawStatus();saveProgress();checkJigsawCompletion()}
     function returnPieceToTray(piece){if(!tray.contains(piece.element))tray.appendChild(piece.element);piece.element.classList.remove("placed");piece.placed=false;updatePieceAppearance(piece);const localLeft=piece.currentX-state.trayRect.left+tray.scrollLeft,localTop=piece.currentY-state.trayRect.top+tray.scrollTop;piece.sourceX=Math.max(0,localLeft);piece.sourceY=Math.max(0,localTop);piece.element.style.position="absolute";piece.element.style.left=`${piece.sourceX}px`;piece.element.style.top=`${piece.sourceY}px`}
@@ -1956,9 +1989,15 @@
         window.scrollTo({left:0,top:0,behavior:"smooth"});
       }
     }
-    function onHiddenStageMouseDown(event){if(state.stage!=="hidden"||event.button!==0)return;if(event.target.closest("#hiddenMenu"))return;state.hiddenScrollDrag={startX:event.clientX,startY:event.clientY,scrollLeft:window.scrollX,scrollTop:window.scrollY,moved:false};document.body.classList.add("dragging")}
-    function onHiddenStageMouseMove(event){if(state.stage!=="hidden"||!state.hiddenScrollDrag)return;const deltaX=event.clientX-state.hiddenScrollDrag.startX,deltaY=event.clientY-state.hiddenScrollDrag.startY;if(Math.abs(deltaX)>4||Math.abs(deltaY)>4)state.hiddenScrollDrag.moved=true;window.scrollTo({left:state.hiddenScrollDrag.scrollLeft-deltaX,top:state.hiddenScrollDrag.scrollTop-deltaY,behavior:"auto"})}
-    function onHiddenStageMouseUp(){if(state.stage!=="hidden"||!state.hiddenScrollDrag)return;if(state.hiddenScrollDrag.moved)state.hiddenSuppressClickUntil=Date.now()+80;state.hiddenScrollDrag=null;document.body.classList.remove("dragging")}
+    function startHiddenStageDrag(clientX, clientY){state.hiddenScrollDrag={startX:clientX,startY:clientY,scrollLeft:window.scrollX,scrollTop:window.scrollY,moved:false};document.body.classList.add("dragging")}
+    function updateHiddenStageDrag(clientX, clientY){if(state.stage!=="hidden"||!state.hiddenScrollDrag)return;const deltaX=clientX-state.hiddenScrollDrag.startX,deltaY=clientY-state.hiddenScrollDrag.startY;if(Math.abs(deltaX)>4||Math.abs(deltaY)>4)state.hiddenScrollDrag.moved=true;window.scrollTo({left:state.hiddenScrollDrag.scrollLeft-deltaX,top:state.hiddenScrollDrag.scrollTop-deltaY,behavior:"auto"})}
+    function endHiddenStageDrag(){if(state.stage!=="hidden"||!state.hiddenScrollDrag)return;if(state.hiddenScrollDrag.moved)state.hiddenSuppressClickUntil=Date.now()+80;state.hiddenScrollDrag=null;document.body.classList.remove("dragging")}
+    function onHiddenStageMouseDown(event){if(state.stage!=="hidden"||event.button!==0)return;if(event.target.closest("#hiddenMenu"))return;startHiddenStageDrag(event.clientX,event.clientY)}
+    function onHiddenStageMouseMove(event){updateHiddenStageDrag(event.clientX,event.clientY)}
+    function onHiddenStageMouseUp(){endHiddenStageDrag()}
+    function onHiddenStageTouchStart(event){if(state.stage!=="hidden")return;const touch=event.changedTouches?.[0];if(!touch||event.target.closest("#hiddenMenu"))return;state.hiddenTouchDragId=touch.identifier;startHiddenStageDrag(touch.clientX,touch.clientY);event.preventDefault()}
+    function onHiddenStageTouchMove(event){if(state.stage!=="hidden"||state.hiddenTouchDragId===null)return;const touch=Array.from(event.changedTouches||[]).find(item=>item.identifier===state.hiddenTouchDragId);if(!touch)return;updateHiddenStageDrag(touch.clientX,touch.clientY);event.preventDefault()}
+    function onHiddenStageTouchEnd(event){if(state.hiddenTouchDragId===null)return;const matches=Array.from(event.changedTouches||[]).some(item=>item.identifier===state.hiddenTouchDragId);if(!matches)return;state.hiddenTouchDragId=null;endHiddenStageDrag()}
     function onHiddenMenuMouseDown(event){if(state.stage!=="hidden"||event.button!==0)return;if(event.target.closest("button") && !event.target.isSameNode(toggleHiddenMenu))return;state.hiddenMenuDrag={offsetX:event.clientX-hiddenMenu.offsetLeft,offsetY:event.clientY-hiddenMenu.offsetTop};event.preventDefault()}
     function onHiddenMenuMouseMove(event){if(!state.hiddenMenuDrag)return;hiddenMenu.style.left=`${event.clientX-state.hiddenMenuDrag.offsetX}px`;hiddenMenu.style.top=`${event.clientY-state.hiddenMenuDrag.offsetY}px`}
     function onHiddenMenuMouseUp(){if(!state.hiddenMenuDrag)return;state.hiddenMenuDrag=null}

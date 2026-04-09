@@ -1519,6 +1519,7 @@
       unlockedStages: ["levelOne"],
       hiddenSuppressClickUntil: 0,
       hiddenMenuDrag: null,
+      hiddenMenuMoved: false,
       hiddenFound: new Set(),
       hiddenZoom: 1,
       hiddenPan: { x: 0, y: 0 },
@@ -1603,9 +1604,10 @@
         hiddenMenu.classList.toggle("collapsed");
         toggleHiddenMenu.textContent = hiddenMenu.classList.contains("collapsed") ? "+" : "-";
       });
-      hiddenMenuHeader.addEventListener("mousedown", onHiddenMenuMouseDown);
-      document.addEventListener("mousemove", onHiddenMenuMouseMove);
-      document.addEventListener("mouseup", onHiddenMenuMouseUp);
+      hiddenMenuHeader.addEventListener("pointerdown", onHiddenMenuPointerDown);
+      document.addEventListener("pointermove", onHiddenMenuPointerMove);
+      document.addEventListener("pointerup", onHiddenMenuPointerUp);
+      document.addEventListener("pointercancel", onHiddenMenuPointerUp);
 
       window.addEventListener("resize", handleResize);
     }
@@ -1978,13 +1980,13 @@
     function clampHiddenPan(panX, panY, zoom = state.hiddenZoom){const scaledSize=BOARD_SIZE*zoom;const minX=Math.min(0,hiddenViewport.clientWidth-scaledSize);const minY=Math.min(0,hiddenViewport.clientHeight-scaledSize);return {x:Math.min(0,Math.max(minX,panX)),y:Math.min(0,Math.max(minY,panY))}}
     function setHiddenZoom(nextZoom, anchorClientX, anchorClientY){const oldZoom=state.hiddenZoom;const clampedZoom=Math.max(1,Math.min(3,Number(nextZoom)||1));const viewportRect=hiddenViewport.getBoundingClientRect();const anchorX=anchorClientX??(viewportRect.left+viewportRect.width/2);const anchorY=anchorClientY??(viewportRect.top+viewportRect.height/2);const relativeX=(anchorX-viewportRect.left-state.hiddenPan.x)/oldZoom;const relativeY=(anchorY-viewportRect.top-state.hiddenPan.y)/oldZoom;state.hiddenZoom=clampedZoom;const nextPanX=anchorX-viewportRect.left-relativeX*clampedZoom;const nextPanY=anchorY-viewportRect.top-relativeY*clampedZoom;state.hiddenPan=clampHiddenPan(nextPanX,nextPanY,clampedZoom);applyHiddenViewTransform()}
     function onHiddenStageWheel(event){if(state.stage!=="hidden")return;event.preventDefault();setHiddenZoom(state.hiddenZoom+(event.deltaY<0?0.1:-0.1),event.clientX,event.clientY)}
-    function showHiddenHint(){if(state.stage!=="hidden")return;const remaining=HIDDEN_TARGETS.filter(target=>!state.hiddenFound.has(target.id));if(!remaining.length)return;const target=remaining[Math.floor(Math.random()*remaining.length)];const centerX=(target.bounds.minX+target.bounds.maxX)/2,centerY=(target.bounds.minY+target.bounds.maxY)/2;const viewportCenterX=hiddenViewport.clientWidth/2,viewportCenterY=hiddenViewport.clientHeight/2;state.hiddenPan=clampHiddenPan(viewportCenterX-centerX*state.hiddenZoom,viewportCenterY-centerY*state.hiddenZoom);applyHiddenViewTransform()}
-    function onHiddenPanPointerDown(event){if(state.stage!=="hidden"||event.button!==0)return;if(event.target.closest("#hiddenMenu"))return;state.hiddenPanDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPanX:state.hiddenPan.x,startPanY:state.hiddenPan.y,moved:false};hiddenViewport.setPointerCapture(event.pointerId);hiddenContent.classList.add("dragging")}
+    function showHiddenHint(){if(state.stage!=="hidden"||!HIDDEN_TARGETS.length)return;const target=HIDDEN_TARGETS[Math.floor(Math.random()*HIDDEN_TARGETS.length)];const centerX=(target.bounds.minX+target.bounds.maxX)/2,centerY=(target.bounds.minY+target.bounds.maxY)/2;const viewportCenterX=hiddenViewport.clientWidth/2,viewportCenterY=hiddenViewport.clientHeight/2;state.hiddenPan=clampHiddenPan(viewportCenterX-centerX*state.hiddenZoom,viewportCenterY-centerY*state.hiddenZoom);applyHiddenViewTransform()}
+    function onHiddenPanPointerDown(event){if(state.stage!=="hidden"||![0,1].includes(event.button))return;if(event.target.closest("#hiddenMenu"))return;state.hiddenPanDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPanX:state.hiddenPan.x,startPanY:state.hiddenPan.y,moved:false};hiddenViewport.setPointerCapture(event.pointerId);hiddenContent.classList.add("dragging")}
     function onHiddenPanPointerMove(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;const deltaX=event.clientX-state.hiddenPanDrag.startX,deltaY=event.clientY-state.hiddenPanDrag.startY;if(Math.abs(deltaX)>3||Math.abs(deltaY)>3)state.hiddenPanDrag.moved=true;state.hiddenPan=clampHiddenPan(state.hiddenPanDrag.startPanX+deltaX,state.hiddenPanDrag.startPanY+deltaY);applyHiddenViewTransform()}
     function onHiddenPanPointerUp(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;if(state.hiddenPanDrag.moved)state.hiddenSuppressClickUntil=Date.now()+120;if(hiddenViewport.hasPointerCapture(event.pointerId))hiddenViewport.releasePointerCapture(event.pointerId);state.hiddenPanDrag=null;hiddenContent.classList.remove("dragging")}
-    function onHiddenMenuMouseDown(event){if(state.stage!=="hidden"||event.button!==0)return;if((event.target.closest("button") && !event.target.isSameNode(toggleHiddenMenu))||event.target.closest("a"))return;state.hiddenMenuDrag={offsetX:event.clientX-hiddenMenu.offsetLeft,offsetY:event.clientY-hiddenMenu.offsetTop};event.preventDefault()}
-    function onHiddenMenuMouseMove(event){if(!state.hiddenMenuDrag)return;hiddenMenu.style.left=`${event.clientX-state.hiddenMenuDrag.offsetX}px`;hiddenMenu.style.top=`${event.clientY-state.hiddenMenuDrag.offsetY}px`}
-    function onHiddenMenuMouseUp(){if(!state.hiddenMenuDrag)return;state.hiddenMenuDrag=null}
+    function onHiddenMenuPointerDown(event){if(state.stage!=="hidden"||event.button!==0)return;if((event.target.closest("button") && !event.target.isSameNode(toggleHiddenMenu))||event.target.closest("a"))return;state.hiddenMenuDrag={pointerId:event.pointerId,offsetX:event.clientX-hiddenMenu.offsetLeft,offsetY:event.clientY-hiddenMenu.offsetTop,startX:event.clientX,startY:event.clientY};state.hiddenMenuMoved=false;hiddenMenuHeader.setPointerCapture?.(event.pointerId);event.preventDefault()}
+    function onHiddenMenuPointerMove(event){if(!state.hiddenMenuDrag||event.pointerId!==state.hiddenMenuDrag.pointerId)return;const nextLeft=event.clientX-state.hiddenMenuDrag.offsetX,nextTop=event.clientY-state.hiddenMenuDrag.offsetY;hiddenMenu.style.left=`${nextLeft}px`;hiddenMenu.style.top=`${nextTop}px`;if(Math.abs(event.clientX-state.hiddenMenuDrag.startX)>3||Math.abs(event.clientY-state.hiddenMenuDrag.startY)>3)state.hiddenMenuMoved=true}
+    function onHiddenMenuPointerUp(event){if(!state.hiddenMenuDrag||event.pointerId!==state.hiddenMenuDrag.pointerId)return;if(hiddenMenuHeader.hasPointerCapture?.(event.pointerId))hiddenMenuHeader.releasePointerCapture(event.pointerId);state.hiddenMenuDrag=null;if(state.hiddenMenuMoved)state.hiddenSuppressClickUntil=Date.now()+120;state.hiddenMenuMoved=false}
   </script>
 </body>
 </html>

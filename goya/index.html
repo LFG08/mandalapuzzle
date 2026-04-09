@@ -500,7 +500,7 @@ font-family:inherit;
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as palavras e elementos escondidos. Clique em uma palavra escondida para editar seu palpite no menu.
       Para dicas, clique com o botão direito do mouse na palavra escondida.
-      Palavras escondidas têm 2 dicas: 1° dica mostra a região aproximada e 2° dica revela o nome no menu.
+      Palavras escondidas têm 2 dicas: 1° dica revela o nome no menu e 2° dica mostra a região aproximada.
       Palavras já expostas no menu têm somente 1 dica (região).
     </span>
   </span>
@@ -871,14 +871,14 @@ function renderMenuWord(li){
 if(!li.classList.contains("hidden-word")) return;
 
 let hintLevel = Number(li.dataset.hintLevel || 0);
-li.classList.toggle("hint-revealed", hintLevel >= 2 && !li.classList.contains("found"));
+li.classList.toggle("hint-revealed", hintLevel >= 1 && !li.classList.contains("found"));
 
 if(li.classList.contains("found")){
   li.textContent = li.dataset.hidden;
   return;
 }
 
-if(hintLevel >= 2){
+if(hintLevel >= 1){
   li.textContent = li.dataset.hidden;
   return;
 }
@@ -1069,7 +1069,7 @@ let word = hintWord || item.dataset.hidden;
 let area = word ? findAreaByWord(word) : null;
 let region = area ? getRegionForArea(area) : null;
 
-if(hintLevel >= 1 && region){
+if(hintLevel >= 2 && region){
   flashRegionHint(region.id);
   centerViewOnRegion(region);
 }

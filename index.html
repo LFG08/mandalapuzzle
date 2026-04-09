@@ -372,6 +372,7 @@ data-total="50">
 </a>
 
 <a href="lucifer" class="card"
+id="luciferCard"
 data-key="luciferJigsawProgress"
 data-total="138">
 
@@ -395,7 +396,9 @@ data-total="138">
 function safeParseStoredArray(key){
 try{
 let parsed = JSON.parse(localStorage.getItem(key) || "[]");
-return Array.isArray(parsed) ? parsed : [];
+if(Array.isArray(parsed)) return parsed;
+if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds;
+return [];
 }catch{
 return [];
 }
@@ -410,6 +413,23 @@ return 0;
 }catch{
 return 0;
 }
+}
+
+function getLuciferStatus(total){
+let progress = safeParseStoredArray("luciferJigsawProgress");
+let found = progress.length;
+let levelTwoStarted = progress.some(id => typeof id === "string" && id.startsWith("levelTwo-"));
+
+if(!levelTwoStarted){
+let levelOnePieces = progress.filter(id => typeof id === "string" && id.startsWith("levelOne-")).length;
+levelTwoStarted = levelOnePieces >= 100;
+}
+
+return {
+showCounter: levelTwoStarted,
+found,
+total
+};
 }
 
 async function getCelticCounterMeta(){
@@ -623,6 +643,21 @@ renderStatus(statusEl, updated.found, updated.total);
 let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
 applyThumbBorder(card, updatedPercentage);
 });
+return;
+}
+
+if(card.id === "luciferCard"){
+let total = parseInt(card.dataset.total);
+if(Number.isNaN(total)) return;
+let statusEl = card.querySelector(".status");
+let luciferStatus = getLuciferStatus(total);
+if(luciferStatus.showCounter){
+renderStatus(statusEl, luciferStatus.found, luciferStatus.total);
+}else if(statusEl){
+statusEl.textContent = "";
+}
+let percentage = luciferStatus.total > 0 ? (luciferStatus.found / luciferStatus.total) * 100 : 0;
+applyThumbBorder(card, percentage);
 return;
 }
 

@@ -731,28 +731,27 @@ document.querySelectorAll("#wordList li").forEach(li=>{
 menuItems[li.id]=li;
 li.addEventListener("contextmenu", e => {
 e.preventDefault();
-let word = li.id.replace("menu-", "");
-let regionId = areaRegionMap[word];
-let area = findAreaByWord(word);
-let currentHint = Number(li.dataset.hintLevel || 0);
-let maxHint = li.classList.contains("hidden-word") ? 2 : 1;
-if(currentHint >= maxHint){
-alert(maxHint === 1 ? "Essa palavra já recebeu sua única dica." : "Essa palavra já recebeu todas as dicas.");
-return;
-}
-let nextHint = currentHint + 1;
-li.dataset.hintLevel = String(nextHint);
-saveHints();
 
-if(area){
-centerViewOnArea(area);
-}
-if(li.classList.contains("hidden-word") && nextHint === 1){
-renderMenuWord(li);
-}
-if(regionId && (!li.classList.contains("hidden-word") || nextHint >= 2)){
-showRegionHint(regionId);
-}
+if(li.classList.contains("found")) return;
+
+let currentHint = Number(li.dataset.hintLevel || 0);
+let wordForHint = getWordFromMenuItem(li);
+let isHiddenWord = li.classList.contains("hidden-word");
+
+let nextHint = isHiddenWord
+? (currentHint <= 0 ? 1 : 2)
+: 2;
+
+let hintPromptText = isHiddenWord
+? (currentHint >= 2
+  ? "Deseja usar novamente a 2° dica (localização aproximada)?"
+  : "Deseja a " + nextHint + "° dica?")
+: "Deseja dica de área?";
+
+let wantsHint = confirm(hintPromptText);
+if(!wantsHint) return;
+
+applyHint(li, nextHint, wordForHint);
 });
 });
 
@@ -762,6 +761,27 @@ let match = onclickText.match(/'([^']+)'/);
 if(!match) return;
 areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
 });
+
+function applyHint(item, hintLevel, hintWord = null){
+let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
+item.dataset.hintLevel = String(Math.min(nextLevel, 2));
+
+let word = hintWord || item.dataset.hidden;
+let regionId = areaRegionMap[word];
+
+if(hintLevel >= 2 && regionId){
+showRegionHint(regionId);
+}
+
+renderMenuWord(item);
+saveHints();
+}
+
+function getWordFromMenuItem(item){
+if(item.classList.contains("hidden-word")) return item.dataset.hidden;
+let idWord = (item.id || "").replace(/^menu-/, "");
+return idWord || item.textContent.trim();
+}
 
 /* ===== menu definitions ===== */
 

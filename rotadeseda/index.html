@@ -326,7 +326,8 @@ cursor:pointer;
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite.
       Para dicas, clique com o botão direito do mouse no menu.
-      1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
+      Elementos escondidos: 1° dica revela o nome no menu e as próximas dicas mostram a região aproximada.
+      Elementos visíveis: a dica leva direto para a área da palavra no mapa. Boa sorte!
     </span>
   </span>
   <a class="menu-btn" href="/" >☰</a>
@@ -844,22 +845,24 @@ let word = li.id.replace("menu-", "");
 let regionId = areaRegionMap[word];
 let area = findAreaByWord(word);
 let currentHint = Number(li.dataset.hintLevel || 0);
-let maxHint = li.classList.contains("hidden-word") ? 2 : 1;
-if(currentHint >= maxHint){
-alert(maxHint === 1 ? "Essa palavra já recebeu sua única dica." : "Essa palavra já recebeu todas as dicas.");
-return;
-}
-let nextHint = currentHint + 1;
-li.dataset.hintLevel = String(nextHint);
-saveHints();
+let isHiddenWord = li.classList.contains("hidden-word");
 
+if(!isHiddenWord){
 if(area){
 centerViewOnArea(area);
 }
-if(li.classList.contains("hidden-word") && nextHint === 1){
+return;
+}
+
+let nextHint = currentHint <= 0 ? 1 : 2;
+li.dataset.hintLevel = String(nextHint);
+saveHints();
+
+if(nextHint === 1){
 renderMenuWord(li);
 }
-if(regionId && (!li.classList.contains("hidden-word") || nextHint >= 2)){
+
+if(regionId && nextHint >= 2){
 showRegionHint(regionId);
 }
 });

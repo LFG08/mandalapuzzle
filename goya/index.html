@@ -500,7 +500,7 @@ font-family:inherit;
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as palavras e elementos escondidos. Clique em uma palavra escondida para editar seu palpite no menu.
       Para dicas, clique com o botão direito do mouse na palavra escondida.
-      Palavras escondidas têm 2 dicas: 1° dica revela o nome no menu e 2° dica mostra a região aproximada (pode ser usada quantas vezes quiser).
+      Palavras escondidas têm 2 dicas: 1° dica revela o nome no menu e 2° dica mostra a região aproximada.
       Palavras já expostas no menu têm somente 1 dica (região).
     </span>
   </span>
@@ -1197,18 +1197,15 @@ let currentHint = Number(item.dataset.hintLevel || 0);
 let wordForHint = getWordFromMenuItem(item);
 let isHiddenWord = item.classList.contains("hidden-word");
 
-if(!isHiddenWord && currentHint >= 1){
-  alert("Essa palavra já recebeu sua única dica.");
-  return;
-}
-
 let nextHint = isHiddenWord
 ? (currentHint <= 0 ? 1 : 2)
-: 1;
+ : 2;
 
-let hintPromptText = isHiddenWord && currentHint >= 2
-? "Deseja usar novamente a 2° dica (localização aproximada)?"
-: "Deseja a " + nextHint + "° dica?";
+let hintPromptText = isHiddenWord
+? (currentHint >= 2
+  ? "Deseja usar novamente a 2° dica (localização aproximada)?"
+  : "Deseja a " + nextHint + "° dica?")
+: "Deseja dica de área?";
 
 let wantsHint = confirm(hintPromptText);
 

@@ -714,7 +714,43 @@
 
     .level-button:disabled {
       cursor: default;
-      opacity: 0.45;
+      opacity: 0.62;
+    }
+
+    .level-button.locked {
+      opacity: 0.78;
+      font-style: italic;
+    }
+
+    .stage-transition-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      --clear-radius: 85vmax;
+      background:
+        radial-gradient(
+          circle at 50% 50%,
+          rgba(7, 18, 30, 0) 0 var(--clear-radius),
+          rgba(5, 12, 22, 0.9) calc(var(--clear-radius) + 14vmax),
+          rgba(3, 9, 18, 0.98) 100%
+        );
+      transition:
+        opacity 180ms ease,
+        --clear-radius 1200ms cubic-bezier(0.2, 0.72, 0.22, 1);
+    }
+
+    .stage-transition-overlay.active {
+      opacity: 1;
+    }
+
+    .stage-transition-overlay.contract {
+      --clear-radius: 0vmax;
+    }
+
+    .stage-transition-overlay.expand {
+      --clear-radius: 85vmax;
     }
 
     @media (max-width: 1740px) {
@@ -911,6 +947,7 @@
       <button id="goToLevel3Button" class="level-button" type="button">Nivel 3</button>
     </div>
   </div>
+  <div id="stageTransitionOverlay" class="stage-transition-overlay" aria-hidden="true"></div>
   <template id="pieceTemplate"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <dialog id="infoDialog" class="info-dialog"><div class="info-content"><h2 id="infoTitle">Sobre Esta Etapa</h2><p id="infoText"></p><button id="closeInfoButton" class="menu-button dialog-close" type="button">Fechar</button></div></dialog>
   <script>
@@ -1419,6 +1456,7 @@
     const goToLevel1Button = document.getElementById("goToLevel1Button");
     const goToLevel2Button = document.getElementById("goToLevel2Button");
     const goToLevel3Button = document.getElementById("goToLevel3Button");
+    const stageTransitionOverlay = document.getElementById("stageTransitionOverlay");
     const initialLevelOneTitle = menuTitle?.textContent?.trim() || "No Fundo do Mar...";
     const initialLevelOneSubtitle = traySubtitle?.textContent?.trim() || "";
     const JIGSAW_LEVELS = [{id:"levelOne",image:"polvo_jigsaw1.webp",rows:10,cols:10,title:initialLevelOneTitle,stageLabel:"",subtitle:initialLevelOneSubtitle,message:"Monte a primeira imagem do polvo.",infoTitle:"Sobre a Etapa 1",infoText:"Primeira camada do quebra-cabeca usando a imagem base do polvo.",guideOpacity:.82},{id:"levelTwo",image:"polvo_jigsaw2.png",rows:10,cols:10,title:"Polvo Jigsaw II",stageLabel:"Nivel 2 de 3",subtitle:"Agora a segunda camada aparece por cima da primeira, ignorando partes transparentes.",message:"Monte a segunda camada por cima da primeira imagem. Apenas areas com imagem geram pecas.",infoTitle:"Sobre a Etapa 2",infoText:"Segunda camada do quebra-cabeca usando polvo_jigsaw2.png, mantendo apenas pecas nas areas nao transparentes.",guideOpacity:.8}];
@@ -1732,7 +1770,11 @@
     function setPiecePosition(piece,left,top){piece.currentX=left;piece.currentY=top;piece.element.style.left=`${left}px`;piece.element.style.top=`${top}px`}
     function playPlaceSound(){placeSound.currentTime=0;placeSound.play().catch(()=>{})}
     function playHiddenFindSound(){hiddenFindSound.currentTime=0;hiddenFindSound.play().catch(()=>{})}
-    function playLevelTransitionSound() {
+    function clearStageTransitionOverlay() {
+      if (!stageTransitionOverlay) return;
+      stageTransitionOverlay.classList.remove("active", "contract", "expand");
+    }
+    function playLevelTransitionSound(durationMs = 1050) {
       if (transitionSoundStopTimer) {
         clearTimeout(transitionSoundStopTimer);
         transitionSoundStopTimer = null;
@@ -1743,7 +1785,7 @@
       transitionSoundStopTimer = setTimeout(() => {
         levelTransitionSound.pause();
         transitionSoundStopTimer = null;
-      }, 1050);
+      }, durationMs);
     }
     async function playLevelOneToTwoTransition() {
       if (!boardTransition || !boardTransitionFrom || !boardTransitionTo) return;
@@ -1760,6 +1802,23 @@
       boardTransitionTo.classList.remove("reveal");
       boardTransitionFrom.style.backgroundImage = "none";
       boardTransitionTo.style.backgroundImage = "none";
+    }
+    async function playLevelTwoToThreeTransition() {
+      if (!stageTransitionOverlay) return;
+      stageTransitionOverlay.classList.add("active", "contract");
+      stageTransitionOverlay.classList.remove("expand");
+      playLevelTransitionSound(2850);
+      await new Promise((resolve) => setTimeout(resolve, 1220));
+      unlockStage("levelThree");
+      state.stage = "hidden";
+      saveProgress();
+      showHiddenStage();
+      requestAnimationFrame(() => {
+        stageTransitionOverlay.classList.remove("contract");
+        stageTransitionOverlay.classList.add("expand");
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1280));
+      stageTransitionOverlay.classList.remove("active", "expand");
     }
     function placePiece(piece){board.appendChild(piece.element);piece.element.style.position="absolute";piece.element.classList.add("placed");piece.element.style.left=`${piece.targetX}px`;piece.element.style.top=`${piece.targetY}px`;piece.placed=true;updatePieceAppearance(piece);playPlaceSound();compactTrayPieces();updateJigsawStatus();saveProgress();checkJigsawCompletion()}
     function returnPieceToTray(piece){if(!tray.contains(piece.element))tray.appendChild(piece.element);piece.element.classList.remove("placed");piece.placed=false;updatePieceAppearance(piece);const localLeft=piece.currentX-state.trayRect.left+tray.scrollLeft,localTop=piece.currentY-state.trayRect.top+tray.scrollTop;piece.sourceX=Math.max(0,localLeft);piece.sourceY=Math.max(0,localTop);piece.element.style.position="absolute";piece.element.style.left=`${piece.sourceX}px`;piece.element.style.top=`${piece.sourceY}px`}
@@ -1790,10 +1849,7 @@
       board.classList.add("shine");
       boardMessage.innerHTML = '<span class="celebration">Nivel dois completo.</span> A imagem brilhou e o desafio final foi liberado.';
       setTimeout(() => {
-        unlockStage("levelThree");
-        state.stage = "hidden";
-        saveProgress();
-        showHiddenStage();
+        playLevelTwoToThreeTransition().catch(console.error);
       }, 1200);
     }
 
@@ -1807,6 +1863,7 @@
       state.stage = "jigsaw";
       state.placedIdsByLevel = {};
       state.unlockedStages = ["levelOne"];
+      clearStageTransitionOverlay();
       hiddenMenu.classList.remove("collapsed");
       toggleHiddenMenu.textContent = "-";
       updateJourneyFooter();
@@ -1840,12 +1897,16 @@
       journeyFooter.classList.toggle("visible", showFooter);
       goToLevel1Button.disabled = !showFooter || (state.stage === "jigsaw" && state.currentLevelIndex === 0);
       goToLevel2Button.disabled = !state.unlockedStages.includes("levelTwo") || (state.stage === "jigsaw" && state.currentLevelIndex === 1);
-      goToLevel3Button.disabled = !state.unlockedStages.includes("levelThree") || state.stage === "hidden";
+      const levelThreeUnlocked = state.unlockedStages.includes("levelThree");
+      goToLevel3Button.disabled = !levelThreeUnlocked || state.stage === "hidden";
+      goToLevel3Button.classList.toggle("locked", !levelThreeUnlocked);
+      goToLevel3Button.textContent = levelThreeUnlocked ? "Nivel 3" : "Nivel 3 (bloqueado)";
     }
 
     function navigateToStage(stageKey) {
       boardTransition?.classList.remove("active");
       boardTransitionTo?.classList.remove("reveal");
+      clearStageTransitionOverlay();
       if (stageKey === "levelOne") {
         state.stage = "jigsaw";
         state.currentLevelIndex = 0;

@@ -123,6 +123,50 @@
       animation: board-shine 1.1s ease-in-out 1;
     }
 
+    .board-transition-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 9;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 220ms ease;
+    }
+
+    .board-transition-overlay.active {
+      opacity: 1;
+    }
+
+    .board-transition-layer {
+      position: absolute;
+      inset: 0;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+    }
+
+    .board-transition-layer.from {
+      filter: saturate(1.08);
+    }
+
+    .board-transition-layer.to {
+      opacity: 0;
+      transform: scale(1.03);
+      filter: blur(10px) saturate(1.1);
+      clip-path: circle(7% at 50% 50%);
+      transition:
+        opacity 1.15s ease,
+        transform 1.2s ease,
+        filter 1.2s ease,
+        clip-path 1.2s ease;
+    }
+
+    .board-transition-layer.to.reveal {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+      clip-path: circle(76% at 50% 50%);
+    }
+
     @keyframes board-shine {
       0% {
         opacity: 0;
@@ -780,7 +824,13 @@
   <main id="jigsawShell" class="app-shell">
     <section class="game-layout">
       <div class="board-wrap">
-        <div id="board" class="board"><div class="board-glow"></div></div>
+        <div id="board" class="board">
+          <div class="board-glow"></div>
+          <div id="boardTransition" class="board-transition-overlay" aria-hidden="true">
+            <div id="boardTransitionFrom" class="board-transition-layer from"></div>
+            <div id="boardTransitionTo" class="board-transition-layer to"></div>
+          </div>
+        </div>
         <p id="boardMessage" class="board-message"></p>
         <div class="board-controls">
           <div class="control-row">
@@ -816,7 +866,7 @@
       </aside>
     </section>
   </main>
-  <footer id="pageCredit" class="page-credit">Keyboard_Tactile_9 by StavSounds from <a href="https://freesound.org/s/766640/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0. Water drop by florianreichelt from <a href="https://freesound.org/s/683102/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0.</footer>
+  <footer id="pageCredit" class="page-credit">Keyboard_Tactile_9 by StavSounds from <a href="https://freesound.org/s/766640/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0. Water drop by florianreichelt from <a href="https://freesound.org/s/683102/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0. The Black Sea - waves' rustle by tomattka from <a href="https://freesound.org/s/400660/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0.</footer>
   <section id="hiddenStage" class="hidden-stage">
     <div id="hiddenMenu" class="margrego-menu">
       <div class="margrego-header">
@@ -849,6 +899,10 @@
       <br>
       Water drop by florianreichelt from
       <a href="https://freesound.org/s/683102/" target="_blank" rel="noreferrer">Freesound</a>,
+      licensed under Creative Commons 0.
+      <br>
+      The Black Sea - waves' rustle by tomattka from
+      <a href="https://freesound.org/s/400660/" target="_blank" rel="noreferrer">Freesound</a>,
       licensed under Creative Commons 0.
     </div>
     <div class="journey-controls">
@@ -1327,6 +1381,9 @@
     const board = document.getElementById("board");
     const pageCredit = document.getElementById("pageCredit");
     const tray = document.getElementById("tray");
+    const boardTransition = document.getElementById("boardTransition");
+    const boardTransitionFrom = document.getElementById("boardTransitionFrom");
+    const boardTransitionTo = document.getElementById("boardTransitionTo");
     const traySizer = document.getElementById("traySizer");
     const boardMessage = document.getElementById("boardMessage");
     const guideLabel = document.getElementById("guideLabel");
@@ -1371,6 +1428,10 @@
     const hiddenFindSound = new Audio("683102__florianreichelt__water-drop.mp3");
     hiddenFindSound.preload = "auto";
     hiddenFindSound.volume = 0.45;
+    const levelTransitionSound = new Audio("400660__tomattka__the-black-sea-waves-rustle.wav");
+    levelTransitionSound.preload = "auto";
+    levelTransitionSound.volume = 0.45;
+    let transitionSoundStopTimer = null;
     volumeSlider.value = String(Math.round(placeSound.volume * 100));
     volumeValue.textContent = `${Math.round(placeSound.volume * 100)}%`;
 
@@ -1435,6 +1496,7 @@
         const volume = Math.max(0, Math.min(1, Number(event.target.value) / 100));
         placeSound.volume = volume;
         hiddenFindSound.volume = volume;
+        levelTransitionSound.volume = volume;
         volumeValue.textContent = `${Math.round(volume * 100)}%`;
       });
 
@@ -1670,6 +1732,35 @@
     function setPiecePosition(piece,left,top){piece.currentX=left;piece.currentY=top;piece.element.style.left=`${left}px`;piece.element.style.top=`${top}px`}
     function playPlaceSound(){placeSound.currentTime=0;placeSound.play().catch(()=>{})}
     function playHiddenFindSound(){hiddenFindSound.currentTime=0;hiddenFindSound.play().catch(()=>{})}
+    function playLevelTransitionSound() {
+      if (transitionSoundStopTimer) {
+        clearTimeout(transitionSoundStopTimer);
+        transitionSoundStopTimer = null;
+      }
+      levelTransitionSound.pause();
+      levelTransitionSound.currentTime = 3;
+      levelTransitionSound.play().catch(() => {});
+      transitionSoundStopTimer = setTimeout(() => {
+        levelTransitionSound.pause();
+        transitionSoundStopTimer = null;
+      }, 1050);
+    }
+    async function playLevelOneToTwoTransition() {
+      if (!boardTransition || !boardTransitionFrom || !boardTransitionTo) return;
+      boardTransitionFrom.style.backgroundImage = 'url("polvo_jigsaw1.webp")';
+      boardTransitionTo.style.backgroundImage = 'url("polvo_jigsaw2.png")';
+      boardTransition.classList.add("active");
+      boardTransitionTo.classList.remove("reveal");
+      requestAnimationFrame(() => {
+        boardTransitionTo.classList.add("reveal");
+      });
+      playLevelTransitionSound();
+      await new Promise((resolve) => setTimeout(resolve, 1450));
+      boardTransition.classList.remove("active");
+      boardTransitionTo.classList.remove("reveal");
+      boardTransitionFrom.style.backgroundImage = "none";
+      boardTransitionTo.style.backgroundImage = "none";
+    }
     function placePiece(piece){board.appendChild(piece.element);piece.element.style.position="absolute";piece.element.classList.add("placed");piece.element.style.left=`${piece.targetX}px`;piece.element.style.top=`${piece.targetY}px`;piece.placed=true;updatePieceAppearance(piece);playPlaceSound();compactTrayPieces();updateJigsawStatus();saveProgress();checkJigsawCompletion()}
     function returnPieceToTray(piece){if(!tray.contains(piece.element))tray.appendChild(piece.element);piece.element.classList.remove("placed");piece.placed=false;updatePieceAppearance(piece);const localLeft=piece.currentX-state.trayRect.left+tray.scrollLeft,localTop=piece.currentY-state.trayRect.top+tray.scrollTop;piece.sourceX=Math.max(0,localLeft);piece.sourceY=Math.max(0,localTop);piece.element.style.position="absolute";piece.element.style.left=`${piece.sourceX}px`;piece.element.style.top=`${piece.sourceY}px`}
     function shuffleUnplacedPieces(){layoutTrayPieces(shuffle(state.pieces.filter(piece=>!piece.placed)),true);saveProgress()}
@@ -1692,7 +1783,7 @@
         unlockStage("levelTwo");
         state.currentLevelIndex = 1;
         saveProgress();
-        setTimeout(() => loadJigsawJourney(loadProgress()), 400);
+        playLevelOneToTwoTransition().then(() => loadJigsawJourney(loadProgress()));
         return;
       }
 
@@ -1753,6 +1844,8 @@
     }
 
     function navigateToStage(stageKey) {
+      boardTransition?.classList.remove("active");
+      boardTransitionTo?.classList.remove("reveal");
       if (stageKey === "levelOne") {
         state.stage = "jigsaw";
         state.currentLevelIndex = 0;

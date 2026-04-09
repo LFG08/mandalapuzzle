@@ -696,26 +696,19 @@ let activeRegionHintTimeout = null;
 
 function centerViewOnRegion(regionEl){
 if(!regionEl) return;
-let container = document.querySelector(".container");
-if(!container) return;
+let rect = regionEl.getBoundingClientRect();
+let regionCenterX = rect.left + (rect.width / 2);
+let regionCenterY = rect.top + (rect.height / 2);
 
-let containerRect = container.getBoundingClientRect();
-let left = Number(regionEl.style.left.replace("px", "")) || 0;
-let top = Number(regionEl.style.top.replace("px", "")) || 0;
-let width = Number(regionEl.style.width.replace("px", "")) || regionEl.offsetWidth;
-let height = Number(regionEl.style.height.replace("px", "")) || regionEl.offsetHeight;
-let regionCenterX = left + (width / 2);
-let regionCenterY = top + (height / 2);
-
-let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
-let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
+let targetX = window.scrollX + regionCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + regionCenterY - (window.innerHeight / 2);
 
 let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
 let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
 
 window.scrollTo({
-left: Math.min(Math.max(targetX, 0), maxX),
-top: Math.min(Math.max(targetY, 0), maxY),
+left: clamp(targetX, 0, maxX),
+top: clamp(targetY, 0, maxY),
 behavior: "smooth"
 });
 }

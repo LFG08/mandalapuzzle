@@ -567,11 +567,11 @@ shape="poly" onclick="toggleAnswer(this,'Turtle'); return false;">
 /* prevent image dragging */
 document.addEventListener("dragstart", e=>e.preventDefault());
 
-const overlayStorageKey = "MAR_selectedOverlay";
-const guessStorageKey = "MAR_wordGuesses";
-const hintStorageKey = "MAR_wordHints";
+const overlayStorageKey = "polvo_selectedOverlay";
+const guessStorageKey = "polvo_wordGuesses";
+const hintStorageKey = "polvo_wordHints";
 const defaultOverlay = "polvo_gabarito1.webp";
-const sourceMapSize = 2048;
+const sourceMapSize = 1280;
 const displayMapSize = 1280;
 const regionDefinitions = [
 { id: 1, left: 0, top: 0, width: displayMapSize, height: displayMapSize / 3 },
@@ -646,7 +646,7 @@ Object.values(answerClips).forEach(clip=>{
 clip.style.backgroundImage = "url('" + currentOverlay + "')";
 });
 
-localStorage.setItem("MAR_selectedOverlay", currentOverlay);
+localStorage.setItem("polvo_selectedOverlay", currentOverlay);
 };
 
 /* ===== menu items ===== */

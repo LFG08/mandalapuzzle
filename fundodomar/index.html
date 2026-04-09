@@ -517,8 +517,7 @@
       margin-top: 6px;
     }
 
-    .margrego-info,
-    #toggleHiddenMenu {
+    .margrego-info {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -656,36 +655,6 @@
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
-    }
-
-    #hiddenMarkers,
-    #hiddenAreas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 3;
-      width: var(--board-size);
-      height: var(--board-size);
-      overflow: visible;
-    }
-
-    #hiddenMarkers {
-      pointer-events: none;
-    }
-
-    .hidden-area-shape {
-      fill: rgba(255, 255, 255, 0.001);
-      stroke: none;
-      cursor: pointer;
-      pointer-events: auto;
-    }
-
-    .hidden-glow-shape {
-      fill: rgba(255, 230, 120, 0.14);
-      stroke: rgba(255, 230, 120, 0.95);
-      stroke-width: 2;
-      filter: drop-shadow(0 0 14px rgba(255, 230, 120, 0.92));
-      animation: hidden-box-in 0.25s ease;
     }
 
     @keyframes hidden-box-in {
@@ -856,16 +825,7 @@
         white-space: nowrap;
       }
 
-      #hiddenCounter {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: calc(0.5rem * var(--mobile-menu-ui-scale));
-        white-space: nowrap;
-      }
-
-      .margrego-info,
-      #toggleHiddenMenu {
+      .margrego-info {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -931,28 +891,10 @@
   </main>
   <footer id="pageCredit" class="page-credit">Keyboard_Tactile_9 by StavSounds from <a href="https://freesound.org/s/766640/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0. Water drop by florianreichelt from <a href="https://freesound.org/s/683102/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0. The Black Sea - waves' rustle by tomattka from <a href="https://freesound.org/s/400660/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0.</footer>
   <section id="hiddenStage" class="hidden-stage">
-    <div id="hiddenMenu" class="margrego-menu">
-      <div class="margrego-header">
-        <span class="margrego-title">E outras criaturas... </span>
-        <div class="margrego-right">
-          <span id="hiddenCounter">0 / 35</span>
-          <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">i</button><span class="margrego-tooltip">do mar.. ou de água doce pois alguns seres são muito fofos</span></span>
-          <span class="margrego-tooltip-wrap"><button class="margrego-info" type="button">?</button><span class="margrego-tooltip">Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite. Para dicas, clique com o botão direito do mouse no menu. 1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!</span></span>
-          <a id="hiddenHomeButton" class="margrego-info margrego-home" href="/" aria-label="Voltar ao menu principal" title="Menu principal">☰</a>
-          <button id="toggleHiddenMenu" type="button">-</button>
-        </div>
-      </div>
-      <div class="hidden-menu-actions">
-        <button id="hiddenTipButton" class="hidden-menu-button" type="button">Centralizar Dica</button>
-      </div>
-      <button id="hiddenResetButton" class="hidden-menu-button" type="button">Reset</button>
-    </div>
     <div class="margrego-stage-wrap">
       <div id="hiddenViewport" class="margrego-viewport">
         <div id="hiddenContent" class="margrego-container">
           <img src="polvo_elementos.webp" alt="Polvo elementos">
-          <svg id="hiddenAreas" viewBox="0 0 1280 1280" preserveAspectRatio="none" aria-hidden="false"></svg>
-          <svg id="hiddenMarkers" viewBox="0 0 1280 1280" preserveAspectRatio="none" aria-hidden="true"></svg>
         </div>
       </div>
     </div>
@@ -974,7 +916,6 @@
     <div class="journey-controls">
       <button id="goToLevel1Button" class="level-button" type="button">Nivel 1</button>
       <button id="goToLevel2Button" class="level-button" type="button">Nivel 2</button>
-      <button id="goToLevel3Button" class="level-button" type="button">Nivel 3</button>
     </div>
   </div>
   <div id="stageTransitionOverlay" class="stage-transition-overlay" aria-hidden="true"></div>
@@ -985,466 +926,7 @@
     const SNAP_DISTANCE = 120;
     const SNAP_AXIS_TOLERANCE = 84;
     const SAVE_KEY = "PolvoJourneyV2";
-    const SVG_NS = "http://www.w3.org/2000/svg";
     const LEVEL_TWO_OCCUPANCY = [[false,false,true,true,true,true,true,true,false,false],[false,false,true,true,true,true,true,true,false,false],[false,false,true,true,true,true,true,true,false,false],[false,false,true,true,true,true,true,true,false,false],[false,false,false,true,true,true,true,false,false,false],[true,true,true,true,true,true,true,true,true,true],[false,false,true,true,true,true,true,true,false,false],[true,true,true,true,true,true,true,true,true,true],[true,true,true,true,true,true,true,true,true,true],[true,true,true,true,false,false,true,true,true,true]];
-    const HIDDEN_TARGETS=[
-    {
-        "id":  1,
-        "label":  "Elemento 01",
-        "points":  "12,19.6 10,33.8 10,33.8 10,33.8 10,33.8 4.9,34 -0.2,33.8 -0.2,33.8 -0.2,33.8 -0.2,33.8 -1.1,27.1 -0.3,8.3 -0.3,8.3 -0.3,8.3 -0.3,8.3 4.9,8 10.1,8.2 10.1,8.2 10.1,8.2 10.1,8.2",
-        "bounds":  {
-                       "minX":  1,
-                       "minY":  11,
-                       "maxX":  9,
-                       "maxY":  31,
-                       "width":  9,
-                       "height":  21
-                   }
-    },
-    {
-        "id":  2,
-        "label":  "Elemento 02",
-        "points":  "650,44.1 648.6,58.5 648.2,63.7 648.1,65.8 648.1,65.8 639,66 629.8,65.8 629.8,65.8 629.7,63.7 629.4,58.5 628.8,53 629.4,28.5 629.7,24.3 629.7,24.3 629.7,24.3 639,24 648.3,24.3 648.3,24.3 648.3,24.3 648.6,28.5",
-        "bounds":  {
-                       "minX":  631,
-                       "minY":  27,
-                       "maxX":  647,
-                       "maxY":  63,
-                       "width":  17,
-                       "height":  37
-                   }
-    },
-    {
-        "id":  3,
-        "label":  "Elemento 03",
-        "points":  "478,41.1 477.5,45.7 477.5,45.7 477.5,45.7 477.5,45.7 477.5,45.7 462.4,45.5 462.4,45.5 462.4,45.5 462.4,45.5 462,41.1 462.6,35.3 462.6,35.3 462.6,35.3 462.6,35.3 463.7,35 477.3,35.1 477.3,35.1 477.3,35.1 477.3,35.1",
-        "bounds":  {
-                       "minX":  465,
-                       "minY":  37,
-                       "maxX":  475,
-                       "maxY":  44,
-                       "width":  11,
-                       "height":  8
-                   }
-    },
-    {
-        "id":  4,
-        "label":  "Elemento 04",
-        "points":  "1198,76 1197.4,91.8 1197.4,91.8 1197.4,91.8 1193.2,92.1 1175.9,93 1159.9,92.1 1156.7,91.9 1156.7,91.9 1156.7,91.9 1156,76 1156.7,59 1156.7,59 1156.7,59 1158.8,58.9 1170,58.2 1193.1,58.9 1197.4,59.1 1197.4,59.1 1197.4,59.1",
-        "bounds":  {
-                       "minX":  1159,
-                       "minY":  61,
-                       "maxX":  1195,
-                       "maxY":  90,
-                       "width":  37,
-                       "height":  30
-                   }
-    },
-    {
-        "id":  5,
-        "label":  "Elemento 05",
-        "points":  "721,127 720.4,133.7 720.4,133.7 720.4,133.7 720.4,133.7 711.1,135 700.5,133.6 700.5,133.6 700.5,133.6 700.5,133.6 700.3,132.4 700.6,119.2 700.6,119.2 700.6,119.2 700.6,119.2 700.6,119.2 720.3,119.1 720.3,119.1 720.3,119.1 720.3,119.1",
-        "bounds":  {
-                       "minX":  703,
-                       "minY":  121,
-                       "maxX":  718,
-                       "maxY":  132,
-                       "width":  16,
-                       "height":  12
-                   }
-    },
-    {
-        "id":  6,
-        "label":  "Elemento 06",
-        "points":  "437,169.9 436.7,176.2 436.7,176.2 436.7,176.2 436.7,176.2 433.5,176.6 412.4,176.4 412.4,176.4 412.4,176.4 412.4,176.4 412,169.9 412.3,164.7 412.3,164.7 412.3,164.7 412.3,164.7 413.4,164.5 436.8,164.8 436.8,164.8 436.8,164.8 436.8,164.8",
-        "bounds":  {
-                       "minX":  415,
-                       "minY":  166,
-                       "maxX":  434,
-                       "maxY":  175,
-                       "width":  20,
-                       "height":  10
-                   }
-    },
-    {
-        "id":  7,
-        "label":  "Elemento 07",
-        "points":  "651,268 650.2,278.1 650.2,278.1 650.2,278.1 650.2,278.1 649,278.2 628.8,278 628.8,278 628.8,278 628.8,278 628.8,278 628.8,257.9 628.8,257.9 628.8,257.9 628.8,257.9 632.3,257.5 650.2,257.9 650.2,257.9 650.2,257.9 650.2,257.9",
-        "bounds":  {
-                       "minX":  631,
-                       "minY":  260,
-                       "maxX":  648,
-                       "maxY":  276,
-                       "width":  18,
-                       "height":  17
-                   }
-    },
-    {
-        "id":  8,
-        "label":  "Elemento 08",
-        "points":  "42,285 41.6,298.5 41.6,298.5 41.6,298.5 34.2,299 17.9,300 1.7,298.9 0.7,298.9 0.7,298.9 0.7,298.9 0.4,294.4 0.8,267.9 0.9,266.8 0.9,266.8 0.9,266.8 12,266.2 35,266.8 41.4,267.2 41.4,267.2 41.4,267.2",
-        "bounds":  {
-                       "minX":  3,
-                       "minY":  269,
-                       "maxX":  39,
-                       "maxY":  297,
-                       "width":  37,
-                       "height":  29
-                   }
-    },
-    {
-        "id":  9,
-        "label":  "Elemento 09",
-        "points":  "551,307.8 550.1,316.2 550.1,316.2 550.1,316.2 550.1,316.2 541.7,317 534.9,316.2 534.9,316.2 534.9,316.2 534.9,316.2 534.5,313.7 534.8,300.9 534.8,300.9 534.8,300.9 534.8,300.9 538.7,300.3 550.2,300.9 550.2,300.9 550.2,300.9 550.2,300.9",
-        "bounds":  {
-                       "minX":  537,
-                       "minY":  303,
-                       "maxX":  548,
-                       "maxY":  314,
-                       "width":  12,
-                       "height":  12
-                   }
-    },
-    {
-        "id":  10,
-        "label":  "Elemento 10",
-        "points":  "366,332.2 365.3,340.9 365.3,340.9 365.3,340.9 365.3,340.9 364.2,341.1 342.7,340.9 342.7,340.9 342.7,340.9 342.7,340.9 342.7,340.9 342.5,323.3 342.5,323.3 342.5,323.3 342.5,323.3 344.8,323 365.4,323.2 365.4,323.2 365.4,323.2 365.4,323.2",
-        "bounds":  {
-                       "minX":  345,
-                       "minY":  325,
-                       "maxX":  363,
-                       "maxY":  339,
-                       "width":  19,
-                       "height":  15
-                   }
-    },
-    {
-        "id":  11,
-        "label":  "Elemento 11",
-        "points":  "955,335 953.7,347.5 953.7,347.5 953.7,347.5 953.7,347.5 944.9,348 936.3,347.4 936.3,347.4 936.3,347.4 936.3,347.4 935.4,340.5 936.2,322.6 936.2,322.6 936.2,322.6 936.2,322.6 938.6,322.3 953.7,322.5 953.7,322.5 953.7,322.5 953.7,322.5",
-        "bounds":  {
-                       "minX":  938,
-                       "minY":  325,
-                       "maxX":  952,
-                       "maxY":  345,
-                       "width":  15,
-                       "height":  21
-                   }
-    },
-    {
-        "id":  12,
-        "label":  "Elemento 12",
-        "points":  "911,381 910,389.3 910,389.3 910,389.3 910,389.3 903.1,390 897.4,389.6 897.4,389.6 897.4,389.6 897.4,389.6 897.4,389.6 897.4,372.5 897.4,372.5 897.4,372.5 897.4,372.5 898.8,372.3 910,372.7 910,372.7 910,372.7 910,372.7",
-        "bounds":  {
-                       "minX":  899,
-                       "minY":  375,
-                       "maxX":  908,
-                       "maxY":  387,
-                       "width":  10,
-                       "height":  13
-                   }
-    },
-    {
-        "id":  13,
-        "label":  "Elemento 13",
-        "points":  "34,429.9 33,443.2 33,443.2 33,443.2 33,443.2 20.9,444 12.3,443.5 12.3,443.5 12.3,443.5 12.3,443.5 11.3,435.3 12.4,415.4 12.5,414.4 12.5,414.4 12.5,414.4 14.9,414.2 32.8,414.6 32.8,414.6 32.8,414.6 32.8,414.6",
-        "bounds":  {
-                       "minX":  14,
-                       "minY":  417,
-                       "maxX":  31,
-                       "maxY":  441,
-                       "width":  18,
-                       "height":  25
-                   }
-    },
-    {
-        "id":  14,
-        "label":  "Elemento 14",
-        "points":  "396,433.9 394.9,442.3 394.9,442.3 394.9,442.3 394.9,442.3 387.9,443 381,442.3 381,442.3 381,442.3 381,442.3 380.6,439.8 381.1,425.7 381.1,425.7 381.1,425.7 381.1,425.7 383.6,425.3 394.9,425.7 394.9,425.7 394.9,425.7 394.9,425.7",
-        "bounds":  {
-                       "minX":  383,
-                       "minY":  428,
-                       "maxX":  393,
-                       "maxY":  440,
-                       "width":  11,
-                       "height":  13
-                   }
-    },
-    {
-        "id":  15,
-        "label":  "Elemento 15",
-        "points":  "151,447.2 149.2,460.8 148.9,464.9 148.9,464.9 148.9,464.9 143,465 135.9,464.8 135.9,464.8 135.9,464.8 135.7,461.7 134.6,452.7 135.5,433.4 135.5,433.4 135.5,433.4 135.5,433.4 136.7,433.3 149.3,433.3 149.3,433.3 149.3,433.3 149.3,433.3",
-        "bounds":  {
-                       "minX":  137,
-                       "minY":  436,
-                       "maxX":  148,
-                       "maxY":  462,
-                       "width":  12,
-                       "height":  27
-                   }
-    },
-    {
-        "id":  16,
-        "label":  "Elemento 16",
-        "points":  "754,513 753.1,527.2 753.1,527.2 753.1,527.2 753.1,527.2 740.1,528 724.8,527.1 724.8,527.1 724.8,527.1 724.8,527.1 724.5,522.6 724.7,500 724.7,500 724.7,500 724.7,500 732.7,499.3 753.2,499.9 753.2,499.9 753.2,499.9 753.2,499.9",
-        "bounds":  {
-                       "minX":  727,
-                       "minY":  502,
-                       "maxX":  751,
-                       "maxY":  525,
-                       "width":  25,
-                       "height":  24
-                   }
-    },
-    {
-        "id":  17,
-        "label":  "Elemento 17",
-        "points":  "462,517.1 461.1,527.1 461.1,527.1 461.1,527.1 461.1,527.1 451,528 438.7,526.9 438.7,526.9 438.7,526.9 438.7,526.9 438.7,526.9 438.6,507.2 438.6,507.2 438.6,507.2 438.6,507.2 440.8,506.9 461.1,506.9 461.1,506.9 461.1,506.9 461.1,506.9",
-        "bounds":  {
-                       "minX":  441,
-                       "minY":  509,
-                       "maxX":  459,
-                       "maxY":  525,
-                       "width":  19,
-                       "height":  17
-                   }
-    },
-    {
-        "id":  18,
-        "label":  "Elemento 18",
-        "points":  "654,577 652.9,593.3 652.5,599.6 652.2,606.8 652.2,606.8 640.1,607 627.9,606.8 627.9,606.8 627.6,598.6 627.1,592.3 626.6,586.8 627.2,560.6 627.6,554.3 627.8,549.2 627.8,549.2 640.1,549 652.3,549.3 652.3,549.3 652.5,554.4 652.9,560.7",
-        "bounds":  {
-                       "minX":  629,
-                       "minY":  552,
-                       "maxX":  651,
-                       "maxY":  604,
-                       "width":  23,
-                       "height":  53
-                   }
-    },
-    {
-        "id":  19,
-        "label":  "Elemento 19",
-        "points":  "498,563.2 497.9,564.9 497.9,564.9 488.2,571.9 485.6,572.7 485.6,572.7 485.6,572.7 485.6,572.7 485.6,572.7 485.6,572.7 485.4,571.6 485.3,554.5 485.3,554.5 485.3,554.5 485.3,554.5 486.7,554.3 491.1,554 497.2,557 497.2,557 497.2,557",
-        "bounds":  {
-                       "minX":  487,
-                       "minY":  553,
-                       "maxX":  496,
-                       "maxY":  570,
-                       "width":  10,
-                       "height":  18
-                   }
-    },
-    {
-        "id":  20,
-        "label":  "Elemento 20",
-        "points":  "786,565.9 784.9,575.3 784.9,575.3 784.9,575.3 784.9,575.3 776.8,576 772.6,575.7 772.6,575.7 772.6,575.7 772.6,575.7 772.5,574.6 772.3,558.5 772.3,558.5 772.3,558.5 772.3,558.5 773.7,558.3 785.2,558.9 785.2,558.9 785.2,558.9 785.2,558.9",
-        "bounds":  {
-                       "minX":  774,
-                       "minY":  561,
-                       "maxX":  783,
-                       "maxY":  573,
-                       "width":  10,
-                       "height":  13
-                   }
-    },
-    {
-        "id":  21,
-        "label":  "Elemento 21",
-        "points":  "128,615.8 126.6,629.6 126.6,629.6 126.6,629.6 126.6,629.6 119.1,630 109.3,629.4 109.3,629.4 109.3,629.4 109.3,629.4 108.4,622.5 109,605.8 109,605.8 109,605.8 109,605.8 111.4,605.5 126.8,605.6 126.8,605.6 126.8,605.6 126.8,605.6",
-        "bounds":  {
-                       "minX":  111,
-                       "minY":  608,
-                       "maxX":  125,
-                       "maxY":  627,
-                       "width":  15,
-                       "height":  20
-                   }
-    },
-    {
-        "id":  22,
-        "label":  "Elemento 22",
-        "points":  "265,643 264.7,657.2 264.7,657.2 256.6,657.6 249.2,658 231.9,659 215.8,658 208.4,657.6 202.3,657.3 202.3,657.3 202,643 202.3,627.7 202.3,627.7 208.5,627.4 215.8,626.9 225.9,626.2 249.2,626.9 256.5,627.4 264.7,627.7 264.7,627.7",
-        "bounds":  {
-                       "minX":  205,
-                       "minY":  629,
-                       "maxX":  262,
-                       "maxY":  656,
-                       "width":  58,
-                       "height":  28
-                   }
-    },
-    {
-        "id":  23,
-        "label":  "Elemento 23",
-        "points":  "1014,638.9 1013.5,649.7 1013.5,649.7 1013.5,649.7 1013.5,649.7 997.9,651 985.7,649.9 985.7,649.9 985.7,649.9 985.7,649.9 985.6,648.8 985.7,629.1 985.7,629.1 985.7,629.1 985.7,629.1 991.4,628.5 1013.5,629.3 1013.5,629.3 1013.5,629.3 1013.5,629.3",
-        "bounds":  {
-                       "minX":  988,
-                       "minY":  631,
-                       "maxX":  1011,
-                       "maxY":  648,
-                       "width":  24,
-                       "height":  18
-                   }
-    },
-    {
-        "id":  24,
-        "label":  "Elemento 24",
-        "points":  "348,710.1 347.7,718.3 347.7,718.3 347.7,718.3 344.6,718.5 339.2,719.1 314.5,718.6 310.3,718.3 310.3,718.3 310.3,718.3 310,710.1 310.3,700.7 310.3,700.7 310.3,700.7 314.5,700.4 318.8,700 344.6,700.5 347.7,700.7 347.7,700.7 347.7,700.7",
-        "bounds":  {
-                       "minX":  313,
-                       "minY":  702,
-                       "maxX":  345,
-                       "maxY":  717,
-                       "width":  33,
-                       "height":  16
-                   }
-    },
-    {
-        "id":  25,
-        "label":  "Elemento 25",
-        "points":  "370,713.8 369.3,723.9 369.3,723.9 369.3,723.9 369.3,723.9 367.1,724.1 343.5,723.6 343.5,723.6 343.5,723.6 343.5,723.6 343.5,723.6 343.5,705.4 343.5,705.4 343.5,705.4 343.5,705.4 347.9,704.9 369.3,705.1 369.3,705.1 369.3,705.1 369.3,705.1",
-        "bounds":  {
-                       "minX":  346,
-                       "minY":  707,
-                       "maxX":  367,
-                       "maxY":  722,
-                       "width":  22,
-                       "height":  16
-                   }
-    },
-    {
-        "id":  26,
-        "label":  "Elemento 26",
-        "points":  "739,734.9 737.9,748.3 737.9,748.3 737.9,748.3 737.9,748.3 726.9,749 716,748.3 716,748.3 716,748.3 716,748.3 715.7,744.9 716.1,721.7 716.1,721.7 716.1,721.7 716.1,721.7 720.7,721.3 737.8,721.6 737.8,721.6 737.8,721.6 737.8,721.6",
-        "bounds":  {
-                       "minX":  718,
-                       "minY":  724,
-                       "maxX":  736,
-                       "maxY":  746,
-                       "width":  19,
-                       "height":  23
-                   }
-    },
-    {
-        "id":  27,
-        "label":  "Elemento 27",
-        "points":  "996,801.1 995.2,809 995.2,809 995.2,809 995.2,809 986,810 976.8,809 976.8,809 976.8,809 976.8,809 976.5,806.6 976.8,791.9 976.8,791.9 976.8,791.9 976.8,791.9 981.8,791.3 995.2,791.9 995.2,791.9 995.2,791.9 995.2,791.9",
-        "bounds":  {
-                       "minX":  979,
-                       "minY":  794,
-                       "maxX":  993,
-                       "maxY":  807,
-                       "width":  15,
-                       "height":  14
-                   }
-    },
-    {
-        "id":  28,
-        "label":  "Elemento 28",
-        "points":  "1248,806.1 1246.8,821.4 1246.8,821.4 1246.8,821.4 1246.8,821.4 1234.9,822 1225.4,821.5 1225.4,821.5 1225.4,821.5 1225.3,820.5 1224.8,815 1225.3,791.6 1225.3,791.6 1225.3,791.6 1225.3,791.6 1228.7,791.3 1246.9,791.7 1246.9,791.7 1246.9,791.7 1246.9,791.7",
-        "bounds":  {
-                       "minX":  1227,
-                       "minY":  794,
-                       "maxX":  1245,
-                       "maxY":  819,
-                       "width":  19,
-                       "height":  26
-                   }
-    },
-    {
-        "id":  29,
-        "label":  "Elemento 29",
-        "points":  "889,831 888.7,840.3 888.7,840.3 888.7,840.3 885.6,840.6 880.1,841.1 855.5,840.6 855.5,840.6 855.5,840.6 855.5,840.6 855.5,840.6 855.7,819.1 855.7,819.1 855.7,819.1 855.7,819.1 863.6,818.3 886.4,819.2 888.5,819.4 888.5,819.4 888.5,819.4",
-        "bounds":  {
-                       "minX":  858,
-                       "minY":  821,
-                       "maxX":  886,
-                       "maxY":  839,
-                       "width":  29,
-                       "height":  19
-                   }
-    },
-    {
-        "id":  30,
-        "label":  "Elemento 30",
-        "points":  "1280,1014.1 1278.6,1027.5 1278.6,1027.5 1278.6,1027.5 1278.6,1027.5 1270.1,1028 1261.5,1027.6 1261.5,1027.6 1261.5,1027.6 1261.5,1027.6 1260.5,1019.6 1261.4,1000.5 1261.4,1000.5 1261.4,1000.5 1261.4,1000.5 1262.6,1000.3 1278.7,1000.5 1278.7,1000.5 1278.7,1000.5 1278.7,1000.5",
-        "bounds":  {
-                       "minX":  1263,
-                       "minY":  1003,
-                       "maxX":  1277,
-                       "maxY":  1025,
-                       "width":  15,
-                       "height":  23
-                   }
-    },
-    {
-        "id":  31,
-        "label":  "Elemento 31",
-        "points":  "1172,1043 1170.9,1059.3 1170.9,1059.3 1170.9,1059.3 1170.9,1059.3 1158,1060 1145.2,1059.4 1145.2,1059.4 1145.2,1059.4 1145.2,1059.4 1144.6,1052.8 1145.1,1027.7 1145.1,1027.7 1145.1,1027.7 1145.1,1027.7 1152,1027.2 1170.9,1027.7 1170.9,1027.7 1170.9,1027.7 1170.9,1027.7",
-        "bounds":  {
-                       "minX":  1147,
-                       "minY":  1030,
-                       "maxX":  1169,
-                       "maxY":  1057,
-                       "width":  23,
-                       "height":  28
-                   }
-    },
-    {
-        "id":  32,
-        "label":  "Elemento 32",
-        "points":  "346,1078.9 345.5,1084.6 345.5,1084.6 345.5,1084.6 345.5,1084.6 343.2,1085 325.2,1084.2 325.2,1084.2 325.2,1084.2 325.2,1084.2 325,1078.9 325.2,1075 325.2,1075 325.2,1075 325.2,1075 325.2,1075 345.7,1074.6 345.7,1074.6 345.7,1074.6 345.7,1074.6",
-        "bounds":  {
-                       "minX":  328,
-                       "minY":  1076,
-                       "maxX":  343,
-                       "maxY":  1083,
-                       "width":  16,
-                       "height":  8
-                   }
-    },
-    {
-        "id":  33,
-        "label":  "Elemento 33",
-        "points":  "469,1120 468.7,1128.4 468.7,1128.4 468.7,1128.4 467.6,1128.5 462.2,1129 437.4,1128.5 435.3,1128.3 435.3,1128.3 435.3,1128.3 435,1120 435.5,1109.4 435.5,1109.4 435.5,1109.4 436.5,1109.3 445.5,1108.4 467.5,1109.3 468.5,1109.4 468.5,1109.4 468.5,1109.4",
-        "bounds":  {
-                       "minX":  438,
-                       "minY":  1111,
-                       "maxX":  466,
-                       "maxY":  1127,
-                       "width":  29,
-                       "height":  17
-                   }
-    },
-    {
-        "id":  34,
-        "label":  "Elemento 34",
-        "points":  "123,1203 122.2,1220 122.2,1220 122.2,1220 121.1,1220.1 104,1221 86.9,1220.1 83.7,1219.9 83.7,1219.9 83.7,1219.9 83,1203 83.8,1185 83.8,1185 83.8,1185 87,1184.8 104,1184 121,1184.8 122.1,1184.9 122.1,1184.9 122.2,1185.9",
-        "bounds":  {
-                       "minX":  86,
-                       "minY":  1187,
-                       "maxX":  120,
-                       "maxY":  1218,
-                       "width":  35,
-                       "height":  32
-                   }
-    },
-    {
-        "id":  35,
-        "label":  "Elemento 35",
-        "points":  "1059,1241.1 1057.9,1257.3 1057.8,1259.4 1057.8,1259.4 1057.8,1259.4 1044,1260 1028.1,1259.3 1028.1,1259.3 1028.1,1259.3 1027.9,1257.2 1027.4,1249.4 1027.9,1223.8 1028.1,1221.7 1028.1,1221.7 1028.1,1221.7 1032.5,1221.4 1055.6,1221.4 1055.6,1221.4 1055.6,1221.4 1055.8,1224.6",
-        "bounds":  {
-                       "minX":  1030,
-                       "minY":  1224,
-                       "maxX":  1056,
-                       "maxY":  1257,
-                       "width":  27,
-                       "height":  34
-                   }
-    }
-]
-;
     const board = document.getElementById("board");
     const pageCredit = document.getElementById("pageCredit");
     const tray = document.getElementById("tray");
@@ -1474,30 +956,18 @@
     const closeInfoButton = document.getElementById("closeInfoButton");
     const jigsawShell = document.getElementById("jigsawShell");
     const hiddenStage = document.getElementById("hiddenStage");
-    const hiddenMenu = document.getElementById("hiddenMenu");
-    const hiddenMenuHeader = hiddenMenu.querySelector(".margrego-header");
-    const hiddenCounter = document.getElementById("hiddenCounter");
-    const hiddenAreas = document.getElementById("hiddenAreas");
-    const hiddenMarkers = document.getElementById("hiddenMarkers");
     const hiddenViewport = document.getElementById("hiddenViewport");
     const hiddenContent = document.getElementById("hiddenContent");
-    const hiddenResetButton = document.getElementById("hiddenResetButton");
-    const hiddenTipButton = document.getElementById("hiddenTipButton");
-    const toggleHiddenMenu = document.getElementById("toggleHiddenMenu");
     const journeyFooter = document.getElementById("journeyFooter");
     const goToLevel1Button = document.getElementById("goToLevel1Button");
     const goToLevel2Button = document.getElementById("goToLevel2Button");
-    const goToLevel3Button = document.getElementById("goToLevel3Button");
     const stageTransitionOverlay = document.getElementById("stageTransitionOverlay");
     const initialLevelOneTitle = menuTitle?.textContent?.trim() || "No Fundo do Mar...";
     const initialLevelOneSubtitle = traySubtitle?.textContent?.trim() || "";
-    const JIGSAW_LEVELS = [{id:"levelOne",image:"polvo_jigsaw1.webp",rows:10,cols:10,title:initialLevelOneTitle,stageLabel:"",subtitle:initialLevelOneSubtitle,message:"Monte a primeira imagem do polvo.",infoTitle:"Sobre a Etapa 1",infoText:"Primeira camada do quebra-cabeca usando a imagem base do polvo.",guideOpacity:.82},{id:"levelTwo",image:"polvo_jigsaw2.png",rows:10,cols:10,title:"...havia um Polvo",stageLabel:"Nivel 2 de 3",subtitle:"Agora a segunda camada aparece por cima da primeira, ignorando partes transparentes.",message:"Monte a segunda camada por cima da primeira imagem. Apenas areas com imagem geram pecas.",infoTitle:"Sobre a Etapa 2",infoText:"Segunda camada do quebra-cabeca usando polvo_jigsaw2.png, mantendo apenas pecas nas areas nao transparentes.",guideOpacity:.8}];
+    const JIGSAW_LEVELS = [{id:"levelOne",image:"polvo_jigsaw1.webp",rows:10,cols:10,title:initialLevelOneTitle,stageLabel:"",subtitle:initialLevelOneSubtitle,message:"Monte a primeira imagem do polvo.",infoTitle:"Sobre a Etapa 1",infoText:"Primeira camada do quebra-cabeca usando a imagem base do polvo.",guideOpacity:.82},{id:"levelTwo",image:"polvo_jigsaw2.png",rows:10,cols:10,title:"...havia um Polvo",stageLabel:"Nivel 2 de 2",subtitle:"Agora a segunda camada aparece por cima da primeira, ignorando partes transparentes.",message:"Monte a segunda camada por cima da primeira imagem. Apenas areas com imagem geram pecas.",infoTitle:"Sobre a Etapa 2",infoText:"Segunda camada do quebra-cabeca usando polvo_jigsaw2.png, mantendo apenas pecas nas areas nao transparentes.",guideOpacity:.8}];
     const placeSound = new Audio("766640__stavsounds__keyboard_tactile_9.ogg");
     placeSound.preload = "auto";
     placeSound.volume = 0.45;
-    const hiddenFindSound = new Audio("683102__florianreichelt__water-drop.mp3");
-    hiddenFindSound.preload = "auto";
-    hiddenFindSound.volume = 0.45;
     const levelTransitionSound = new Audio("400660__tomattka__the-black-sea-waves-rustle.wav");
     levelTransitionSound.preload = "auto";
     levelTransitionSound.volume = 0.45;
@@ -1517,10 +987,6 @@
       boardGuideBaseOpacity: 1,
       menuMinimized: false,
       unlockedStages: ["levelOne"],
-      hiddenSuppressClickUntil: 0,
-      hiddenMenuDrag: null,
-      hiddenMenuMoved: false,
-      hiddenFound: new Set(),
       hiddenZoom: 1,
       hiddenPan: { x: 0, y: 0 },
       hiddenPanDrag: null,
@@ -1568,7 +1034,6 @@
       volumeSlider.addEventListener("input", (event) => {
         const volume = Math.max(0, Math.min(1, Number(event.target.value) / 100));
         placeSound.volume = volume;
-        hiddenFindSound.volume = volume;
         levelTransitionSound.volume = volume;
         volumeValue.textContent = `${Math.round(volume * 100)}%`;
       });
@@ -1586,11 +1051,8 @@
       });
 
       resetButton.addEventListener("click", resetJourney);
-      hiddenResetButton.addEventListener("click", resetHiddenStage);
-      hiddenTipButton.addEventListener("click", showHiddenHint);
       goToLevel1Button.addEventListener("click", () => navigateToStage("levelOne"));
       goToLevel2Button.addEventListener("click", () => navigateToStage("levelTwo"));
-      goToLevel3Button.addEventListener("click", () => navigateToStage("levelThree"));
       document.addEventListener("dragstart", (event) => {
         if (state.stage === "hidden") event.preventDefault();
       });
@@ -1600,15 +1062,6 @@
       hiddenViewport.addEventListener("pointercancel", onHiddenPanPointerUp);
       hiddenViewport.addEventListener("wheel", onHiddenStageWheel, { passive: false });
 
-      toggleHiddenMenu.addEventListener("click", () => {
-        hiddenMenu.classList.toggle("collapsed");
-        toggleHiddenMenu.textContent = hiddenMenu.classList.contains("collapsed") ? "+" : "-";
-      });
-      hiddenMenuHeader.addEventListener("pointerdown", onHiddenMenuPointerDown);
-      document.addEventListener("pointermove", onHiddenMenuPointerMove);
-      document.addEventListener("pointerup", onHiddenMenuPointerUp);
-      document.addEventListener("pointercancel", onHiddenMenuPointerUp);
-
       window.addEventListener("resize", handleResize);
     }
 
@@ -1617,7 +1070,6 @@
 
       if (saved) {
         state.currentLevelIndex = Math.max(0, Math.min(saved.currentLevelIndex ?? 0, JIGSAW_LEVELS.length - 1));
-        state.hiddenFound = new Set(saved.hiddenFound ?? []);
         state.menuMinimized = Boolean(saved.menuMinimized);
         state.stage = saved.stage === "hidden" ? "hidden" : "jigsaw";
         state.placedIdsByLevel = saved.placedIdsByLevel ?? {};
@@ -1659,7 +1111,6 @@
         SAVE_KEY,
         JSON.stringify({
           currentLevelIndex: state.currentLevelIndex,
-          hiddenFound: [...state.hiddenFound],
           unlockedStages: state.unlockedStages,
           menuMinimized: state.menuMinimized,
           stage: state.stage,
@@ -1806,7 +1257,6 @@
     function onPointerUp(){if(!state.drag)return;const {piece}=state.drag;piece.element.classList.remove("dragging");const distance=Math.hypot(piece.currentX-(state.boardRect.left+piece.targetX),piece.currentY-(state.boardRect.top+piece.targetY)),axisAligned=Math.abs(piece.currentX-(state.boardRect.left+piece.targetX))<=SNAP_AXIS_TOLERANCE&&Math.abs(piece.currentY-(state.boardRect.top+piece.targetY))<=SNAP_AXIS_TOLERANCE;if(distance<=SNAP_DISTANCE||axisAligned)placePiece(piece);else returnPieceToTray(piece);state.drag=null;window.removeEventListener("pointermove",onPointerMove)}
     function setPiecePosition(piece,left,top){piece.currentX=left;piece.currentY=top;piece.element.style.left=`${left}px`;piece.element.style.top=`${top}px`}
     function playPlaceSound(){placeSound.currentTime=0;placeSound.play().catch(()=>{})}
-    function playHiddenFindSound(){hiddenFindSound.currentTime=0;hiddenFindSound.play().catch(()=>{})}
     function clearStageTransitionOverlay() {
       if (!stageTransitionOverlay) return;
       stageTransitionOverlay.classList.remove("active", "descend", "ascend");
@@ -1840,7 +1290,7 @@
       boardTransitionFrom.style.backgroundImage = "none";
       boardTransitionTo.style.backgroundImage = "none";
     }
-    async function playLevelTwoToThreeTransition() {
+    async function playLevelTwoToFinalTransition() {
       if (!stageTransitionOverlay) return;
       stageTransitionOverlay.classList.remove("descend", "ascend");
       stageTransitionOverlay.classList.add("active");
@@ -1849,7 +1299,6 @@
       });
       playLevelTransitionSound(8000, 0);
       await new Promise((resolve) => setTimeout(resolve, 4000));
-      unlockStage("levelThree");
       state.stage = "hidden";
       saveProgress();
       showHiddenStage();
@@ -1886,10 +1335,9 @@
         return;
       }
 
-      board.classList.add("shine");
-      boardMessage.innerHTML = '<span class="celebration">Nivel dois completo.</span> A imagem brilhou e o desafio final foi liberado.';
+      boardMessage.innerHTML = '<span class="celebration">Nivel dois completo.</span> Mergulhando para a cena final...';
       setTimeout(() => {
-        playLevelTwoToThreeTransition().catch(console.error);
+        playLevelTwoToFinalTransition().catch(console.error);
       }, 1200);
     }
 
@@ -1898,38 +1346,27 @@
 
       localStorage.removeItem(SAVE_KEY);
       state.currentLevelIndex = 0;
-      state.hiddenFound = new Set();
       state.menuMinimized = false;
       state.stage = "jigsaw";
       state.placedIdsByLevel = {};
       state.unlockedStages = ["levelOne"];
       clearStageTransitionOverlay();
-      hiddenMenu.classList.remove("collapsed");
-      toggleHiddenMenu.textContent = "-";
       updateJourneyFooter();
       loadJigsawJourney(null).catch(console.error);
     }
-    function showHiddenStage(){jigsawShell.style.display="none";hiddenStage.classList.add("active");document.body.classList.add("hidden-scroll-stage");pageCredit.classList.add("hidden");buildHiddenAreas();syncHiddenCounter();setHiddenZoom(1);updateJourneyFooter();window.scrollTo({top:0,behavior:"smooth"})}
-    function buildHiddenAreas(){hiddenAreas.innerHTML="";hiddenMarkers.innerHTML="";HIDDEN_TARGETS.forEach(target=>{const area=document.createElementNS(SVG_NS,"polygon");area.setAttribute("points",target.points);area.setAttribute("class","hidden-area-shape");area.dataset.targetId=String(target.id);area.setAttribute("aria-label",target.label);area.addEventListener("click",()=>{if(Date.now()<state.hiddenSuppressClickUntil)return;toggleHidden(target)});hiddenAreas.appendChild(area);if(state.hiddenFound.has(target.id))createHiddenBox(target)})}
-    function createHiddenMarker(target, className){const marker=document.createElementNS(SVG_NS,"polygon");marker.setAttribute("points",target.points);marker.setAttribute("class",className);marker.dataset.targetId=String(target.id);hiddenMarkers.appendChild(marker);return marker}
-    function createHiddenBox(target){createHiddenMarker(target,"hidden-glow-shape")}
-    function toggleHidden(target){if(state.hiddenFound.has(target.id)){unmarkHidden(target);return}state.hiddenFound.add(target.id);createHiddenBox(target);playHiddenFindSound();syncHiddenCounter();saveProgress()}
-    function unmarkHidden(target){state.hiddenFound.delete(target.id);hiddenMarkers.querySelector(`.hidden-glow-shape[data-target-id="${target.id}"]`)?.remove();syncHiddenCounter();saveProgress()}
-    function syncHiddenCounter(){hiddenCounter.textContent=`${state.hiddenFound.size} / ${HIDDEN_TARGETS.length}`}
-    function resetHiddenStage(){if(!confirm("Reset the hidden elements stage?"))return;state.hiddenFound=new Set();buildHiddenAreas();syncHiddenCounter();setHiddenZoom(1);saveProgress()}
+    function showHiddenStage(){jigsawShell.style.display="none";hiddenStage.classList.add("active");document.body.classList.add("hidden-scroll-stage");pageCredit.classList.add("hidden");setHiddenZoom(1);updateJourneyFooter();window.scrollTo({top:0,behavior:"smooth"})}
     function handleResize(){updateRects();state.pieces.forEach(piece=>{if(piece.placed){piece.element.style.left=`${piece.targetX}px`;piece.element.style.top=`${piece.targetY}px`}});state.hiddenPan=clampHiddenPan(state.hiddenPan.x,state.hiddenPan.y);applyHiddenViewTransform()}
     function handleDialogBackdropClick(event){const bounds=infoDialog.getBoundingClientRect(),clickedInside=event.clientX>=bounds.left&&event.clientX<=bounds.right&&event.clientY>=bounds.top&&event.clientY<=bounds.bottom;if(!clickedInside)infoDialog.close()}
     function normalizeUnlockedStages(savedUnlocked, saved) {
       const unlocked = new Set(Array.isArray(savedUnlocked) && savedUnlocked.length ? savedUnlocked : ["levelOne"]);
       if ((saved?.currentLevelIndex ?? 0) >= 1) unlocked.add("levelTwo");
-      if (saved?.stage === "hidden") unlocked.add("levelThree");
-      return ["levelOne", "levelTwo", "levelThree"].filter((stage) => unlocked.has(stage));
+      return ["levelOne", "levelTwo"].filter((stage) => unlocked.has(stage));
     }
 
     function unlockStage(stageKey) {
       const unlocked = new Set(state.unlockedStages);
       unlocked.add(stageKey);
-      state.unlockedStages = ["levelOne", "levelTwo", "levelThree"].filter((stage) => unlocked.has(stage));
+      state.unlockedStages = ["levelOne", "levelTwo"].filter((stage) => unlocked.has(stage));
       updateJourneyFooter();
     }
 
@@ -1938,11 +1375,6 @@
       journeyFooter.classList.toggle("visible", showFooter);
       goToLevel1Button.disabled = !showFooter || (state.stage === "jigsaw" && state.currentLevelIndex === 0);
       goToLevel2Button.disabled = !state.unlockedStages.includes("levelTwo") || (state.stage === "jigsaw" && state.currentLevelIndex === 1);
-      const levelThreeUnlocked = state.unlockedStages.includes("levelThree");
-      goToLevel3Button.disabled = !levelThreeUnlocked || state.stage === "hidden";
-      goToLevel3Button.classList.toggle("locked", !levelThreeUnlocked);
-      goToLevel3Button.hidden = !levelThreeUnlocked;
-      goToLevel3Button.textContent = "Nivel 3";
     }
 
     function navigateToStage(stageKey) {
@@ -1968,25 +1400,14 @@
         return;
       }
 
-      if (stageKey === "levelThree") {
-        if (!state.unlockedStages.includes("levelThree")) return;
-        state.stage = "hidden";
-        saveProgress();
-        showHiddenStage();
-        window.scrollTo({left:0,top:0,behavior:"smooth"});
-      }
     }
     function applyHiddenViewTransform(){hiddenContent.style.transform=`translate(${state.hiddenPan.x}px, ${state.hiddenPan.y}px) scale(${state.hiddenZoom})`}
     function clampHiddenPan(panX, panY, zoom = state.hiddenZoom){const scaledSize=BOARD_SIZE*zoom;const minX=Math.min(0,hiddenViewport.clientWidth-scaledSize);const minY=Math.min(0,hiddenViewport.clientHeight-scaledSize);return {x:Math.min(0,Math.max(minX,panX)),y:Math.min(0,Math.max(minY,panY))}}
     function setHiddenZoom(nextZoom, anchorClientX, anchorClientY){const oldZoom=state.hiddenZoom;const clampedZoom=Math.max(1,Math.min(3,Number(nextZoom)||1));const viewportRect=hiddenViewport.getBoundingClientRect();const anchorX=anchorClientX??(viewportRect.left+viewportRect.width/2);const anchorY=anchorClientY??(viewportRect.top+viewportRect.height/2);const relativeX=(anchorX-viewportRect.left-state.hiddenPan.x)/oldZoom;const relativeY=(anchorY-viewportRect.top-state.hiddenPan.y)/oldZoom;state.hiddenZoom=clampedZoom;const nextPanX=anchorX-viewportRect.left-relativeX*clampedZoom;const nextPanY=anchorY-viewportRect.top-relativeY*clampedZoom;state.hiddenPan=clampHiddenPan(nextPanX,nextPanY,clampedZoom);applyHiddenViewTransform()}
     function onHiddenStageWheel(event){if(state.stage!=="hidden")return;event.preventDefault();setHiddenZoom(state.hiddenZoom+(event.deltaY<0?0.1:-0.1),event.clientX,event.clientY)}
-    function showHiddenHint(){if(state.stage!=="hidden"||!HIDDEN_TARGETS.length)return;const target=HIDDEN_TARGETS[Math.floor(Math.random()*HIDDEN_TARGETS.length)];const centerX=(target.bounds.minX+target.bounds.maxX)/2,centerY=(target.bounds.minY+target.bounds.maxY)/2;const viewportCenterX=hiddenViewport.clientWidth/2,viewportCenterY=hiddenViewport.clientHeight/2;state.hiddenPan=clampHiddenPan(viewportCenterX-centerX*state.hiddenZoom,viewportCenterY-centerY*state.hiddenZoom);applyHiddenViewTransform()}
-    function onHiddenPanPointerDown(event){if(state.stage!=="hidden"||![0,1].includes(event.button))return;if(event.target.closest("#hiddenMenu"))return;state.hiddenPanDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPanX:state.hiddenPan.x,startPanY:state.hiddenPan.y,moved:false};hiddenViewport.setPointerCapture(event.pointerId);hiddenContent.classList.add("dragging")}
+    function onHiddenPanPointerDown(event){if(state.stage!=="hidden"||![0,1].includes(event.button))return;state.hiddenPanDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPanX:state.hiddenPan.x,startPanY:state.hiddenPan.y,moved:false};hiddenViewport.setPointerCapture(event.pointerId);hiddenContent.classList.add("dragging")}
     function onHiddenPanPointerMove(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;const deltaX=event.clientX-state.hiddenPanDrag.startX,deltaY=event.clientY-state.hiddenPanDrag.startY;if(Math.abs(deltaX)>3||Math.abs(deltaY)>3)state.hiddenPanDrag.moved=true;state.hiddenPan=clampHiddenPan(state.hiddenPanDrag.startPanX+deltaX,state.hiddenPanDrag.startPanY+deltaY);applyHiddenViewTransform()}
-    function onHiddenPanPointerUp(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;if(state.hiddenPanDrag.moved)state.hiddenSuppressClickUntil=Date.now()+120;if(hiddenViewport.hasPointerCapture(event.pointerId))hiddenViewport.releasePointerCapture(event.pointerId);state.hiddenPanDrag=null;hiddenContent.classList.remove("dragging")}
-    function onHiddenMenuPointerDown(event){if(state.stage!=="hidden"||event.button!==0)return;if((event.target.closest("button") && !event.target.isSameNode(toggleHiddenMenu))||event.target.closest("a"))return;state.hiddenMenuDrag={pointerId:event.pointerId,offsetX:event.clientX-hiddenMenu.offsetLeft,offsetY:event.clientY-hiddenMenu.offsetTop,startX:event.clientX,startY:event.clientY};state.hiddenMenuMoved=false;hiddenMenuHeader.setPointerCapture?.(event.pointerId);event.preventDefault()}
-    function onHiddenMenuPointerMove(event){if(!state.hiddenMenuDrag||event.pointerId!==state.hiddenMenuDrag.pointerId)return;const nextLeft=event.clientX-state.hiddenMenuDrag.offsetX,nextTop=event.clientY-state.hiddenMenuDrag.offsetY;hiddenMenu.style.left=`${nextLeft}px`;hiddenMenu.style.top=`${nextTop}px`;if(Math.abs(event.clientX-state.hiddenMenuDrag.startX)>3||Math.abs(event.clientY-state.hiddenMenuDrag.startY)>3)state.hiddenMenuMoved=true}
-    function onHiddenMenuPointerUp(event){if(!state.hiddenMenuDrag||event.pointerId!==state.hiddenMenuDrag.pointerId)return;if(hiddenMenuHeader.hasPointerCapture?.(event.pointerId))hiddenMenuHeader.releasePointerCapture(event.pointerId);state.hiddenMenuDrag=null;if(state.hiddenMenuMoved)state.hiddenSuppressClickUntil=Date.now()+120;state.hiddenMenuMoved=false}
+    function onHiddenPanPointerUp(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;if(hiddenViewport.hasPointerCapture(event.pointerId))hiddenViewport.releasePointerCapture(event.pointerId);state.hiddenPanDrag=null;hiddenContent.classList.remove("dragging")}
   </script>
 </body>
 </html>

@@ -326,8 +326,8 @@ cursor:pointer;
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite.
       Para dicas, clique com o botão direito do mouse no menu.
-      Elementos escondidos: 1° dica revela o nome no menu e as próximas dicas mostram a região aproximada.
-      Elementos visíveis: a dica leva direto para a área da palavra no mapa. Boa sorte!
+      Elementos escondidos: 1° dica revela a área (em 1 de 6 regiões) e centraliza o mapa; 2° dica revela o nome no menu.
+      Elementos visíveis: possuem apenas a dica de área, que pode ser usada quantas vezes quiser. Boa sorte!
     </span>
   </span>
   <a class="menu-btn" href="/" >☰</a>
@@ -843,14 +843,14 @@ li.addEventListener("contextmenu", e => {
 e.preventDefault();
 let word = li.id.replace("menu-", "");
 let regionId = areaRegionMap[word];
-let area = findAreaByWord(word);
 let currentHint = Number(li.dataset.hintLevel || 0);
 let isHiddenWord = li.classList.contains("hidden-word");
 
-if(!isHiddenWord){
-if(area){
-centerViewOnArea(area);
+if(regionId){
+showRegionHint(regionId);
 }
+
+if(!isHiddenWord){
 return;
 }
 
@@ -858,12 +858,8 @@ let nextHint = currentHint <= 0 ? 1 : 2;
 li.dataset.hintLevel = String(nextHint);
 saveHints();
 
-if(nextHint === 1){
+if(nextHint >= 2){
 renderMenuWord(li);
-}
-
-if(regionId && nextHint >= 2){
-showRegionHint(regionId);
 }
 });
 });
@@ -1021,8 +1017,8 @@ answerClips[word].classList.remove("visible");
 document.querySelectorAll("#wordList li").forEach(li => {
 
   li.classList.remove("found");
+  li.dataset.hintLevel = "0";
 
-  /* 👇 THIS IS THE FIX */
   if(li.classList.contains("hidden-word")){
     let word = li.dataset.hidden;
     li.textContent = "?".repeat(word.length);

@@ -894,7 +894,7 @@
     <div class="margrego-stage-wrap">
       <div id="hiddenViewport" class="margrego-viewport">
         <div id="hiddenContent" class="margrego-container">
-          <img src="polvo_elementos.webp" alt="Polvo elementos">
+          <iframe id="levelThreeFrame" src="level3.html" title="Nivel 3 - Fundo do Mar" loading="lazy" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border: 0;"></iframe>
         </div>
       </div>
     </div>
@@ -916,6 +916,7 @@
     <div class="journey-controls">
       <button id="goToLevel1Button" class="level-button" type="button">Nivel 1</button>
       <button id="goToLevel2Button" class="level-button" type="button">Nivel 2</button>
+      <button id="goToLevel3Button" class="level-button" type="button">Nivel 3</button>
     </div>
   </div>
   <div id="stageTransitionOverlay" class="stage-transition-overlay" aria-hidden="true"></div>
@@ -925,7 +926,9 @@
     const BOARD_SIZE = 1280;
     const SNAP_DISTANCE = 120;
     const SNAP_AXIS_TOLERANCE = 84;
-    const SAVE_KEY = "PolvoJourneyV2";
+    const JOURNEY_SAVE_KEYS = ["PolvoJourneyV3", "PolvoJourneyV2"];
+    const SAVE_KEY = JOURNEY_SAVE_KEYS[0];
+    const LEVEL_THREE_SAVE_KEYS = ["polvo3PuzzleProgress", "MAR_wordGuesses", "MAR_wordHints", "MAR_selectedOverlay"];
     const LEVEL_TWO_OCCUPANCY = [[false,false,true,true,true,true,true,true,false,false],[false,false,true,true,true,true,true,true,false,false],[false,false,true,true,true,true,true,true,false,false],[false,false,true,true,true,true,true,true,false,false],[false,false,false,true,true,true,true,false,false,false],[true,true,true,true,true,true,true,true,true,true],[false,false,true,true,true,true,true,true,false,false],[true,true,true,true,true,true,true,true,true,true],[true,true,true,true,true,true,true,true,true,true],[true,true,true,true,false,false,true,true,true,true]];
     const board = document.getElementById("board");
     const pageCredit = document.getElementById("pageCredit");
@@ -961,10 +964,11 @@
     const journeyFooter = document.getElementById("journeyFooter");
     const goToLevel1Button = document.getElementById("goToLevel1Button");
     const goToLevel2Button = document.getElementById("goToLevel2Button");
+    const goToLevel3Button = document.getElementById("goToLevel3Button");
     const stageTransitionOverlay = document.getElementById("stageTransitionOverlay");
     const initialLevelOneTitle = menuTitle?.textContent?.trim() || "No Fundo do Mar...";
     const initialLevelOneSubtitle = traySubtitle?.textContent?.trim() || "";
-    const JIGSAW_LEVELS = [{id:"levelOne",image:"polvo_jigsaw1.webp",rows:10,cols:10,title:initialLevelOneTitle,stageLabel:"",subtitle:initialLevelOneSubtitle,message:"Monte a primeira imagem do polvo.",infoTitle:"Sobre a Etapa 1",infoText:"Primeira camada do quebra-cabeca usando a imagem base do polvo.",guideOpacity:.82},{id:"levelTwo",image:"polvo_jigsaw2.png",rows:10,cols:10,title:"...havia um Polvo",stageLabel:"Nivel 2 de 2",subtitle:"Agora a segunda camada aparece por cima da primeira, ignorando partes transparentes.",message:"Monte a segunda camada por cima da primeira imagem. Apenas areas com imagem geram pecas.",infoTitle:"Sobre a Etapa 2",infoText:"Segunda camada do quebra-cabeca usando polvo_jigsaw2.png, mantendo apenas pecas nas areas nao transparentes.",guideOpacity:.8}];
+    const JIGSAW_LEVELS = [{id:"levelOne",image:"polvo_jigsaw1.webp",rows:10,cols:10,title:initialLevelOneTitle,stageLabel:"Nivel 1 de 3",subtitle:initialLevelOneSubtitle,message:"Monte a primeira imagem do polvo.",infoTitle:"Sobre a Etapa 1",infoText:"Primeira camada do quebra-cabeca usando a imagem base do polvo.",guideOpacity:.82},{id:"levelTwo",image:"polvo_jigsaw2.png",rows:10,cols:10,title:"...havia um Polvo",stageLabel:"Nivel 2 de 3",subtitle:"Agora a segunda camada aparece por cima da primeira, ignorando partes transparentes.",message:"Monte a segunda camada por cima da primeira imagem. Apenas areas com imagem geram pecas.",infoTitle:"Sobre a Etapa 2",infoText:"Segunda camada do quebra-cabeca usando polvo_jigsaw2.png, mantendo apenas pecas nas areas nao transparentes.",guideOpacity:.8}];
     const placeSound = new Audio("766640__stavsounds__keyboard_tactile_9.ogg");
     placeSound.preload = "auto";
     placeSound.volume = 0.45;
@@ -1053,6 +1057,7 @@
       resetButton.addEventListener("click", resetJourney);
       goToLevel1Button.addEventListener("click", () => navigateToStage("levelOne"));
       goToLevel2Button.addEventListener("click", () => navigateToStage("levelTwo"));
+      goToLevel3Button.addEventListener("click", () => navigateToStage("levelThree"));
       document.addEventListener("dragstart", (event) => {
         if (state.stage === "hidden") event.preventDefault();
       });
@@ -1071,7 +1076,7 @@
       if (saved) {
         state.currentLevelIndex = Math.max(0, Math.min(saved.currentLevelIndex ?? 0, JIGSAW_LEVELS.length - 1));
         state.menuMinimized = Boolean(saved.menuMinimized);
-        state.stage = saved.stage === "hidden" ? "hidden" : "jigsaw";
+        state.stage = saved.stage === "hidden" || saved.stage === "levelThree" ? "hidden" : "jigsaw";
         state.placedIdsByLevel = saved.placedIdsByLevel ?? {};
         state.unlockedStages = normalizeUnlockedStages(saved.unlockedStages, saved);
       }
@@ -1088,7 +1093,11 @@
 
     function loadProgress() {
       try {
-        const raw = localStorage.getItem(SAVE_KEY);
+        let raw = null;
+        for (const key of JOURNEY_SAVE_KEYS) {
+          raw = localStorage.getItem(key);
+          if (raw) break;
+        }
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         if (parsed && !parsed.placedIdsByLevel && Array.isArray(parsed.placedIds)) {
@@ -1335,7 +1344,8 @@
         return;
       }
 
-      boardMessage.innerHTML = '<span class="celebration">Nivel dois completo.</span> Mergulhando para a cena final...';
+      boardMessage.innerHTML = '<span class="celebration">Nivel dois completo.</span> Liberando o nivel 3...';
+      unlockStage("levelThree");
       setTimeout(() => {
         playLevelTwoToFinalTransition().catch(console.error);
       }, 1200);
@@ -1344,7 +1354,8 @@
     function resetJourney() {
       if (!confirm("Reiniciar toda a jornada?")) return;
 
-      localStorage.removeItem(SAVE_KEY);
+      JOURNEY_SAVE_KEYS.forEach((key) => localStorage.removeItem(key));
+      LEVEL_THREE_SAVE_KEYS.forEach((key) => localStorage.removeItem(key));
       state.currentLevelIndex = 0;
       state.menuMinimized = false;
       state.stage = "jigsaw";
@@ -1360,13 +1371,14 @@
     function normalizeUnlockedStages(savedUnlocked, saved) {
       const unlocked = new Set(Array.isArray(savedUnlocked) && savedUnlocked.length ? savedUnlocked : ["levelOne"]);
       if ((saved?.currentLevelIndex ?? 0) >= 1) unlocked.add("levelTwo");
-      return ["levelOne", "levelTwo"].filter((stage) => unlocked.has(stage));
+      if (saved?.stage === "hidden" || saved?.stage === "levelThree") unlocked.add("levelThree");
+      return ["levelOne", "levelTwo", "levelThree"].filter((stage) => unlocked.has(stage));
     }
 
     function unlockStage(stageKey) {
       const unlocked = new Set(state.unlockedStages);
       unlocked.add(stageKey);
-      state.unlockedStages = ["levelOne", "levelTwo"].filter((stage) => unlocked.has(stage));
+      state.unlockedStages = ["levelOne", "levelTwo", "levelThree"].filter((stage) => unlocked.has(stage));
       updateJourneyFooter();
     }
 
@@ -1375,6 +1387,7 @@
       journeyFooter.classList.toggle("visible", showFooter);
       goToLevel1Button.disabled = !showFooter || (state.stage === "jigsaw" && state.currentLevelIndex === 0);
       goToLevel2Button.disabled = !state.unlockedStages.includes("levelTwo") || (state.stage === "jigsaw" && state.currentLevelIndex === 1);
+      goToLevel3Button.disabled = !state.unlockedStages.includes("levelThree") || state.stage === "hidden";
     }
 
     function navigateToStage(stageKey) {
@@ -1397,6 +1410,14 @@
         saveProgress();
         loadJigsawJourney(loadProgress()).catch(console.error);
         window.scrollTo({left:0,top:0,behavior:"smooth"});
+        return;
+      }
+
+      if (stageKey === "levelThree") {
+        if (!state.unlockedStages.includes("levelThree")) return;
+        state.stage = "hidden";
+        saveProgress();
+        showHiddenStage();
         return;
       }
 

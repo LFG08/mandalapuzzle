@@ -1104,7 +1104,7 @@ alert("fim! 🎉🎉");
 
 function loadProgress(){
 
-let saved = localStorage.getItem("marPuzzleProgress");
+let saved = localStorage.getItem("polvo3PuzzleProgress");
 if(!saved) return;
 
 let words = JSON.parse(saved);
@@ -1156,7 +1156,7 @@ document.querySelectorAll("#wordList li").forEach(li => {
 revealAllMenuWords = false;
 updateRevealAllButton();
 
-localStorage.removeItem("marPuzzleProgress");
+localStorage.removeItem("polvo3PuzzleProgress");
 localStorage.removeItem(guessStorageKey);
 localStorage.removeItem(hintStorageKey);
 updateCounter();
@@ -1166,7 +1166,7 @@ function confirmReset(){
 
 if(confirm("Reset?")){
 clearAll();
-localStorage.removeItem("marPuzzleProgress");
+localStorage.removeItem("polvo3PuzzleProgress");
 }
 
   }
@@ -1251,7 +1251,7 @@ document.body.classList.remove("dragging");
 function saveProgress(){
 
 localStorage.setItem(
-"marPuzzleProgress",
+"polvo3PuzzleProgress",
 JSON.stringify(Object.keys(answerClips)
 .filter(w => answerClips[w].classList.contains("visible")))
 );

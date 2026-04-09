@@ -471,6 +471,7 @@
     const SNAP_AXIS_TOLERANCE = 72;
     const SAVE_KEY = "luciferJigsawProgress";
     const LEGACY_SAVE_KEYS = ["LuciferFVS"];
+    const PIECE_PLACE_SOUND_SRC = "/fundodomar/683102__florianreichelt__water-drop.mp3";
 
     const LEVELS = [
       {
@@ -511,6 +512,8 @@
     const statusCard = document.getElementById("status-card");
     const menuToggleButton = document.getElementById("menu-toggle-button");
     const pieceTemplate = document.getElementById("piece-template");
+    const placementSound = new Audio(PIECE_PLACE_SOUND_SRC);
+    placementSound.preload = "auto";
 
     const EASY_BOARD_GUIDE = {
       image: "level_one.png",
@@ -1129,6 +1132,7 @@
       piece.element.style.position = "absolute";
       piece.element.classList.add("placed");
       piece.placed = true;
+      playPlacementSound();
       piece.element.style.left = `${piece.targetX}px`;
       piece.element.style.top = `${piece.targetY}px`;
       piece.currentX = state.boardRect.left + piece.targetX;
@@ -1140,6 +1144,12 @@
       saveProgress();
       updateStatus();
       checkLevelCompletion(level);
+    }
+
+    function playPlacementSound() {
+      const soundInstance = placementSound.cloneNode();
+      soundInstance.volume = 0.42;
+      soundInstance.play().catch(() => {});
     }
 
     function returnPieceToTray(piece) {

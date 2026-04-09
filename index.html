@@ -475,7 +475,77 @@ levelTwoStarted = levelOnePieces >= 100;
 }
 
 return {
-showCounter: levelTwoStarted,
+found,
+total: levelTwoStarted ? total : null
+};
+}
+
+function getStoredObjectFromKeys(keys){
+for(let i = 0; i < keys.length; i++){
+try{
+let raw = localStorage.getItem(keys[i]);
+if(!raw) continue;
+let parsed = JSON.parse(raw);
+if(parsed && typeof parsed === "object"){
+return parsed;
+}
+}catch{
+/* ignore invalid save shape */
+}
+}
+return null;
+}
+
+async function getFundodomarCounterMeta(){
+try{
+let response = await fetch("fundodomar/level3.html", { cache: "no-store" });
+if(!response.ok) throw new Error("Falha ao carregar fundodomar/level3.html");
+let html = await response.text();
+let matches = html.match(/<li\s+id="menu-[^"]+"/g) || [];
+return {
+levelThreeTotal: matches.length
+};
+}catch{
+return null;
+}
+}
+
+function getFundodomarStatus(meta){
+let journey = getStoredObjectFromKeys(["PolvoJourneyV3", "PolvoJourneyV2"]);
+let placedByLevel = journey && journey.placedIdsByLevel && typeof journey.placedIdsByLevel === "object"
+? journey.placedIdsByLevel
+: {};
+
+let levelOneFound = Array.isArray(placedByLevel.levelOne) ? placedByLevel.levelOne.length : 0;
+let levelTwoFound = Array.isArray(placedByLevel.levelTwo) ? placedByLevel.levelTwo.length : 0;
+let levelThreeFound = safeParseStoredArray("polvo3PuzzleProgress").length;
+
+let unlocked = new Set(["levelOne"]);
+if(Array.isArray(journey && journey.unlockedStages)){
+journey.unlockedStages.forEach(stage => {
+if(typeof stage === "string") unlocked.add(stage);
+});
+}
+if(Number(journey && journey.currentLevelIndex) >= 1){
+unlocked.add("levelTwo");
+}
+if(journey && (journey.stage === "hidden" || journey.stage === "levelThree")){
+unlocked.add("levelThree");
+}
+
+let found = levelOneFound + levelTwoFound + levelThreeFound;
+let hasLastLevelUnlocked = unlocked.has("levelThree");
+let levelThreeTotal = meta && Number.isFinite(meta.levelThreeTotal) ? meta.levelThreeTotal : 0;
+
+if(!hasLastLevelUnlocked){
+return {
+found,
+total: null
+};
+}
+
+let total = 100 + levelTwoFound + levelThreeTotal;
+return {
 found,
 total
 };
@@ -578,16 +648,16 @@ if(!statusEl) return;
 statusEl.style.color = "#f5e6d3";
 statusEl.style.opacity = "0.8";
 
-if(found === total && total > 0){
+if(total !== null && found === total && total > 0){
 statusEl.textContent = "✔ completo";
 statusEl.style.color = "#f1c501";
 statusEl.style.opacity = "1";
 return;
 }
 
-statusEl.textContent = found + " / " + total;
+statusEl.textContent = found + " / " + (total === null ? "?" : total);
 
-if(found === 0 && total === 0){
+if(found === 0 && (total === 0 || total === null)){
 statusEl.style.opacity = "0.7";
 }
 }
@@ -700,13 +770,25 @@ let total = parseInt(card.dataset.total);
 if(Number.isNaN(total)) return;
 let statusEl = card.querySelector(".status");
 let luciferStatus = getLuciferStatus(total);
-if(luciferStatus.showCounter){
 renderStatus(statusEl, luciferStatus.found, luciferStatus.total);
-}else if(statusEl){
-statusEl.textContent = "";
-}
 let percentage = luciferStatus.total > 0 ? (luciferStatus.found / luciferStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
+return;
+}
+
+if(card.id === "polvoCard"){
+let statusEl = card.querySelector(".status");
+let initial = getFundodomarStatus(null);
+renderStatus(statusEl, initial.found, initial.total);
+let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
+applyThumbBorder(card, initialPercentage);
+
+getFundodomarCounterMeta().then(meta => {
+let updated = getFundodomarStatus(meta);
+renderStatus(statusEl, updated.found, updated.total);
+let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
+applyThumbBorder(card, updatedPercentage);
+});
 return;
 }
 

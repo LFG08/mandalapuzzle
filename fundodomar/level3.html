@@ -564,13 +564,13 @@ shape="poly" onclick="toggleAnswer(this,'Turtle'); return false;">
 
 <script>
 
-/* prevent image dragging */
-document.addEventListener("dragstart", e=>e.preventDefault());
-
 const overlayStorageKey = "polvo_selectedOverlay";
 const guessStorageKey = "polvo_wordGuesses";
 const hintStorageKey = "polvo_wordHints";
 const defaultOverlay = "polvo_gabarito1.webp";
+const foundSound = new Audio("683102__florianreichelt__water-drop.mp3");
+foundSound.preload = "auto";
+foundSound.volume = 0.45;
 const sourceMapSize = 1280;
 const displayMapSize = 1280;
 const regionDefinitions = [
@@ -1026,6 +1026,13 @@ applyHint(item, nextHint);
 
 const answerClips={};
 
+function playFoundSound(){
+try{
+  foundSound.currentTime = 0;
+  void foundSound.play();
+}catch{}
+}
+
 function toggleAnswer(area,word){
 
 if(!area.coords) return;
@@ -1059,6 +1066,7 @@ if(!isVisible){
 
   answerClips[word].classList.add("visible");
   menuWord.classList.add("found");
+  playFoundSound();
 
   if(menuWord.classList.contains("hidden-word")){
   finishGuessEdit(menuWord, false);
@@ -1218,6 +1226,9 @@ let isDragging=false,startX,startY,scrollLeft,scrollTop;
 document.addEventListener("mousedown",e=>{
 
 if(e.target.closest("#wordMenu")) return;
+if(e.button !== 0) return;
+
+e.preventDefault();
 
 isDragging=true;
 document.body.classList.add("dragging");
@@ -1242,6 +1253,16 @@ scrollTop-(e.clientY-startY)
 });
 
 document.addEventListener("mouseup",()=>{
+isDragging=false;
+document.body.classList.remove("dragging");
+});
+
+document.addEventListener("mouseleave",()=>{
+isDragging=false;
+document.body.classList.remove("dragging");
+});
+
+window.addEventListener("blur",()=>{
 isDragging=false;
 document.body.classList.remove("dragging");
 });

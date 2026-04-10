@@ -429,6 +429,20 @@ data-total="138">
   <div class="status"></div>
 
 </a>
+
+<a href="tyre" class="card"
+id="tyreCard"
+data-key="tyreJigsawProgress"
+data-total="136">
+
+  <div class="thumb">
+    <img src="thumb_tyre.png" loading="lazy">
+  </div>
+
+  <div class="tags">#jigsawpuzzle #quebra-cabeça #Tyre</div>
+  <div class="status"></div>
+
+</a>
   
 <a href="fundodomar" class="card" id="polvoCard">
   <div class="thumb">
@@ -515,8 +529,8 @@ return 0;
 }
 }
 
-function getLuciferStatus(total){
-let progress = safeParseStoredArray("luciferJigsawProgress");
+function getTwoLevelJigsawStatus(saveKey, total){
+let progress = safeParseStoredArray(saveKey);
 let found = progress.length;
 let levelTwoStarted = progress.some(id => typeof id === "string" && id.startsWith("levelTwo-"));
 
@@ -529,6 +543,14 @@ return {
 found,
 total: levelTwoStarted ? total : null
 };
+}
+
+function getLuciferStatus(total){
+return getTwoLevelJigsawStatus("luciferJigsawProgress", total);
+}
+
+function getTyreStatus(total){
+return getTwoLevelJigsawStatus("tyreJigsawProgress", total);
 }
 
 function getStoredObjectFromKeys(keys){
@@ -824,6 +846,17 @@ let statusEl = card.querySelector(".status");
 let luciferStatus = getLuciferStatus(total);
 renderStatus(statusEl, luciferStatus.found, luciferStatus.total);
 let percentage = luciferStatus.total > 0 ? (luciferStatus.found / luciferStatus.total) * 100 : 0;
+applyThumbBorder(card, percentage);
+return;
+}
+
+if(card.id === "tyreCard"){
+let total = parseInt(card.dataset.total);
+if(Number.isNaN(total)) return;
+let statusEl = card.querySelector(".status");
+let tyreStatus = getTyreStatus(total);
+renderStatus(statusEl, tyreStatus.found, tyreStatus.total);
+let percentage = tyreStatus.total > 0 ? (tyreStatus.found / tyreStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
 return;
 }

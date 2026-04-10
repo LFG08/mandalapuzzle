@@ -150,6 +150,17 @@ margin-top:4px;
 opacity:0.7;
 }
 
+
+.locked-tag{
+  opacity:.7;
+  transition:opacity .35s ease, transform .35s ease;
+}
+
+.locked-tag.unlocked{
+  opacity:1;
+  transform:scale(1.05);
+}
+  
 .status{
 font-size:12px;
 margin-top:6px;
@@ -381,7 +392,13 @@ data-total="40">
     <img id="celticThumb" loading="lazy">
   </div>
 
-  <div class="tags">#caça-elementos #Celtic #Irlanda #NósDemais</div>
+  <div class="tags">#caça-elementos #Celtic #Irlanda #NósDemais
+  
+  <span class="tag locked-tag"
+        data-unlock="18"
+        data-real="#caça-palavras">#???</span>
+    
+  </div>
   <div class="status"></div>
 
 </a>
@@ -422,10 +439,7 @@ data-total="138">
   <div class="status"></div>
 
 </a>
-
-
-
-  
+ 
   
 </div>
 
@@ -441,7 +455,21 @@ data-total="138">
   target="_blank"
   rel="noopener noreferrer"
 >reportar um problema</a>
+  
 <script>
+
+document.querySelectorAll(".locked-tag").forEach(tag => {
+  const unlockAt = Number(tag.dataset.unlock);
+
+  if(foundCount >= unlockAt){
+    tag.textContent = tag.dataset.real;
+    tag.classList.add("unlocked");
+  } else {
+    tag.textContent = "#???";
+    tag.classList.remove("unlocked");
+  }
+});
+  
 function safeParseStoredArray(key){
 try{
 let parsed = JSON.parse(localStorage.getItem(key) || "[]");

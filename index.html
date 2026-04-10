@@ -458,17 +458,40 @@ data-total="138">
   
 <script>
 
-document.querySelectorAll(".locked-tag").forEach(tag => {
-  const unlockAt = Number(tag.dataset.unlock);
-
-  if(foundCount >= unlockAt){
-    tag.textContent = tag.dataset.real;
-    tag.classList.add("unlocked");
-  } else {
-    tag.textContent = "#???";
-    tag.classList.remove("unlocked");
-  }
+function updateLockedTags(scope, foundCount){
+let root = scope || document;
+root.querySelectorAll(".locked-tag").forEach(tag => {
+let unlockAt = Number(tag.dataset.unlock || 0);
+if(foundCount >= unlockAt){
+tag.textContent = tag.dataset.real || tag.textContent;
+tag.classList.add("unlocked");
+return;
+}
+tag.textContent = "#???";
+tag.classList.remove("unlocked");
 });
+}
+
+function setCelticThumb(thumbEl, src){
+if(!thumbEl || !src) return;
+
+if(thumbEl.getAttribute("src") === src){
+thumbEl.classList.add("ready");
+return;
+}
+
+thumbEl.classList.remove("ready");
+let preloader = new Image();
+preloader.onload = () => {
+thumbEl.src = src;
+thumbEl.classList.add("ready");
+};
+preloader.onerror = () => {
+thumbEl.src = src;
+thumbEl.classList.add("ready");
+};
+preloader.src = src;
+}
   
 function safeParseStoredArray(key){
 try{
@@ -777,16 +800,17 @@ let statusEl = card.querySelector(".status");
 let thumbEl = document.getElementById("celticThumb");
 let totalFallback = parseInt(card.dataset.total);
 let initial = getCelticStatus(null, totalFallback);
-thumbEl.src = initial.thumb;
-thumbEl.classList.add("ready");
+setCelticThumb(thumbEl, initial.thumb);
 renderStatus(statusEl, initial.found, initial.total);
+updateLockedTags(card, initial.found);
 let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
 applyThumbBorder(card, initialPercentage);
 
 getCelticCounterMeta().then(meta => {
 let updated = getCelticStatus(meta, totalFallback);
-thumbEl.src = updated.thumb;
+setCelticThumb(thumbEl, updated.thumb);
 renderStatus(statusEl, updated.found, updated.total);
+updateLockedTags(card, updated.found);
 let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
 applyThumbBorder(card, updatedPercentage);
 });

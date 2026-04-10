@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Flower Jigsaw</title>
+  <style>
+    :root{--guide:url("flower_jigsaw_level_1.png");--overlay:linear-gradient(rgba(255,247,235,.34),rgba(255,247,235,.34));--guideOpacity:.9}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:#f7ecdf;background:radial-gradient(circle at top,rgba(225,149,83,.22),transparent 28%),linear-gradient(180deg,#4b1a09,#280d04 72%)}
+    button,input{font:inherit}.app{width:min(1480px,calc(100vw - 28px));margin:0 auto;padding:22px 0 34px}.layout{display:grid;grid-template-columns:minmax(768px,820px) minmax(320px,1fr);gap:24px;align-items:start}
+    .card,.trayWrap,.boardWrap{background:linear-gradient(180deg,rgba(72,28,10,.98),rgba(45,16,7,.98));border:1px solid #9e5a22;border-radius:24px;box-shadow:0 26px 60px rgba(29,12,4,.28)}
+    .boardWrap{position:sticky;top:18px;padding:18px}.board{position:relative;width:768px;height:768px;background:linear-gradient(rgba(255,246,233,.18),rgba(255,246,233,.18));box-shadow:inset 0 0 0 1px rgba(255,236,211,.12)}
+    .board:before{content:"";position:absolute;inset:0;background:var(--overlay),var(--guide);background-size:100% 100%;opacity:var(--guideOpacity);pointer-events:none;z-index:0}.glow{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 25%,rgba(255,255,255,.2),transparent 40%),radial-gradient(circle at 50% 120%,rgba(255,208,158,.16),transparent 32%)}
+    .cracks{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;background-size:100% 100%;background-position:center}
+    .cracks.active{animation:crackSpread 1.8s ease forwards}
+    .controls{margin:12px 6px 0;display:flex;gap:12px;align-items:center}.controls label,.small{color:#dfbf9a;text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}.slider{flex:1;accent-color:#d58349}
+    .trayWrap{padding:18px;min-height:850px}.card{padding:18px;margin-bottom:18px}.title{margin:0 0 14px;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.34rem}.line+.line{margin-top:12px}.value{display:inline-block;margin-top:4px;color:#fff4e7}
+    .actions{display:grid;gap:8px;margin-top:16px}.btn{width:100%;border:1px solid rgba(255,234,210,.18);border-radius:999px;padding:9px 12px;background:linear-gradient(180deg,rgba(122,49,16,.98),rgba(86,31,9,.98));color:#fff1e1;cursor:pointer}
+    .tray{position:relative;min-height:710px;height:calc(100vh - 190px);overflow:auto;border-radius:20px;background:linear-gradient(135deg,#2d0d00,#8e3810),repeating-linear-gradient(45deg,rgba(255,219,182,.05) 0,rgba(255,219,182,.05) 16px,transparent 16px,transparent 32px);border:2px inset rgb(55,20,5)}
+    .piece{position:absolute;border:0;padding:0;margin:0;background:transparent;cursor:grab;touch-action:none;user-select:none;transition:transform .15s ease,filter .15s ease;z-index:2}.piece:hover{transform:translateY(-2px)}.piece canvas{display:block;filter:drop-shadow(0 12px 22px rgba(44,23,11,.24))}
+    .piece.drag{position:fixed;cursor:grabbing;z-index:9999;transition:none}.piece.placed{cursor:default}.piece.placed canvas{filter:drop-shadow(0 8px 12px rgba(44,23,11,.08))}.piece.level2:not(.active){display:none}.piece.level1-hidden{display:none}
+    .piece.shattering{pointer-events:none;transform-origin:center center}.piece.shattering canvas{filter:drop-shadow(0 22px 30px rgba(28,14,7,.34))}
+    .piece.cracking{pointer-events:none;transform-origin:center center}.piece.cracking canvas{filter:drop-shadow(0 10px 14px rgba(255,244,230,.22)) drop-shadow(0 0 10px rgba(255,255,255,.18))}
+    .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#dfbf9a}.celebrate{color:#ffd7ab;font-weight:700}
+    .credits{margin:16px 4px 0;color:#dfbf9a;font-size:.82rem;line-height:1.5}.credits a{color:#ffd7ab}
+    @keyframes crackSpread{0%{opacity:0;transform:scale(.18)}35%{opacity:.92;transform:scale(.58)}68%{opacity:.82;transform:scale(.9)}100%{opacity:0;transform:scale(1)}}
+    @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
+    @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="layout">
+      <div class="boardWrap">
+        <div id="board" class="board"><div class="glow"></div><div id="cracks" class="cracks"></div></div>
+        <div class="controls"><label for="guide">Guia de Visibilidade</label><input id="guide" class="slider" type="range" min="0" max="100" value="90"><span id="guideVal">90%</span></div>
+      </div>
+      <aside class="trayWrap">
+        <div class="card">
+          <h1 class="title">Flor</h1>
+          <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 0</strong></div>
+          <div class="actions"><button id="shuffle" class="btn" type="button">Embaralhar Peças Soltas</button><button id="reset" class="btn" type="button">Reset</button></div>
+        </div>
+        <h2 style="margin:0 0 14px">Bandeja de Peças</h2>
+        <div id="tray" class="tray"></div>
+      </aside>
+    </section>
+    <p class="credits">Ice Breaking; Slow.wav by Rslebs -- <a href="https://freesound.org/s/661830/">https://freesound.org/s/661830/</a> -- License: Attribution 4.0</p>
+  </main>
+  <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
+  <script src="assets.js"></script>
+  <script>
+    const BOARD=768,SNAP=110,AXIS=72,KEY="flowerJigsawProgress",BREAK_SOUND="661830__rslebs__ice-breaking-slow.wav";
+    const LEVELS=[{id:"levelOne",label:"Level 1",image:"flower_jigsaw_level_1.png",frame:"flower_jigsaw_frame.png",mode:"hybrid"},{id:"levelTwo",label:"Level 2",image:"flower_jigsaw_level_2.png",rows:6,cols:6,mode:"grid"}];
+    const GUIDE1={img:"flower_jigsaw_level_1.png",overlay:"linear-gradient(rgba(255,247,235,.16),rgba(255,247,235,.16))",opacity:.62};
+    const INTRO_GUIDE={img:"flower_jigsaw_level_1.png",overlay:"linear-gradient(rgba(255,247,235,0),rgba(255,247,235,0))",opacity:1};
+    const GUIDE2={img:"flower_jigsaw_level_2_guia.png",overlay:"linear-gradient(rgba(255,247,235,.12),rgba(255,247,235,.12))",opacity:.5};
+    const FINAL_GUIDE={img:"flower_jigsaw_level_2_guia.png",overlay:"linear-gradient(rgba(255,247,235,0),rgba(255,247,235,0))",opacity:1};
+    const el={
+      board:document.getElementById("board"),
+      cracks:document.getElementById("cracks"),
+      tray:document.getElementById("tray"),
+      tpl:document.getElementById("tpl"),
+      placed:document.getElementById("placed"),
+      guide:document.getElementById("guide"),
+      guideVal:document.getElementById("guideVal"),
+      shuffle:document.getElementById("shuffle"),
+      reset:document.getElementById("reset")
+    };
+    const st={boardRect:null,trayRect:null,pieces:[],levels:[],current:0,drag:null,z:2,guide:.9,guideBase:.9,intro:false,breakAudio:null};
+    init().catch(e=>{console.error(e);alert(`The puzzle could not be initialized. ${e.message||""}`.trim())});
+    async function init(){
+      const saved=load();setGuide(GUIDE1);applyGuide(saved?.guide??.9);
+      st.breakAudio=createBreakAudio();
+      st.levels=await Promise.all(LEVELS.map(loadLevel));
+      st.levels.forEach((lv,i)=>createPieces(lv,i===0));rects();if(saved)restore(saved);else await playIntroShatter();status();
+      addEventListener("resize",resize);el.guide.oninput=e=>{applyGuide(+e.target.value/100);save()};el.shuffle.onclick=shuffleLoose;el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+    }
+    function setGuide(g){st.guideBase=g.opacity;document.documentElement.style.setProperty("--guide",`url("${g.img}")`);document.documentElement.style.setProperty("--overlay",g.overlay);syncGuide()}
+    function applyGuide(v){st.guide=Math.max(0,Math.min(1,+v||0));el.guide.value=Math.round(st.guide*100);el.guideVal.textContent=`${Math.round(st.guide*100)}%`;syncGuide()}
+    function syncGuide(){document.documentElement.style.setProperty("--guideOpacity",(st.guideBase*st.guide).toFixed(2))}
+    function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return null;const parsed=JSON.parse(raw);return Array.isArray(parsed.placed)?parsed:null}catch{return null}}
+    function save(){try{localStorage.setItem(KEY,JSON.stringify({guide:st.guide,placed:st.pieces.filter(p=>p.placed).map(p=>p.id)}))}catch{}}
+    function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
+    async function loadLevel(cfg){
+      const img=await loadImage(cfg.image);
+      if(cfg.mode==="hybrid"){const frame=await loadImage(cfg.frame);const regions=hybridRegions(frame);return {...cfg,img,regions,total:regions.length,placed:0}}
+      const occ=Array.from({length:cfg.rows},()=>Array(cfg.cols).fill(true));const edges=edgeMap(cfg.rows,cfg.cols,occ);return {...cfg,img,occ,edges,total:cfg.rows*cfg.cols,placed:0}
+    }
+    function loadImage(src){return new Promise((ok,bad)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>bad(new Error(`Image load failed for ${src}`));i.src=(typeof EMBEDDED_ASSETS!=="undefined"&&EMBEDDED_ASSETS[src])?EMBEDDED_ASSETS[src]:src})}
+    function hybridRegions(image){
+      const {lines,barrier,w,h}=frameAnalysis(image),outside=outsideArea(barrier,w,h),inside=new Uint8Array(w*h);
+      for(let i=0;i<inside.length;i++)inside[i]=barrier[i]||outside[i]?0:1;
+      const frameParts=findRegions(inside,w,h,72,"frame"),outerMask=new Uint8Array(w*h);
+      for(let i=0;i<outerMask.length;i++)outerMask[i]=outside[i]&&!lines[i]?1:0;
+      return refineLevelOneRegions([...frameParts,...outerRegions(outerMask,w,h)]).sort((a,b)=>b.area-a.area).map((r,i)=>({...r,id:`${r.kind}-${i}`}));
+    }
+    function frameAnalysis(image){
+      const c=document.createElement("canvas");c.width=image.width;c.height=image.height;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(image,0,0);
+      const data=x.getImageData(0,0,c.width,c.height).data,bg=sampleBg(x,c.width,c.height),lines=new Uint8Array(c.width*c.height);
+      for(let y=0;y<c.height;y++)for(let x0=0;x0<c.width;x0++){const o=(y*c.width+x0)*4,a=data[o+3];if(a<=8)continue;const d=dist(data[o],data[o+1],data[o+2],bg.r,bg.g,bg.b);if(d>10)lines[y*c.width+x0]=1}
+      seal(lines,c.width,c.height,16);return {lines,barrier:dilate(lines,c.width,c.height,1),w:c.width,h:c.height}
+    }
+    function outerRegions(mask,w,h){
+      const open=[];for(let i=0;i<mask.length;i++)if(mask[i])open.push(i);if(!open.length)return [];
+      const seeds=spreadSeeds(open,w,Math.max(12,Math.min(24,Math.round(open.length/20000)))),owners=Array.from({length:seeds.length},()=>[]),own=new Int16Array(mask.length).fill(-1);
+      for(const i of open){const x=i%w,y=(i-x)/w;let best=0,bestScore=1/0;for(let s=0;s<seeds.length;s++){const dx=x-seeds[s].x,dy=y-seeds[s].y,score=dx*dx+dy*dy+noise(x*.065,y*.065,s)*1100;if(score<bestScore){bestScore=score;best=s}}own[i]=best;owners[best].push(i)}
+      const temp=new Uint8Array(mask.length),parts=[];for(const group of owners){temp.fill(0);for(const i of group)temp[i]=1;parts.push(...findRegions(temp,w,h,120,"outer"))}
+      return merge(parts,1200,42)
+    }
+    function refineLevelOneRegions(regions){
+      const out=[];for(const region of regions){const target=region.kind==="frame"?11000:9000;if(region.area<=target*1.35){out.push(region);continue}
+        out.push(...splitRegion(region,Math.max(2,Math.round(region.area/target))))
+      }return out
+    }
+    function splitRegion(region,count){
+      const pixels=[];for(let y=0;y<region.h;y++)for(let x=0;x<region.w;x++){const i=(y*region.w+x)*4;if(region.mask[i+3])pixels.push({x,y})}
+      if(pixels.length<2||count<2)return [region];
+      const seeds=spreadLocalSeeds(pixels,count,region.x*1000+region.y),groups=Array.from({length:seeds.length},()=>[]);
+      for(const p of pixels){let best=0,bestScore=1/0;for(let i=0;i<seeds.length;i++){const dx=p.x-seeds[i].x,dy=p.y-seeds[i].y,score=dx*dx+dy*dy+noise((region.x+p.x)*.08,(region.y+p.y)*.08,i)*240;if(score<bestScore){bestScore=score;best=i}}groups[best].push(p)}
+      const parts=[];for(const group of groups){if(!group.length)continue;let minX=1/0,minY=1/0,maxX=0,maxY=0;for(const p of group){if(p.x<minX)minX=p.x;if(p.y<minY)minY=p.y;if(p.x>maxX)maxX=p.x;if(p.y>maxY)maxY=p.y}
+        const w=maxX-minX+1,h=maxY-minY+1,mask=new Uint8ClampedArray(w*h*4);for(const p of group){const o=((p.y-minY)*w+(p.x-minX))*4;mask[o]=mask[o+1]=mask[o+2]=mask[o+3]=255}
+        parts.push({kind:region.kind,x:region.x+minX,y:region.y+minY,w,h,area:group.length,mask})
+      }
+      return parts.length?parts:[region]
+    }
+    function spreadLocalSeeds(pixels,count,seedBase=0){
+      const seeds=[pixels[seededIndex(pixels.length,`local:${seedBase}:0`)]];
+      while(seeds.length<count){let best=pixels[0],far=-1;for(let i=0;i<Math.min(600,pixels.length);i++){const p=pixels[(i*4861)%pixels.length];let near=1/0;for(const seed of seeds){const dx=p.x-seed.x,dy=p.y-seed.y,d=dx*dx+dy*dy;if(d<near)near=d}if(near>far){far=near;best=p}}seeds.push(best)}
+      return seeds
+    }
+    function spreadSeeds(open,w,count){
+      const seeds=[pt(open[seededIndex(open.length,`outer:${w}:${count}`)],w)];
+      while(seeds.length<count){let best=open[0],far=-1;for(let s=0;s<Math.min(900,open.length);s++){const idx=open[(s*9973)%open.length],p=pt(idx,w);let near=1/0;for(const seed of seeds){const dx=p.x-seed.x,dy=p.y-seed.y,d=dx*dx+dy*dy;if(d<near)near=d}if(near>far){far=near;best=idx}}seeds.push(pt(best,w))}
+      return seeds
+    }
+    function seededIndex(length,key){if(length<=1)return 0;return Math.floor(seededUnit(key)*length)%length}
+    function seededUnit(key){const str=String(key);let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return ((h>>>0)%1000000)/1000000}
+    function pt(i,w){const x=i%w;return {x,y:(i-x)/w}} function noise(x,y,s){const v=Math.sin(x*12.9898+y*78.233+s*37.719)*43758.5453;return v-Math.floor(v)}
+    function findRegions(mask,w,h,minArea,kind){
+      const seen=new Uint8Array(w*h),q=new Int32Array(w*h),out=[];
+      for(let start=0;start<mask.length;start++){if(!mask[start]||seen[start])continue;let head=0,tail=0,area=0,minX=w,minY=h,maxX=0,maxY=0,pixels=[];seen[start]=1;q[tail++]=start;
+        while(head<tail){const i=q[head++],x=i%w,y=(i-x)/w;area++;pixels.push(i);if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y;push(i-1,x>0);push(i+1,x<w-1);push(i-w,y>0);push(i+w,y<h-1)}
+        if(area>=minArea)out.push(regionFromPixels(pixels,minX,minY,maxX,maxY,w,kind));
+        function push(i,ok){if(ok&&!seen[i]&&mask[i]){seen[i]=1;q[tail++]=i}}
+      }
+      return merge(out,kind==="frame"?520:360,30)
+    }
+    function regionFromPixels(pixels,minX,minY,maxX,maxY,w,kind){
+      const rw=maxX-minX+1,rh=maxY-minY+1,mask=new Uint8ClampedArray(rw*rh*4);
+      for(const i of pixels){const x=i%w,y=(i-x)/w,o=((y-minY)*rw+(x-minX))*4;mask[o]=mask[o+1]=mask[o+2]=mask[o+3]=255}
+      return {kind,x:minX,y:minY,w:rw,h:rh,area:pixels.length,mask}
+    }
+    function merge(regions,minArea,maxGap){
+      const big=[],small=[];for(const r of regions)(r.area>=minArea?big:small).push(r);
+      for(const r of small){let bi=-1,bd=1/0;for(let i=0;i<big.length;i++){const d=gap(r,big[i]);if(d<bd){bd=d;bi=i}}if(bi!==-1&&bd<=maxGap)big[bi]=join(big[bi],r);else big.push(r)}return big
+    }
+    function gap(a,b){const gx=Math.max(0,Math.max(a.x-(b.x+b.w),b.x-(a.x+a.w))),gy=Math.max(0,Math.max(a.y-(b.y+b.h),b.y-(a.y+a.h)));return Math.hypot(gx,gy)}
+    function join(a,b){
+      const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.max(a.x+a.w,b.x+b.w)-x,h=Math.max(a.y+a.h,b.y+b.h)-y,mask=new Uint8ClampedArray(w*h*4);
+      drawInto(mask,w,a,x,y);drawInto(mask,w,b,x,y);return {kind:a.kind,x,y,w,h,area:a.area+b.area,mask}
+    }
+    function drawInto(target,targetW,r,ox,oy){for(let y=0;y<r.h;y++)for(let x=0;x<r.w;x++){const s=(y*r.w+x)*4;if(!r.mask[s+3])continue;const t=((r.y-oy+y)*targetW+(r.x-ox+x))*4;target[t]=target[t+1]=target[t+2]=target[t+3]=255}}
+    function seal(mask,w,h,d){
+      for(let x=0;x<w;x++){for(let y=0;y<Math.min(d,h);y++)if(mask[y*w+x]){for(let f=0;f<=y;f++)mask[f*w+x]=1;break}for(let y=h-1;y>=Math.max(0,h-d);y--)if(mask[y*w+x]){for(let f=h-1;f>=y;f--)mask[f*w+x]=1;break}}
+      for(let y=0;y<h;y++){for(let x=0;x<Math.min(d,w);x++)if(mask[y*w+x]){for(let f=0;f<=x;f++)mask[y*w+f]=1;break}for(let x=w-1;x>=Math.max(0,w-d);x--)if(mask[y*w+x]){for(let f=w-1;f>=x;f--)mask[y*w+f]=1;break}}
+    }
+    function outsideArea(mask,w,h){
+      const pw=w+2,ph=h+2,seen=new Uint8Array(pw*ph),q=new Int32Array(pw*ph);let head=0,tail=0;seen[0]=1;q[tail++]=0;
+      while(head<tail){const p=q[head++],x=p%pw,y=(p-x)/pw;go(x+1,y);go(x-1,y);go(x,y+1);go(x,y-1)}
+      const out=new Uint8Array(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(seen[(y+1)*pw+(x+1)])out[y*w+x]=1;return out;
+      function go(nx,ny){if(nx<0||ny<0||nx>=pw||ny>=ph)return;const p=ny*pw+nx;if(seen[p])return;if(nx>0&&ny>0&&nx<pw-1&&ny<ph-1&&mask[(ny-1)*w+(nx-1)])return;seen[p]=1;q[tail++]=p}
+    }
+    function dilate(src,w,h,r){const out=new Uint8Array(src.length);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let fill=0;for(let dy=-r;dy<=r&&!fill;dy++)for(let dx=-r;dx<=r;dx++){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;if(src[ny*w+nx]){fill=1;break}}out[y*w+x]=fill}return out}
+    function sampleBg(ctx,w,h){const pts=[[8,8],[w-8,8],[8,h-8],[w-8,h-8],[Math.floor(w/2),8],[8,Math.floor(h/2)]],t=pts.reduce((s,[x,y])=>{const p=ctx.getImageData(Math.max(0,x),Math.max(0,y),1,1).data;return {r:s.r+p[0],g:s.g+p[1],b:s.b+p[2]}},{r:0,g:0,b:0});return {r:t.r/pts.length,g:t.g/pts.length,b:t.b/pts.length}}
+    function dist(r1,g1,b1,r2,g2,b2){return Math.hypot(r1-r2,g1-g2,b1-b2)}
+    function edgeMap(rows,cols,occ){
+      const map=Array.from({length:rows},()=>Array.from({length:cols},()=>null)),on=(r,c)=>!!occ[r]?.[c];
+      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){if(!on(r,c)){map[r][c]={top:0,right:0,bottom:0,left:0};continue}
+        const top=r===0||!on(r-1,c)?0:-map[r-1][c].bottom,left=c===0||!on(r,c-1)?0:-map[r][c-1].right,bottom=r===rows-1||!on(r+1,c)?0:(Math.random()>.5?1:-1),right=c===cols-1||!on(r,c+1)?0:(Math.random()>.5?1:-1);
+        map[r][c]={top,right,bottom,left}}
+      return map
+    }
+    function createPieces(level,active){if(level.mode==="hybrid")return regionPieces(level,active);const pw=BOARD/level.cols,ph=BOARD/level.rows,tab=Math.round(Math.min(pw,ph)*.24);for(let r=0;r<level.rows;r++)for(let c=0;c<level.cols;c++){const node=el.tpl.content.firstElementChild.cloneNode(true);st.pieces.push(gridPiece(level,r,c,pw,ph,tab,level.edges[r][c],node,active))}}
+    function regionPieces(level,active){for(const region of level.regions){const node=el.tpl.content.firstElementChild.cloneNode(true),can=document.createElement("canvas");can.width=region.w;can.height=region.h;drawRegion(can,level.img,region);node.appendChild(can);node.classList.toggle("level2",level.id==="levelTwo");node.classList.toggle("active",active);node.style.width=`${region.w}px`;node.style.height=`${region.h}px`;const piece={id:`${level.id}-${region.id}`,levelId:level.id,node,can,w:region.w,h:region.h,targetX:region.x,targetY:region.y,currentX:0,currentY:0,placed:false,active};node.onpointerdown=e=>startDrag(e,piece);el.tray.appendChild(node);st.pieces.push(piece)}}
+    function gridPiece(level,row,col,pw,ph,tab,edges,node,active){
+      const can=document.createElement("canvas"),w=Math.round(pw+tab*2),h=Math.round(ph+tab*2);can.width=w;can.height=h;drawGrid(can,level.img,row,col,pw,ph,tab,edges);node.appendChild(can);
+      node.classList.toggle("level2",level.id==="levelTwo");node.classList.toggle("active",active);node.style.width=`${w}px`;node.style.height=`${h}px`;
+      const piece={id:`${level.id}-${row}-${col}`,levelId:level.id,node,can,w,h,targetX:Math.round(col*pw-tab),targetY:Math.round(row*ph-tab),currentX:0,currentY:0,placed:false,active};
+      node.onpointerdown=e=>startDrag(e,piece);el.tray.appendChild(node);return piece
+    }
+    function drawRegion(can,img,region){
+      const x=can.getContext("2d");x.drawImage(img,region.x,region.y,region.w,region.h,0,0,region.w,region.h);
+      const mask=document.createElement("canvas");mask.width=region.w;mask.height=region.h;mask.getContext("2d").putImageData(new ImageData(region.mask,region.w,region.h),0,0);
+      x.save();x.globalCompositeOperation="destination-in";x.drawImage(mask,0,0);x.restore();x.strokeStyle=region.kind==="frame"?"rgba(72,40,18,.58)":"rgba(102,57,28,.44)";x.lineWidth=1.3;x.strokeRect(.5,.5,region.w-1,region.h-1)
+    }
+    function drawGrid(can,img,row,col,pw,ph,tab,edges){
+      const x=can.getContext("2d"),ox=tab,oy=tab;x.save();x.beginPath();trace(x,ox,oy,pw,ph,tab,edges);x.closePath();x.clip();
+      x.drawImage(img,col*pw-tab,row*ph-tab,pw+tab*2,ph+tab*2,0,0,can.width,can.height);x.restore();x.beginPath();trace(x,ox,oy,pw,ph,tab,edges);x.closePath();x.lineWidth=1.4;x.strokeStyle="rgba(82,53,30,.48)";x.stroke()
+    }
+    function trace(x,sx,sy,w,h,t,e){x.moveTo(sx,sy);hedge(x,sx,sy,w,t,e.top,1);vedge(x,sx+w,sy,h,t,e.right,1);hedge(x,sx+w,sy+h,w,t,e.bottom,-1);vedge(x,sx,sy+h,h,t,e.left,-1)}
+    function hedge(p,sx,sy,span,t,d,sign){
+      const seg=span/3;if(sign===1){p.lineTo(sx+seg,sy);if(d!==0){p.bezierCurveTo(sx+seg+t*.15,sy,sx+seg+t*.25,sy-t*d,sx+span/2,sy-t*d);p.bezierCurveTo(sx+seg*2-t*.25,sy-t*d,sx+seg*2-t*.15,sy,sx+seg*2,sy)}else p.lineTo(sx+seg*2,sy);p.lineTo(sx+span,sy);return}
+      p.lineTo(sx-seg,sy);if(d!==0){p.bezierCurveTo(sx-seg-t*.15,sy,sx-seg-t*.25,sy+t*d,sx-span/2,sy+t*d);p.bezierCurveTo(sx-seg*2+t*.25,sy+t*d,sx-seg*2+t*.15,sy,sx-seg*2,sy)}else p.lineTo(sx-seg*2,sy);p.lineTo(sx-span,sy)
+    }
+    function vedge(p,sx,sy,span,t,d,sign){
+      const seg=span/3;if(sign===1){p.lineTo(sx,sy+seg);if(d!==0){p.bezierCurveTo(sx,sy+seg+t*.15,sx+t*d,sy+seg+t*.25,sx+t*d,sy+span/2);p.bezierCurveTo(sx+t*d,sy+seg*2-t*.25,sx,sy+seg*2-t*.15,sx,sy+seg*2)}else p.lineTo(sx,sy+seg*2);p.lineTo(sx,sy+span);return}
+      p.lineTo(sx,sy-seg);if(d!==0){p.bezierCurveTo(sx,sy-seg-t*.15,sx-t*d,sy-seg-t*.25,sx-t*d,sy-span/2);p.bezierCurveTo(sx-t*d,sy-seg*2+t*.25,sx,sy-seg*2+t*.15,sx,sy-seg*2)}else p.lineTo(sx,sy-seg*2);p.lineTo(sx,sy-span)
+    }
+    function startDrag(e,piece){
+      if(st.intro||piece.placed||!piece.active)return;e.preventDefault();rects();const r=piece.node.getBoundingClientRect();st.drag={piece,ox:e.clientX-r.left,oy:e.clientY-r.top};piece.node.classList.add("drag");piece.node.style.zIndex=String(st.z++);
+      const src=el.board.contains(piece.node)?el.board:el.tray;if(src!==document.body){const sr=src.getBoundingClientRect();piece.sourceX=r.left-sr.left+src.scrollLeft;piece.sourceY=r.top-sr.top+src.scrollTop;document.body.appendChild(piece.node);piece.node.style.position="fixed";placeAt(piece,r.left,r.top)}
+      addEventListener("pointermove",moveDrag);addEventListener("pointerup",endDrag,{once:true})
+    }
+    function moveDrag(e){if(!st.drag)return;const {piece,ox,oy}=st.drag;placeAt(piece,e.clientX-ox,e.clientY-oy)}
+    function endDrag(){
+      if(!st.drag)return;const {piece}=st.drag;piece.node.classList.remove("drag");
+      const cx=piece.currentX+piece.w/2,cy=piece.currentY+piece.h/2,tx=st.boardRect.left+piece.targetX+piece.w/2,ty=st.boardRect.top+piece.targetY+piece.h/2;
+      const d=Math.hypot(cx-tx,cy-ty),axis=Math.abs(piece.currentX-(st.boardRect.left+piece.targetX))<=AXIS&&Math.abs(piece.currentY-(st.boardRect.top+piece.targetY))<=AXIS;
+      if(d<=SNAP||axis)dropOnBoard(piece);else backToTray(piece);st.drag=null;removeEventListener("pointermove",moveDrag)
+    }
+    function placeAt(piece,left,top){piece.currentX=left;piece.currentY=top;piece.node.style.left=`${left}px`;piece.node.style.top=`${top}px`}
+    function dropOnBoard(piece){
+      el.board.appendChild(piece.node);piece.node.style.position="absolute";piece.node.classList.add("placed");piece.placed=true;piece.node.style.left=`${piece.targetX}px`;piece.node.style.top=`${piece.targetY}px`;
+      piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;const level=st.levels.find(v=>v.id===piece.levelId);level.placed++;compact();save();status();done(level)
+    }
+    function backToTray(piece){
+      if(!el.tray.contains(piece.node))el.tray.appendChild(piece.node);
+      const localLeft=piece.currentX-(st.trayRect?.left??0)+el.tray.scrollLeft,localTop=piece.currentY-(st.trayRect?.top??0)+el.tray.scrollTop,maxLeft=Math.max(0,el.tray.scrollWidth-piece.w),maxTop=Math.max(0,el.tray.scrollHeight-piece.h);
+      const inTray=piece.currentX+piece.w*.5>=(st.trayRect?.left??0)&&piece.currentX+piece.w*.5<=(st.trayRect?.right??0)&&piece.currentY+piece.h*.5>=(st.trayRect?.top??0)&&piece.currentY+piece.h*.5<=(st.trayRect?.bottom??0);
+      if(inTray){piece.sourceX=Math.max(0,Math.min(maxLeft,localLeft));piece.sourceY=Math.max(0,Math.min(maxTop,localTop))}
+      piece.node.style.position="absolute";piece.node.style.left=`${piece.sourceX??0}px`;piece.node.style.top=`${piece.sourceY??0}px`;piece.currentX=(st.trayRect?.left??0)+(piece.sourceX??0);piece.currentY=(st.trayRect?.top??0)+(piece.sourceY??0);save()
+    }
+    function shuffleLoose(){
+      if(st.intro)return;
+      rects();const loose=st.pieces.filter(p=>p.active&&!p.placed);if(!loose.length)return empty();
+      clearEmpty();const pad=12,max=Math.max(el.tray.clientWidth-pad,180);let x=pad,y=pad,row=0;
+      for(const p of shuffleList(loose)){if(!el.tray.contains(p.node))el.tray.appendChild(p.node);if(x+p.w>max){x=pad;y+=row+pad;row=0}p.node.style.position="absolute";p.node.style.left=`${x}px`;p.node.style.top=`${y}px`;p.sourceX=x;p.sourceY=y;p.currentX=(st.trayRect?.left??0)+x;p.currentY=(st.trayRect?.top??0)+y;x+=p.w+pad;row=Math.max(row,p.h)}
+      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;save()
+    }
+    async function playIntroShatter(){
+      st.intro=true;clearEmpty();setGuide(INTRO_GUIDE);rects();const pieces=shuffleList(st.pieces.filter(p=>p.levelId==="levelOne"&&!p.placed));
+      for(const p of pieces){p.node.style.visibility="hidden";p.node.style.opacity="0"}
+      await frame();rects();await wait(2000);
+      for(const p of pieces){el.board.appendChild(p.node);p.node.style.position="absolute";p.node.style.left=`${p.targetX}px`;p.node.style.top=`${p.targetY}px`;p.node.style.visibility="visible";p.node.style.opacity="0";p.currentX=st.boardRect.left+p.targetX;p.currentY=st.boardRect.top+p.targetY}
+      await frame();playBreakSound();await shatterAlongPieces(pieces);const layout=trayLayout(pieces);await sinkPiecesIntoBoard(pieces);stopBreakSound();await emergePiecesFromTray(pieces,layout);
+      for(const p of pieces){p.node.style.opacity="";p.node.style.visibility=""}
+      setGuide(GUIDE1);applyGuide(st.guide);
+      el.tray.style.minHeight=`${Math.max(layout.minHeight,710)}px`;st.intro=false;save()
+    }
+    function trayLayout(pieces){
+      const slots=new Map(),pad=12,max=Math.max(el.tray.clientWidth-pad*2,180);let x=pad,y=pad,row=0;
+      for(const p of pieces){if(x+p.w>max){x=pad;y+=row+pad;row=0}slots.set(p.id,{x,y});x+=p.w+pad;row=Math.max(row,p.h)}
+      return {slots,minHeight:y+row+pad}
+    }
+    async function shatterAlongPieces(pieces){
+      const cx=BOARD/2,cy=BOARD/2,maxDist=Math.hypot(cx,cy),jobs=pieces.map(piece=>{
+        const px=piece.targetX+piece.w/2,py=piece.targetY+piece.h/2,dx=px-cx,dy=py-cy,dist=Math.hypot(dx,dy),nx=dist?dx/dist:0,ny=dist?dy/dist:0,delay=(dist/maxDist)*1400,jitter=(piece.w+piece.h)/90,rot=(Math.random()*2.8+1.1)*(Math.random()>.5?1:-1);
+        piece.node.classList.add("cracking");piece.node.style.zIndex=String(st.z++);
+        return piece.node.animate([
+          {transform:"translate(0px,0px) rotate(0deg) scale(1)",opacity:0,filter:"brightness(1)"},
+          {transform:"translate(0px,0px) rotate(0deg) scale(1)",opacity:1,filter:"brightness(1.08)",offset:.12},
+          {transform:`translate(${nx*jitter*.45}px,${ny*jitter*.45}px) rotate(${rot*.3}deg) scale(1.004)`,opacity:1,filter:"brightness(1.05)",offset:.42},
+          {transform:`translate(${nx*jitter}px,${ny*jitter}px) rotate(${rot}deg) scale(1.01)`,opacity:1,filter:"brightness(1.12)",offset:.72},
+          {transform:`translate(${nx*jitter*.7}px,${ny*jitter*.7}px) rotate(${rot*.55}deg) scale(1.005)`,opacity:1,filter:"brightness(1.02)"}
+        ],{duration:1150,delay,easing:"cubic-bezier(.19,.82,.28,1)",fill:"forwards"}).finished.catch(()=>{})
+      });
+      await Promise.all(jobs);
+      for(const piece of pieces){piece.node.classList.remove("cracking");piece.node.getAnimations().forEach(a=>a.cancel());piece.node.style.transform="";piece.node.style.filter=""}
+      await wait(240)
+    }
+    async function sinkPiecesIntoBoard(pieces){
+      const cx=BOARD/2,cy=BOARD/2,maxDist=Math.hypot(cx,cy),jobs=pieces.map((piece,index)=>{
+        piece.node.classList.add("shattering");
+        piece.node.style.zIndex=String(st.z++);
+        const px=piece.targetX+piece.w/2,py=piece.targetY+piece.h/2,dist=Math.hypot(px-cx,py-cy),delay=(dist/maxDist)*820+index*4;
+        return piece.node.animate([
+          {transform:"translateY(0px) scale(1) rotate(0deg)",opacity:1,filter:"brightness(1) blur(0px)"},
+          {transform:`translateY(${4+index%3*2}px) scale(.965) rotate(${(index%2?1:-1)*1.2}deg)`,opacity:.96,filter:"brightness(.82) blur(.6px)",offset:.42},
+          {transform:`translateY(${8+index%4*2}px) scale(.74) rotate(${(index%2?1:-1)*2.4}deg)`,opacity:.28,filter:"brightness(.52) blur(2.2px)",offset:.82},
+          {transform:`translateY(${10+index%5}px) scale(.54) rotate(${(index%2?1:-1)*3}deg)`,opacity:0,filter:"brightness(.34) blur(4px)"}
+        ],{duration:760,delay,easing:"cubic-bezier(.2,.08,.32,.96)",fill:"forwards"}).finished.catch(()=>{})
+      });
+      await Promise.all(jobs);
+      for(const piece of pieces){piece.node.classList.remove("shattering");piece.node.getAnimations().forEach(a=>a.cancel());piece.node.style.transform="";piece.node.style.opacity="0";piece.node.style.visibility="hidden"}
+    }
+    async function emergePiecesFromTray(pieces,layout){
+      rects();
+      for(const piece of pieces){
+        const slot=layout.slots.get(piece.id);
+        if(!el.tray.contains(piece.node))el.tray.appendChild(piece.node);
+        piece.node.style.position="absolute";
+        piece.node.style.left=`${slot.x}px`;
+        piece.node.style.top=`${slot.y}px`;
+        piece.node.style.visibility="visible";
+        piece.node.style.opacity="0";
+        piece.sourceX=slot.x;piece.sourceY=slot.y;
+        piece.currentX=(st.trayRect?.left??0)+slot.x;piece.currentY=(st.trayRect?.top??0)+slot.y;
+      }
+      await frame();
+      const jobs=pieces.map((piece,index)=>piece.node.animate([
+        {transform:"translateY(34px) scale(.92)",opacity:0},
+        {transform:"translateY(-4px) scale(1.02)",opacity:1,offset:.72},
+        {transform:"translateY(0px) scale(1)",opacity:1}
+      ],{duration:520+index*10,delay:120+index*26,easing:"cubic-bezier(.17,.84,.3,1)",fill:"forwards"}).finished.catch(()=>{}));
+      await Promise.all(jobs);
+      for(const piece of pieces){piece.node.getAnimations().forEach(a=>a.cancel());piece.node.style.transform="";piece.node.style.opacity="";piece.node.style.visibility=""}
+    }
+    function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+    function createBreakAudio(){
+      try{
+        const audio=new Audio(BREAK_SOUND);
+        audio.loop=true;
+        audio.preload="auto";
+        audio.volume=.72;
+        return audio
+      }catch{return null}
+    }
+    function playBreakSound(){
+      if(!st.breakAudio)return;
+      try{st.breakAudio.currentTime=0;st.breakAudio.play().catch(()=>{})}catch{}
+    }
+    function stopBreakSound(){
+      if(!st.breakAudio)return;
+      try{st.breakAudio.pause();st.breakAudio.currentTime=0}catch{}
+    }
+    function frame(){return new Promise(r=>requestAnimationFrame(()=>r()))}
+    function compact(){
+      rects();const loose=st.pieces.filter(p=>p.active&&!p.placed);if(!loose.length)return empty();
+      clearEmpty();const ordered=[...loose].sort((a,b)=>(a.sourceY??0)-(b.sourceY??0)||(a.sourceX??0)-(b.sourceX??0)),pad=12,max=Math.max(el.tray.clientWidth-pad,180);let x=pad,y=pad,row=0;
+      for(const p of ordered){if(!el.tray.contains(p.node))el.tray.appendChild(p.node);if(x+p.w>max){x=pad;y+=row+pad;row=0}p.node.style.position="absolute";p.node.style.left=`${x}px`;p.node.style.top=`${y}px`;p.sourceX=x;p.sourceY=y;p.currentX=(st.trayRect?.left??0)+x;p.currentY=(st.trayRect?.top??0)+y;x+=p.w+pad;row=Math.max(row,p.h)}
+      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;save()
+    }
+    function shuffleList(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+    function status(){const lv=st.levels[st.current];el.placed.textContent=`${lv.placed} / ${lv.total}`}
+    function setLevelOneVisibility(visible){for(const p of st.pieces)if(p.levelId==="levelOne")p.node.classList.toggle("level1-hidden",!visible)}
+    function setLevelTwoVisibility(visible){for(const p of st.pieces)if(p.levelId==="levelTwo")p.node.classList.toggle("level1-hidden",!visible)}
+    function done(level){
+      if(level.placed!==level.total)return;
+      if(level.id==="levelOne"){st.current=1;for(const p of st.pieces)if(p.levelId==="levelTwo"){p.active=true;p.node.classList.add("active")}setLevelOneVisibility(false);setGuide(GUIDE2);status();shuffleLoose();save();return}
+      setLevelTwoVisibility(false);setGuide(FINAL_GUIDE);applyGuide(1);empty();status();save()
+    }
+    function empty(){clearEmpty();if(st.pieces.some(p=>p.active&&!p.placed))return;const d=document.createElement("div");d.id="empty";d.className="empty";d.textContent=st.current===0?"All active pieces are already on the board.":"The tray is empty because every active piece has been placed.";el.tray.appendChild(d)}
+    function clearEmpty(){document.getElementById("empty")?.remove()}
+    function resize(){rects();for(const p of st.pieces)if(p.placed){p.node.style.left=`${p.targetX}px`;p.node.style.top=`${p.targetY}px`}}
+    function restore(saved){
+      if(!saved)return;const ids=new Set(saved.placed),level1count=[...ids].filter(id=>id.startsWith("levelOne-")).length,level1done=level1count===st.levels[0].total,hasL2=[...ids].some(id=>id.startsWith("levelTwo-"));
+      if(level1done||hasL2){st.current=1;for(const p of st.pieces)if(p.levelId==="levelTwo"){p.active=true;p.node.classList.add("active")}setLevelOneVisibility(false);setGuide(GUIDE2)}else setLevelOneVisibility(true)
+      for(const p of st.pieces)if(ids.has(p.id))restorePiece(p);
+      if(st.levels[1].placed===st.levels[1].total&&st.levels[1].total>0){setLevelTwoVisibility(false);setGuide(FINAL_GUIDE);applyGuide(1)}
+      shuffleLoose()
+    }
+    function restorePiece(piece){
+      el.board.appendChild(piece.node);piece.node.style.position="absolute";piece.node.classList.add("placed","active");piece.placed=true;piece.active=true;piece.node.style.left=`${piece.targetX}px`;piece.node.style.top=`${piece.targetY}px`;
+      piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;st.levels.find(v=>v.id===piece.levelId).placed++
+    }
+  </script>
+</body>
+</html>

@@ -477,6 +477,20 @@ data-total="136">
   <div class="status"></div>
 
 </a>
+ 
+<a href="flower" class="card"
+id="flowerCard"
+data-key="flowerJigsawProgress"
+data-total="136">
+
+  <div class="thumb">
+    <img src="/thumb_flower.png" loading="lazy">
+  </div>
+
+  <div class="tags">#jigsawpuzzle #quebra-cabeça #Flower</div>
+  <div class="status"></div>
+
+</a>
   
 <a href="fundodomar" class="card" id="polvoCard">
   <div class="thumb">
@@ -555,6 +569,7 @@ function safeParseStoredArray(key){
 try{
 let parsed = JSON.parse(localStorage.getItem(key) || "[]");
 if(Array.isArray(parsed)) return parsed;
+if(parsed && Array.isArray(parsed.placed)) return parsed.placed;
 if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds;
 return [];
 }catch{
@@ -566,6 +581,7 @@ function getStoredProgressCount(key){
 try{
 let parsed = JSON.parse(localStorage.getItem(key) || "[]");
 if(Array.isArray(parsed)) return parsed.length;
+if(parsed && Array.isArray(parsed.placed)) return parsed.placed.length;
 if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds.length;
 return 0;
 }catch{
@@ -595,6 +611,10 @@ return getTwoLevelJigsawStatus("luciferJigsawProgress", total);
 
 function getTyreStatus(total){
 return getTwoLevelJigsawStatus("tyreJigsawProgress", total);
+}
+
+function getFlowerStatus(total){
+return getTwoLevelJigsawStatus("flowerJigsawProgress", total);
 }
 
 function getStoredObjectFromKeys(keys){
@@ -950,6 +970,17 @@ let statusEl = card.querySelector(".status");
 let tyreStatus = getTyreStatus(total);
 renderStatus(statusEl, tyreStatus.found, tyreStatus.total);
 let percentage = tyreStatus.total > 0 ? (tyreStatus.found / tyreStatus.total) * 100 : 0;
+applyThumbBorder(card, percentage);
+return;
+}
+
+if(card.id === "flowerCard"){
+let total = parseInt(card.dataset.total);
+if(Number.isNaN(total)) return;
+let statusEl = card.querySelector(".status");
+let flowerStatus = getFlowerStatus(total);
+renderStatus(statusEl, flowerStatus.found, flowerStatus.total);
+let percentage = flowerStatus.total > 0 ? (flowerStatus.found / flowerStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
 return;
 }

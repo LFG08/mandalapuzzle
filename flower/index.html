@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Flower Jigsaw</title>
+  <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
   <style>
     :root{--guide:url("flower_jigsaw_level_1.png");--overlay:linear-gradient(rgba(255,247,235,.34),rgba(255,247,235,.34));--guideOpacity:.9}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:#f7ecdf;background:radial-gradient(circle at top,rgba(225,149,83,.22),transparent 28%),linear-gradient(180deg,#4b1a09,#280d04 72%)}
@@ -14,14 +15,22 @@
     .cracks{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;background-size:100% 100%;background-position:center}
     .cracks.active{animation:crackSpread 1.8s ease forwards}
     .controls{margin:12px 6px 0;display:flex;gap:12px;align-items:center}.controls label,.small{color:#dfbf9a;text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}.slider{flex:1;accent-color:#d58349}
-    .trayWrap{padding:18px;min-height:850px}.card{padding:18px;margin-bottom:18px}.title{margin:0 0 14px;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.34rem}.line+.line{margin-top:12px}.value{display:inline-block;margin-top:4px;color:#fff4e7}
-    .actions{display:grid;gap:8px;margin-top:16px}.btn{width:100%;border:1px solid rgba(255,234,210,.18);border-radius:999px;padding:9px 12px;background:linear-gradient(180deg,rgba(122,49,16,.98),rgba(86,31,9,.98));color:#fff1e1;cursor:pointer}
+    .trayWrap{padding:18px;min-height:850px}.card{padding:18px;margin-bottom:18px}
+    .card.minimized .menuBody{display:none}
+    .menuHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .title{margin:0;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.34rem}
+    .line+.line{margin-top:12px}.value{display:inline-block;margin-top:4px;color:#fff4e7}
+    .actions{display:grid;gap:8px;margin-top:16px}.btn{width:100%;border:1px solid rgba(255,234,210,.18);border-radius:999px;padding:9px 12px;background:linear-gradient(180deg,rgba(122,49,16,.98),rgba(86,31,9,.98));color:#fff1e1;cursor:pointer;text-align:center;text-decoration:none}
     .tray{position:relative;min-height:710px;height:calc(100vh - 190px);overflow:auto;border-radius:20px;background:linear-gradient(135deg,#2d0d00,#8e3810),repeating-linear-gradient(45deg,rgba(255,219,182,.05) 0,rgba(255,219,182,.05) 16px,transparent 16px,transparent 32px);border:2px inset rgb(55,20,5)}
     .piece{position:absolute;border:0;padding:0;margin:0;background:transparent;cursor:grab;touch-action:none;user-select:none;transition:transform .15s ease,filter .15s ease;z-index:2}.piece:hover{transform:translateY(-2px)}.piece canvas{display:block;filter:drop-shadow(0 12px 22px rgba(44,23,11,.24))}
     .piece.drag{position:fixed;cursor:grabbing;z-index:9999;transition:none}.piece.placed{cursor:default}.piece.placed canvas{filter:drop-shadow(0 8px 12px rgba(44,23,11,.08))}.piece.level2:not(.active){display:none}.piece.level1-hidden{display:none}
     .piece.shattering{pointer-events:none;transform-origin:center center}.piece.shattering canvas{filter:drop-shadow(0 22px 30px rgba(28,14,7,.34))}
     .piece.cracking{pointer-events:none;transform-origin:center center}.piece.cracking canvas{filter:drop-shadow(0 10px 14px rgba(255,244,230,.22)) drop-shadow(0 0 10px rgba(255,255,255,.18))}
     .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#dfbf9a}.celebrate{color:#ffd7ab;font-weight:700}
+    .info{border:1px solid #9e5a22;border-radius:16px;max-width:460px;background:linear-gradient(180deg,rgba(72,28,10,.98),rgba(45,16,7,.98));color:#f7ecdf}
+    .info::backdrop{background:rgba(0,0,0,.45)}
+    .infoInner{padding:18px}
+    .info h2{margin:0 0 10px}
     .credits{margin:16px 4px 0;color:#dfbf9a;font-size:.82rem;line-height:1.5}.credits a{color:#ffd7ab}
     @keyframes crackSpread{0%{opacity:0;transform:scale(.18)}35%{opacity:.92;transform:scale(.58)}68%{opacity:.82;transform:scale(.9)}100%{opacity:0;transform:scale(1)}}
     @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
@@ -36,10 +45,21 @@
         <div class="controls"><label for="guide">Guia de Visibilidade</label><input id="guide" class="slider" type="range" min="0" max="100" value="90"><span id="guideVal">90%</span></div>
       </div>
       <aside class="trayWrap">
-        <div class="card">
-          <h1 class="title">Flor</h1>
-          <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 0</strong></div>
-          <div class="actions"><button id="shuffle" class="btn" type="button">Embaralhar Peças Soltas</button><button id="reset" class="btn" type="button">Reset</button></div>
+        <div id="menuCard" class="card">
+          <div class="menuHeader">
+            <h1 class="title">Flor</h1>
+            <button id="menuToggle" class="btn" type="button">Minimizar</button>
+          </div>
+          <div id="menuBody" class="menuBody">
+            <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 0</strong></div>
+            <div class="actions">
+              <a href="/" class="btn" role="button">Menu Principal</a>
+              <button id="reset" class="btn" type="button">Reset</button>
+              <button id="shuffle" class="btn" type="button">Embaralhar Peças Soltas</button>
+              <button id="volume" class="btn" type="button">Som: Ligado</button>
+              <button id="about" class="btn" type="button">Sobre Esta Imagem</button>
+            </div>
+          </div>
         </div>
         <h2 style="margin:0 0 14px">Bandeja de Peças</h2>
         <div id="tray" class="tray"></div>
@@ -47,6 +67,13 @@
     </section>
     <div class="credits"><div>Ice Breaking; Slow.wav by Rslebs -- <a href="https://freesound.org/s/661830/">https://freesound.org/s/661830/</a> -- License: Attribution 4.0</div><div>Keyboard tactile 9 by StavSounds -- <a href="https://freesound.org/s/766640/">https://freesound.org/s/766640/</a> -- License: Attribution 4.0</div></div>
   </main>
+  <dialog id="aboutDialog" class="info">
+    <div class="infoInner">
+      <h2>Sobre Esta Imagem</h2>
+      <p>mandala inspirada na música "First Time" do Hozier.</p>
+      <button id="closeAbout" class="btn" type="button">Fechar</button>
+    </div>
+  </dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script src="assets.js"></script>
   <script>
@@ -65,9 +92,15 @@
       guide:document.getElementById("guide"),
       guideVal:document.getElementById("guideVal"),
       shuffle:document.getElementById("shuffle"),
-      reset:document.getElementById("reset")
+      reset:document.getElementById("reset"),
+      volume:document.getElementById("volume"),
+      about:document.getElementById("about"),
+      aboutDialog:document.getElementById("aboutDialog"),
+      closeAbout:document.getElementById("closeAbout"),
+      menuCard:document.getElementById("menuCard"),
+      menuToggle:document.getElementById("menuToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],levels:[],current:0,drag:null,z:2,guide:.9,guideBase:.9,intro:false,breakAudio:null,placeAudio:null};
+    const st={boardRect:null,trayRect:null,pieces:[],levels:[],current:0,drag:null,z:2,guide:.9,guideBase:.9,intro:false,breakAudio:null,placeAudio:null,sound:true,menuMin:false};
     init().catch(e=>{console.error(e);alert(`The puzzle could not be initialized. ${e.message||""}`.trim())});
     async function init(){
       const saved=load();setGuide(GUIDE1);applyGuide(saved?.guide??.9);
@@ -76,6 +109,12 @@
       st.levels=await Promise.all(LEVELS.map(loadLevel));
       st.levels.forEach((lv,i)=>createPieces(lv,i===0));rects();if(saved)restore(saved);else await playIntroShatter();status();
       addEventListener("resize",resize);el.guide.oninput=e=>{applyGuide(+e.target.value/100);save()};el.shuffle.onclick=shuffleLoose;el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+      el.volume.onclick=toggleSound;
+      el.about.onclick=()=>el.aboutDialog.showModal();
+      el.closeAbout.onclick=()=>el.aboutDialog.close();
+      el.menuToggle.onclick=toggleMenu;
+      el.aboutDialog.addEventListener("click",e=>{if(e.target===el.aboutDialog)el.aboutDialog.close()});
+      syncMenu();
     }
     function setGuide(g){st.guideBase=g.opacity;document.documentElement.style.setProperty("--guide",`url("${g.img}")`);document.documentElement.style.setProperty("--overlay",g.overlay);syncGuide()}
     function applyGuide(v){st.guide=Math.max(0,Math.min(1,+v||0));el.guide.value=Math.round(st.guide*100);el.guideVal.textContent=`${Math.round(st.guide*100)}%`;syncGuide()}
@@ -318,7 +357,7 @@
       }catch{return null}
     }
     function playBreakSound(){
-      if(!st.breakAudio)return;
+      if(!st.breakAudio||!st.sound)return;
       try{st.breakAudio.currentTime=0;st.breakAudio.play().catch(()=>{})}catch{}
     }
     function stopBreakSound(){
@@ -334,9 +373,12 @@
       }catch{return null}
     }
     function playPlaceSound(){
-      if(!st.placeAudio)return;
+      if(!st.placeAudio||!st.sound)return;
       try{st.placeAudio.currentTime=0;st.placeAudio.play().catch(()=>{})}catch{}
     }
+    function toggleSound(){st.sound=!st.sound;el.volume.textContent=`Som: ${st.sound?"Ligado":"Desligado"}`;if(!st.sound)stopBreakSound()}
+    function toggleMenu(){st.menuMin=!st.menuMin;syncMenu()}
+    function syncMenu(){el.menuCard.classList.toggle("minimized",st.menuMin);el.menuToggle.textContent=st.menuMin?"Expandir":"Minimizar"}
     function frame(){return new Promise(r=>requestAnimationFrame(()=>r()))}
     function compact(){
       rects();const loose=st.pieces.filter(p=>p.active&&!p.placed);if(!loose.length)return empty();

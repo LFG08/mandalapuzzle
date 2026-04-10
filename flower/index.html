@@ -74,6 +74,13 @@
       <button id="closeAbout" class="btn" type="button">Fechar</button>
     </div>
   </dialog>
+  <dialog id="endDialog" class="info">
+    <div class="infoInner">
+      <h2>Fim🎉 🎉</h2>
+      <p>Parabéns! Você completou todas as peças do quebra-cabeça.</p>
+      <button id="closeEnd" class="btn" type="button">Fechar</button>
+    </div>
+  </dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script src="assets.js"></script>
   <script>
@@ -97,6 +104,8 @@
       about:document.getElementById("about"),
       aboutDialog:document.getElementById("aboutDialog"),
       closeAbout:document.getElementById("closeAbout"),
+      endDialog:document.getElementById("endDialog"),
+      closeEnd:document.getElementById("closeEnd"),
       menuCard:document.getElementById("menuCard"),
       menuToggle:document.getElementById("menuToggle")
     };
@@ -112,8 +121,10 @@
       el.volume.onclick=toggleSound;
       el.about.onclick=()=>el.aboutDialog.showModal();
       el.closeAbout.onclick=()=>el.aboutDialog.close();
+      el.closeEnd.onclick=()=>el.endDialog.close();
       el.menuToggle.onclick=toggleMenu;
       el.aboutDialog.addEventListener("click",e=>{if(e.target===el.aboutDialog)el.aboutDialog.close()});
+      el.endDialog.addEventListener("click",e=>{if(e.target===el.endDialog)el.endDialog.close()});
       syncMenu();
     }
     function setGuide(g){st.guideBase=g.opacity;document.documentElement.style.setProperty("--guide",`url("${g.img}")`);document.documentElement.style.setProperty("--overlay",g.overlay);syncGuide()}
@@ -393,7 +404,7 @@
     function done(level){
       if(level.placed!==level.total)return;
       if(level.id==="levelOne"){st.current=1;for(const p of st.pieces)if(p.levelId==="levelTwo"){p.active=true;p.node.classList.add("active")}setLevelOneVisibility(false);setGuide(GUIDE2);status();shuffleLoose();save();return}
-      setLevelTwoVisibility(false);setGuide(FINAL_GUIDE);applyGuide(1);empty();status();save()
+      setLevelTwoVisibility(false);setGuide(FINAL_GUIDE);applyGuide(1);empty();status();save();el.endDialog.showModal()
     }
     function empty(){clearEmpty();if(st.pieces.some(p=>p.active&&!p.placed))return;const d=document.createElement("div");d.id="empty";d.className="empty";d.textContent=st.current===0?"All active pieces are already on the board.":"The tray is empty because every active piece has been placed.";el.tray.appendChild(d)}
     function clearEmpty(){document.getElementById("empty")?.remove()}

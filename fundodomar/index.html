@@ -1385,10 +1385,12 @@
 
     function updateJourneyFooter() {
       const showFooter = state.unlockedStages.includes("levelTwo");
+      const levelThreeUnlocked = state.unlockedStages.includes("levelThree");
       journeyFooter.classList.toggle("visible", showFooter);
       goToLevel1Button.disabled = !showFooter || (state.stage === "jigsaw" && state.currentLevelIndex === 0);
       goToLevel2Button.disabled = !state.unlockedStages.includes("levelTwo") || (state.stage === "jigsaw" && state.currentLevelIndex === 1);
-      goToLevel3Button.disabled = !state.unlockedStages.includes("levelThree") || state.stage === "hidden";
+      goToLevel3Button.hidden = !levelThreeUnlocked;
+      goToLevel3Button.disabled = !levelThreeUnlocked || state.stage === "hidden";
     }
 
     function navigateToStage(stageKey) {

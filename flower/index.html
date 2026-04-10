@@ -45,12 +45,12 @@
         <div id="tray" class="tray"></div>
       </aside>
     </section>
-    <p class="credits">Ice Breaking; Slow.wav by Rslebs -- <a href="https://freesound.org/s/661830/">https://freesound.org/s/661830/</a> -- License: Attribution 4.0</p>
+    <div class="credits"><div>Ice Breaking; Slow.wav by Rslebs -- <a href="https://freesound.org/s/661830/">https://freesound.org/s/661830/</a> -- License: Attribution 4.0</div><div>Keyboard tactile 9 by StavSounds -- <a href="https://freesound.org/s/766640/">https://freesound.org/s/766640/</a> -- License: Attribution 4.0</div></div>
   </main>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script src="assets.js"></script>
   <script>
-    const BOARD=768,SNAP=110,AXIS=72,KEY="flowerJigsawProgress",BREAK_SOUND="661830__rslebs__ice-breaking-slow.wav";
+    const BOARD=768,SNAP=110,AXIS=72,KEY="flowerJigsawProgress",BREAK_SOUND="661830__rslebs__ice-breaking-slow.wav",PLACE_SOUND="../fundodomar/766640__stavsounds__keyboard_tactile_9.ogg";
     const LEVELS=[{id:"levelOne",label:"Level 1",image:"flower_jigsaw_level_1.png",frame:"flower_jigsaw_frame.png",mode:"hybrid"},{id:"levelTwo",label:"Level 2",image:"flower_jigsaw_level_2.png",rows:6,cols:6,mode:"grid"}];
     const GUIDE1={img:"flower_jigsaw_level_1.png",overlay:"linear-gradient(rgba(255,247,235,.16),rgba(255,247,235,.16))",opacity:.62};
     const INTRO_GUIDE={img:"flower_jigsaw_level_1.png",overlay:"linear-gradient(rgba(255,247,235,0),rgba(255,247,235,0))",opacity:1};
@@ -67,11 +67,12 @@
       shuffle:document.getElementById("shuffle"),
       reset:document.getElementById("reset")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],levels:[],current:0,drag:null,z:2,guide:.9,guideBase:.9,intro:false,breakAudio:null};
+    const st={boardRect:null,trayRect:null,pieces:[],levels:[],current:0,drag:null,z:2,guide:.9,guideBase:.9,intro:false,breakAudio:null,placeAudio:null};
     init().catch(e=>{console.error(e);alert(`The puzzle could not be initialized. ${e.message||""}`.trim())});
     async function init(){
       const saved=load();setGuide(GUIDE1);applyGuide(saved?.guide??.9);
       st.breakAudio=createBreakAudio();
+      st.placeAudio=createPlaceAudio();
       st.levels=await Promise.all(LEVELS.map(loadLevel));
       st.levels.forEach((lv,i)=>createPieces(lv,i===0));rects();if(saved)restore(saved);else await playIntroShatter();status();
       addEventListener("resize",resize);el.guide.oninput=e=>{applyGuide(+e.target.value/100);save()};el.shuffle.onclick=shuffleLoose;el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
@@ -222,7 +223,7 @@
     function placeAt(piece,left,top){piece.currentX=left;piece.currentY=top;piece.node.style.left=`${left}px`;piece.node.style.top=`${top}px`}
     function dropOnBoard(piece){
       el.board.appendChild(piece.node);piece.node.style.position="absolute";piece.node.classList.add("placed");piece.placed=true;piece.node.style.left=`${piece.targetX}px`;piece.node.style.top=`${piece.targetY}px`;
-      piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;const level=st.levels.find(v=>v.id===piece.levelId);level.placed++;compact();save();status();done(level)
+      piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;playPlaceSound();const level=st.levels.find(v=>v.id===piece.levelId);level.placed++;compact();save();status();done(level)
     }
     function backToTray(piece){
       if(!el.tray.contains(piece.node))el.tray.appendChild(piece.node);
@@ -323,6 +324,18 @@
     function stopBreakSound(){
       if(!st.breakAudio)return;
       try{st.breakAudio.pause();st.breakAudio.currentTime=0}catch{}
+    }
+    function createPlaceAudio(){
+      try{
+        const audio=new Audio(PLACE_SOUND);
+        audio.preload="auto";
+        audio.volume=.58;
+        return audio
+      }catch{return null}
+    }
+    function playPlaceSound(){
+      if(!st.placeAudio)return;
+      try{st.placeAudio.currentTime=0;st.placeAudio.play().catch(()=>{})}catch{}
     }
     function frame(){return new Promise(r=>requestAnimationFrame(()=>r()))}
     function compact(){

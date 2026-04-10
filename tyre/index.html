@@ -410,6 +410,20 @@
       margin-top: 10px;
     }
 
+    .page-credit {
+      margin: 18px auto 0;
+      width: min(1480px, calc(100vw - 32px));
+      color: #f1dcc2;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      text-align: center;
+      opacity: 0.88;
+    }
+
+    .page-credit a {
+      color: #ffd3a6;
+    }
+
     @media (max-width: 1280px) {
       .game-layout {
         grid-template-columns: 1fr;
@@ -509,6 +523,11 @@
     </div>
   </dialog>
 
+  <footer class="page-credit">
+    Wood Tumble by DiscordantScraps from <a href="https://freesound.org/s/767432/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Attribution 4.0.
+    Keyboard_Tactile_9 by StavSounds from <a href="https://freesound.org/s/766640/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0.
+  </footer>
+
   <script src="assets.js"></script>
   <script>
     const BOARD_SIZE = 768;
@@ -517,6 +536,7 @@
     const SAVE_KEY = "tyreJigsawProgress";
     const LEGACY_SAVE_KEYS = ["TYREPuzzle"];
     const PIECE_PLACE_SOUND_SRC = "/fundodomar/766640__stavsounds__keyboard_tactile_9.ogg";
+    const TRANSITION_SOUND_SRC = "767432__discordantscraps__wood-tumble.wav";
 
     const LEVELS = [
       {
@@ -562,7 +582,9 @@
     const menuToggleButton = document.getElementById("menu-toggle-button");
     const pieceTemplate = document.getElementById("piece-template");
     const placementSound = new Audio(PIECE_PLACE_SOUND_SRC);
+    const transitionSound = new Audio(TRANSITION_SOUND_SRC);
     placementSound.preload = "auto";
+    transitionSound.preload = "auto";
 
     const EASY_BOARD_GUIDE = {
       image: "board.png",
@@ -1947,6 +1969,7 @@
 
     async function unlockLevelTwo() {
       boardMessage.innerHTML = '<span class="celebration">Nivel um completo.</span> A imagem esta se assentando no tabuleiro.';
+      playTransitionSound();
       await runBoardSettleEffect("tyre_level_one.png");
       state.currentLevelIndex = 1;
       activateLevelTwoPieces();
@@ -1956,6 +1979,15 @@
       updateStatus();
       shuffleUnplacedPieces();
       saveProgress();
+    }
+
+    function playTransitionSound() {
+      if (!isSoundEnabled) {
+        return;
+      }
+      const soundInstance = transitionSound.cloneNode();
+      soundInstance.volume = 0.46;
+      soundInstance.play().catch(() => {});
     }
 
     function renderTrayEmptyState() {

@@ -375,6 +375,20 @@
       margin-top: 10px;
     }
 
+    .page-credit {
+      margin: 18px auto 0;
+      width: min(1480px, calc(100vw - 32px));
+      color: #f1dcc2;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      text-align: center;
+      opacity: 0.88;
+    }
+
+    .page-credit a {
+      color: #ffd3a6;
+    }
+
     @media (max-width: 1280px) {
       .game-layout {
         grid-template-columns: 1fr;
@@ -473,6 +487,10 @@
       <button id="close-end-button" class="menu-button dialog-close" type="button">Fechar</button>
     </div>
   </dialog>
+
+  <footer class="page-credit">
+    Keyboard_Tactile_9 by StavSounds from <a href="https://freesound.org/s/766640/" target="_blank" rel="noreferrer">Freesound</a>, licensed under Creative Commons 0.
+  </footer>
 
   <script>
     const BOARD_SIZE = 768;

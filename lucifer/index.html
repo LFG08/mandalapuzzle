@@ -440,6 +440,7 @@
             <div class="menu-actions">
               <a href="/" class="menu-button" role="button">Menu Principal</a>
               <button id="shuffle-button" type="button">Embaralhar Peças Soltas</button>
+              <button id="volume-button" class="menu-button" type="button">Som: Ligado</button>
               <button id="info-button" class="menu-button" type="button">Sobre Esta Imagem</button>
             </div>
           </div>
@@ -462,6 +463,14 @@
       <h2>Sobre Esta Imagem</h2>
       <p><a href="https://www.tumblr.com/readingc33/798737837734379520/2910-inspired-by-lucifer-franz-von-stuck-1890?source=share" target="_blank" rel="noreferrer">Ilustração</a> inspirada em <a href="https://pt.wikipedia.org/wiki/Ficheiro:1-Luzifer.jpg" target="_blank" rel="noreferrer">Lucifer, de Franz von Stuck, 1890</a></p>
       <button id="close-info-button" class="menu-button dialog-close" type="button">Fechar</button>
+    </div>
+  </dialog>
+
+  <dialog id="end-dialog" class="info-dialog">
+    <div class="info-content">
+      <h2>Fim🎉 🎉</h2>
+      <p>Parabéns! Você completou todas as peças do quebra-cabeça.</p>
+      <button id="close-end-button" class="menu-button dialog-close" type="button">Fechar</button>
     </div>
   </dialog>
 
@@ -506,9 +515,12 @@
     const guideVisibilitySlider = document.getElementById("guide-visibility");
     const guideValue = document.getElementById("guide-value");
     const shuffleButton = document.getElementById("shuffle-button");
+    const volumeButton = document.getElementById("volume-button");
     const infoButton = document.getElementById("info-button");
     const infoDialog = document.getElementById("info-dialog");
     const closeInfoButton = document.getElementById("close-info-button");
+    const endDialog = document.getElementById("end-dialog");
+    const closeEndButton = document.getElementById("close-end-button");
     const statusCard = document.getElementById("status-card");
     const menuToggleButton = document.getElementById("menu-toggle-button");
     const pieceTemplate = document.getElementById("piece-template");
@@ -534,6 +546,7 @@
       boardGuideBaseOpacity: 1,
       menuMinimized: false
     };
+    let isSoundEnabled = true;
 
     initialize().catch((error) => {
       console.error(error);
@@ -560,10 +573,13 @@
       updateStatus();
       window.addEventListener("resize", handleResize);
       shuffleButton.addEventListener("click", shuffleUnplacedPieces);
+      volumeButton.addEventListener("click", toggleSound);
       guideVisibilitySlider.addEventListener("input", handleGuideVisibilityChange);
       infoButton.addEventListener("click", openInfoDialog);
       closeInfoButton.addEventListener("click", closeInfoDialog);
+      closeEndButton.addEventListener("click", closeEndDialog);
       infoDialog.addEventListener("click", handleDialogBackdropClick);
+      endDialog.addEventListener("click", handleDialogBackdropClick);
       menuToggleButton.addEventListener("click", toggleMenuMinimized);
       setMenuMinimized(Boolean(savedProgress?.menuMinimized));
     }
@@ -614,8 +630,13 @@
       infoDialog.close();
     }
 
+    function closeEndDialog() {
+      endDialog.close();
+    }
+
     function handleDialogBackdropClick(event) {
-      const bounds = infoDialog.getBoundingClientRect();
+      const dialog = event.currentTarget;
+      const bounds = dialog.getBoundingClientRect();
       const clickedInside = (
         event.clientX >= bounds.left &&
         event.clientX <= bounds.right &&
@@ -624,8 +645,13 @@
       );
 
       if (!clickedInside) {
-        closeInfoDialog();
+        dialog.close();
       }
+    }
+
+    function toggleSound() {
+      isSoundEnabled = !isSoundEnabled;
+      volumeButton.textContent = isSoundEnabled ? "Som: Ligado" : "Som: Desligado";
     }
 
     function loadProgress() {
@@ -723,11 +749,12 @@
         placedLabel.textContent = `${levelTwo.totalPieces} / ${levelTwo.totalPieces}`;
         boardMessage.innerHTML = '<span class="celebration">As duas camadas estao completas.</span> A mandala foi montada por inteiro.';
         renderTrayEmptyState();
+        endDialog.showModal();
         return;
       }
 
       if (levelOne.placedPieces === levelOne.totalPieces) {
-        boardMessage.innerHTML = `<span class="celebration">Nivel um completo.</span> As ${levelTwo.totalPieces} pecas de <code>level_two.png</code> agora estao na bandeja.`;
+        boardMessage.innerHTML = '<span class="celebration">Nivel um completo.</span>';
       }
     }
 
@@ -1147,6 +1174,9 @@
     }
 
     function playPlacementSound() {
+      if (!isSoundEnabled) {
+        return;
+      }
       const soundInstance = placementSound.cloneNode();
       soundInstance.volume = 0.42;
       soundInstance.play().catch(() => {});
@@ -1309,14 +1339,14 @@
       placedLabel.textContent = `${level.totalPieces} / ${level.totalPieces}`;
       boardMessage.innerHTML = '<span class="celebration">As duas camadas estao completas.</span> A mandala foi montada por inteiro.';
       renderTrayEmptyState();
+      endDialog.showModal();
     }
 
     function unlockLevelTwo() {
       state.currentLevelIndex = 1;
       activateLevelTwoPieces();
 
-      const levelTwo = state.levels[1];
-      boardMessage.innerHTML = `<span class="celebration">Nivel um completo.</span> As ${levelTwo.totalPieces} pecas de <code>level_two.png</code> agora estao na bandeja.`;
+      boardMessage.innerHTML = '<span class="celebration">Nivel um completo.</span>';
       updateStatus();
       shuffleUnplacedPieces();
       saveProgress();

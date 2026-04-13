@@ -889,10 +889,16 @@ let cards = Array.from(grid.querySelectorAll(".card"));
 let sorted = cards.slice().sort((a, b) => {
 let ratioA = Number(a.dataset.progressRatio || 0);
 let ratioB = Number(b.dataset.progressRatio || 0);
+let totalA = Number(a.dataset.progressTotal);
+let totalB = Number(b.dataset.progressTotal);
+let hasTotalA = Number.isFinite(totalA);
+let hasTotalB = Number.isFinite(totalB);
 let completeA = a.dataset.progressComplete === "1";
 let completeB = b.dataset.progressComplete === "1";
 
 if(selected === "decrescente"){
+if(hasTotalA !== hasTotalB) return hasTotalA ? -1 : 1;
+if(hasTotalA && totalA !== totalB) return totalB - totalA;
 return ratioB - ratioA;
 }
 if(selected === "nao-finalizadas"){
@@ -903,6 +909,8 @@ if(selected === "finalizadas"){
 if(completeA !== completeB) return completeA ? -1 : 1;
 return ratioB - ratioA;
 }
+if(hasTotalA !== hasTotalB) return hasTotalA ? -1 : 1;
+if(hasTotalA && totalA !== totalB) return totalA - totalB;
 return ratioA - ratioB;
 });
 

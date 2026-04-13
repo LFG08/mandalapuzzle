@@ -68,7 +68,11 @@ opacity:0.9;
 }
 
 .menu-filter{
-text-align:center;
+display:flex;
+justify-content:center;
+align-items:center;
+gap:10px;
+flex-wrap:wrap;
 margin:0 auto 18px auto;
 position:relative;
 z-index:2;
@@ -320,6 +324,13 @@ background:#5c2208;
     <option value="caca-elementos">caça-elementos</option>
     <option value="caca-palavras-elementos">caça-palavras-elementos</option>
     <option value="misterio">???</option>
+  </select>
+  <label for="menuOrder" hidden>Reordenar mandalas</label>
+  <select id="menuOrder">
+    <option value="crescente">crescente</option>
+    <option value="decrescente">decrescente</option>
+    <option value="nao-finalizadas">não finalizadas</option>
+    <option value="finalizadas">finalizadas</option>
   </select>
 </div>
 
@@ -853,6 +864,51 @@ card.style.display = cardMatchesFilter(card, selected) ? "block" : "none";
 });
 }
 
+function setCardProgressMeta(card, found, total){
+if(!card) return;
+let safeFound = Number.isFinite(found) ? found : 0;
+let safeTotal = Number.isFinite(total) ? total : null;
+let hasKnownTotal = safeTotal !== null && safeTotal > 0;
+let ratio = hasKnownTotal ? safeFound / safeTotal : 0;
+let completed = hasKnownTotal && safeFound === safeTotal;
+
+card.dataset.progressFound = String(safeFound);
+card.dataset.progressTotal = safeTotal === null ? "" : String(safeTotal);
+card.dataset.progressRatio = String(ratio);
+card.dataset.progressComplete = completed ? "1" : "0";
+}
+
+function applyMenuOrdering(){
+let grid = document.querySelector(".grid");
+if(!grid) return;
+
+let orderSelect = document.getElementById("menuOrder");
+let selected = orderSelect ? orderSelect.value : "crescente";
+let cards = Array.from(grid.querySelectorAll(".card"));
+
+let sorted = cards.slice().sort((a, b) => {
+let ratioA = Number(a.dataset.progressRatio || 0);
+let ratioB = Number(b.dataset.progressRatio || 0);
+let completeA = a.dataset.progressComplete === "1";
+let completeB = b.dataset.progressComplete === "1";
+
+if(selected === "decrescente"){
+return ratioB - ratioA;
+}
+if(selected === "nao-finalizadas"){
+if(completeA !== completeB) return completeA ? 1 : -1;
+return ratioB - ratioA;
+}
+if(selected === "finalizadas"){
+if(completeA !== completeB) return completeA ? -1 : 1;
+return ratioB - ratioA;
+}
+return ratioA - ratioB;
+});
+
+sorted.forEach(card => grid.appendChild(card));
+}
+
 function applyThumbBorder(card, percentage){
 let thumb = card.querySelector(".thumb");
 if(!thumb) return;
@@ -937,6 +993,10 @@ let menuFilter = document.getElementById("menuFilter");
 if(menuFilter){
 menuFilter.addEventListener("change", applyMenuFilter);
 }
+let menuOrder = document.getElementById("menuOrder");
+if(menuOrder){
+menuOrder.addEventListener("change", applyMenuOrdering);
+}
 
 document.querySelectorAll(".card").forEach(card => {
 
@@ -945,19 +1005,23 @@ let statusEl = card.querySelector(".status");
 let thumbEl = document.getElementById("celticThumb");
 let totalFallback = parseInt(card.dataset.total);
 let initial = getCelticStatus(null, totalFallback);
+setCardProgressMeta(card, initial.found, initial.total);
 setCelticThumb(thumbEl, initial.thumb);
 renderStatus(statusEl, initial.found, initial.total);
 updateLockedTags(card, initial.found);
 applyMenuFilter();
+applyMenuOrdering();
 let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
 applyThumbBorder(card, initialPercentage);
 
 getCelticCounterMeta().then(meta => {
 let updated = getCelticStatus(meta, totalFallback);
+setCardProgressMeta(card, updated.found, updated.total);
 setCelticThumb(thumbEl, updated.thumb);
 renderStatus(statusEl, updated.found, updated.total);
 updateLockedTags(card, updated.found);
 applyMenuFilter();
+applyMenuOrdering();
 let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
 applyThumbBorder(card, updatedPercentage);
 });
@@ -969,6 +1033,7 @@ let total = parseInt(card.dataset.total);
 if(Number.isNaN(total)) return;
 let statusEl = card.querySelector(".status");
 let luciferStatus = getLuciferStatus(total);
+setCardProgressMeta(card, luciferStatus.found, luciferStatus.total);
 renderStatus(statusEl, luciferStatus.found, luciferStatus.total);
 let percentage = luciferStatus.total > 0 ? (luciferStatus.found / luciferStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
@@ -980,6 +1045,7 @@ let total = parseInt(card.dataset.total);
 if(Number.isNaN(total)) return;
 let statusEl = card.querySelector(".status");
 let tyreStatus = getTyreStatus(total);
+setCardProgressMeta(card, tyreStatus.found, tyreStatus.total);
 renderStatus(statusEl, tyreStatus.found, tyreStatus.total);
 let percentage = tyreStatus.total > 0 ? (tyreStatus.found / tyreStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
@@ -991,6 +1057,7 @@ let total = parseInt(card.dataset.total);
 if(Number.isNaN(total)) return;
 let statusEl = card.querySelector(".status");
 let flowerStatus = getFlowerStatus(total);
+setCardProgressMeta(card, flowerStatus.found, flowerStatus.total);
 renderStatus(statusEl, flowerStatus.found, flowerStatus.total);
 let percentage = flowerStatus.total > 0 ? (flowerStatus.found / flowerStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
@@ -1000,17 +1067,21 @@ return;
 if(card.id === "polvoCard"){
 let statusEl = card.querySelector(".status");
 let initial = getFundodomarStatus(null);
+setCardProgressMeta(card, initial.found, initial.total);
 renderStatus(statusEl, initial.found, initial.total);
 updateLockedTags(card, initial.found, { levelThreeUnlocked: initial.levelThreeUnlocked });
 applyMenuFilter();
+applyMenuOrdering();
 let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
 applyThumbBorder(card, initialPercentage);
 
 getFundodomarCounterMeta().then(meta => {
 let updated = getFundodomarStatus(meta);
+setCardProgressMeta(card, updated.found, updated.total);
 renderStatus(statusEl, updated.found, updated.total);
 updateLockedTags(card, updated.found, { levelThreeUnlocked: updated.levelThreeUnlocked });
 applyMenuFilter();
+applyMenuOrdering();
 let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
 applyThumbBorder(card, updatedPercentage);
 });
@@ -1025,6 +1096,7 @@ if(!key || Number.isNaN(total)) return;
 
 let statusEl = card.querySelector(".status");
 let found = getStoredProgressCount(key);
+setCardProgressMeta(card, found, total);
 renderStatus(statusEl, found, total);
 
 let percentage = total > 0 ? (found / total) * 100 : 0;
@@ -1033,6 +1105,7 @@ applyThumbBorder(card, percentage);
 });
 
 applyMenuFilter();
+applyMenuOrdering();
 
 });
 </script>

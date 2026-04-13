@@ -200,6 +200,14 @@ cursor:grabbing;
   transition: 0.2s;
 }
 
+.tooltip.credits-tooltip .credit-line{
+  margin-bottom:6px;
+}
+
+.tooltip.credits-tooltip .credit-line:last-child{
+  margin-bottom:0;
+}
+
 /* show tooltip when hovering button OR tooltip itself */
 .info-wrapper:hover .tooltip {
   opacity: 1;
@@ -273,6 +281,7 @@ z-index:999;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
+#toggleSound,
 #rotateMandala{
 
 border:none;
@@ -306,8 +315,12 @@ cursor:pointer;
 <span class="info-wrapper">
     <button class="info-btn">i</button>
 
-    <span class="tooltip">
-      gatos.
+    <span class="tooltip credits-tooltip">
+      <div class="credit-line">Cat Meow 3 by ebcrosby -- https://freesound.org/s/334435/ -- License: Attribution 3.0</div>
+      <div class="credit-line">Cat meow.m4a by Christyboy100 -- https://freesound.org/s/495694/ -- License: Attribution 3.0</div>
+      <div class="credit-line">Cat Meowing by lextrack -- https://freesound.org/s/333916/ -- License: Creative Commons 0</div>
+      <div class="credit-line">cat meow short by skymary -- https://freesound.org/s/412017/ -- License: Creative Commons 0</div>
+      <div class="credit-line">New Cat Meow 1 by steffcaffrey -- https://freesound.org/s/479272/ -- License: Creative Commons 0</div>
     </span>
   </span>
   <span class="info-wrapper">
@@ -371,6 +384,7 @@ cursor:pointer;
 
 <button id="clearButton" onclick="confirmReset()">Reset</button>
 <button id="toggleClickMode">Desmarcar: ON</button>
+<button id="toggleSound">Som: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
 
 <select id="overlaySelector">
@@ -527,8 +541,21 @@ document.addEventListener("dragstart", e=>e.preventDefault());
 
 
 const hintStorageKey = "BICHANOS_wordHints";
+const soundEnabledKey = "bichanos_soundEnabled";
 const baseMandalaSize = 2048;
 const areaRegionMap = {};
+const catSoundFiles = [
+"../sound_effects/333916__lextrack__cat-meowing.mp3",
+"../sound_effects/334435__ebcrosby__cat-meow-3.wav",
+"../sound_effects/412017__skymary__cat-meow-short.wav",
+"../sound_effects/479272__steffcaffrey__new-cat-meow-1.wav",
+"../sound_effects/495694__christyboy100__cat-meow.m4a"
+];
+const catSoundStartOffsets = {
+"../sound_effects/412017__skymary__cat-meow-short.wav": 0.5
+};
+let soundEnabled = true;
+let activeCatSound = null;
 
 function clamp(value, min, max){
 return Math.min(max, Math.max(min, value));
@@ -660,6 +687,27 @@ let hintLevel = Number(li.dataset.hintLevel || 0);
 li.textContent = hintLevel >= 1 ? li.dataset.hidden : "?".repeat(li.dataset.hidden.length);
 }
 
+function playRandomCatSound(){
+if(!soundEnabled || !catSoundFiles.length) return;
+
+let soundPath = catSoundFiles[Math.floor(Math.random() * catSoundFiles.length)];
+let startOffset = catSoundStartOffsets[soundPath] || 0;
+
+if(activeCatSound){
+activeCatSound.pause();
+activeCatSound.currentTime = 0;
+}
+
+activeCatSound = new Audio(soundPath);
+if(startOffset > 0){
+activeCatSound.addEventListener("loadedmetadata", function handleLoadedMetadata(){
+activeCatSound.currentTime = Math.min(startOffset, Math.max(0, activeCatSound.duration || startOffset));
+activeCatSound.removeEventListener("loadedmetadata", handleLoadedMetadata);
+});
+}
+activeCatSound.play().catch(() => {});
+}
+
 
 /* load */
 window.addEventListener("load", function(){
@@ -694,6 +742,10 @@ overlaySelector.dispatchEvent(new Event("change"));
 /* load answers AFTER overlay is ready */
 loadProgress();
 loadHints();
+
+let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
+soundEnabled = savedSoundEnabled !== "0";
+toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
 });
 
 
@@ -708,6 +760,17 @@ allowToggleOff=!allowToggleOff;
 this.textContent=allowToggleOff
 ? "Desmarcar: ON"
 : "Desmarcar: OFF";
+};
+
+toggleSound.onclick = function(){
+soundEnabled = !soundEnabled;
+this.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+
+if(!soundEnabled && activeCatSound){
+activeCatSound.pause();
+activeCatSound.currentTime = 0;
+}
 };
 
 /* OVERLAY */
@@ -850,6 +913,7 @@ if(!isVisible){
 
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
+  playRandomCatSound();
 
   if(menuWord.classList.contains("hidden-word")){
   menuWord.textContent = menuWord.dataset.hidden;

@@ -889,28 +889,32 @@ let cards = Array.from(grid.querySelectorAll(".card"));
 let sorted = cards.slice().sort((a, b) => {
 let ratioA = Number(a.dataset.progressRatio || 0);
 let ratioB = Number(b.dataset.progressRatio || 0);
+let foundA = Number(a.dataset.progressFound || 0);
+let foundB = Number(b.dataset.progressFound || 0);
 let totalA = Number(a.dataset.progressTotal);
 let totalB = Number(b.dataset.progressTotal);
 let hasTotalA = Number.isFinite(totalA);
 let hasTotalB = Number.isFinite(totalB);
 let completeA = a.dataset.progressComplete === "1";
 let completeB = b.dataset.progressComplete === "1";
+let amountA = hasTotalA ? totalA : foundA;
+let amountB = hasTotalB ? totalB : foundB;
 
 if(selected === "decrescente"){
-if(hasTotalA !== hasTotalB) return hasTotalA ? -1 : 1;
-if(hasTotalA && totalA !== totalB) return totalB - totalA;
+if(amountA !== amountB) return amountB - amountA;
 return ratioB - ratioA;
 }
 if(selected === "nao-finalizadas"){
 if(completeA !== completeB) return completeA ? 1 : -1;
-return ratioB - ratioA;
+if(ratioA !== ratioB) return ratioB - ratioA;
+return foundB - foundA;
 }
 if(selected === "finalizadas"){
 if(completeA !== completeB) return completeA ? -1 : 1;
-return ratioB - ratioA;
+if(ratioA !== ratioB) return ratioB - ratioA;
+return foundB - foundA;
 }
-if(hasTotalA !== hasTotalB) return hasTotalA ? -1 : 1;
-if(hasTotalA && totalA !== totalB) return totalA - totalB;
+if(amountA !== amountB) return amountA - amountB;
 return ratioA - ratioB;
 });
 

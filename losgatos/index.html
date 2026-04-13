@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Los Gatos</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32px32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+:root{
+--mandala-display-size:2048px;
+--mandala-render-size:var(--mandala-display-size);
+--mobile-menu-scale:0.20;
+--mobile-menu-ui-scale:1;
+--mobile-menu-base-width:250px;
+}
+
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+contain:layout paint;
+transition:transform 0.25s ease;
+margin-bottom:20px;
+overflow:hidden;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+}
+
+#regionHints{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+z-index:3;
+}
+
+.hint-region{
+position:absolute;
+border:6px solid rgba(130, 255, 130, 0);
+box-shadow:0 0 0 rgba(130, 255, 130, 0);
+opacity:0;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(130, 255, 130, 0.95);
+box-shadow:0 0 26px rgba(130, 255, 130, 0.95), inset 0 0 18px rgba(130, 255, 130, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(0.996);}
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+
+background-image:url("losgatos_gabarito_01.png");
+background-size:var(--mandala-display-size) var(--mandala-display-size);
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(16, 56, 0);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+  position:fixed;
+  top:120px;
+  left:30px;
+  width:calc(250px * var(--mobile-menu-ui-scale));
+
+  max-height:70vh;
+
+  background:rgba(0, 0, 0, 0.459);
+  border:1px solid white;
+  color:white;
+
+  font-family:'Times New Roman', Times, serif;
+  font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+  box-sizing:border-box;
+}
+
+#wordMenu.mobile-pinned{
+  left:auto;
+  right:auto;
+  top:auto;
+  bottom:auto;
+}
+
+#menuHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  touch-action:none;
+}
+/* LEFT SIDE */
+.title {
+  flex-shrink:inherit;
+
+  white-space: nowrap;
+
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  margin-left:calc(8px * var(--mobile-menu-ui-scale));
+  margin-top:calc(8px * var(--mobile-menu-ui-scale));
+}
+/* RIGHT SIDE GROUP */
+.right{
+  display:flex;
+  align-items:center;
+  gap:calc(6px * var(--mobile-menu-ui-scale));
+  flex-shrink:0;
+  margin-right:calc(8px * var(--mobile-menu-ui-scale));
+}
+/* COUNTER */
+#counter {
+  white-space: nowrap;
+}
+
+#menuBody{
+display:flex;
+flex-direction:column;
+}
+
+/* ================= INFO ================= */
+
+.info-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.info-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 6px; /* invisible bridge */
+}
+
+.info-btn,
+.menu-btn,
+#toggleMenu{
+  
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:calc(16px * var(--mobile-menu-ui-scale));
+  height:calc(16px * var(--mobile-menu-ui-scale));
+  border-radius:50%;
+  border:none;
+  font-size:calc(11px * var(--mobile-menu-ui-scale));
+  cursor:pointer;
+  background:#ccc;
+  line-height:calc(16px * var(--mobile-menu-ui-scale));
+  padding:0;
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 180px;
+  margin-top: 4px; /* small, safe gap */
+
+  background: rgba(0,0,0,0.85);
+  color: white;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+}
+
+.tooltip.help-tooltip {
+  width: 320px;
+  line-height: 1.35;
+}
+
+.tooltip.credits-tooltip {
+  width: 360px;
+  line-height: 1.35;
+}
+
+.tooltip.credits-tooltip .credit-line{
+  margin-bottom:6px;
+}
+
+.tooltip.credits-tooltip .credit-line:last-child{
+  margin-bottom:0;
+}
+
+/* show tooltip when hovering button OR tooltip itself */
+.info-wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  
+}
+
+.tooltip a {
+  text-decoration: none;
+}
+
+.tooltip a:hover {
+  text-decoration: none; /* optional: add back on hover */
+}
+
+.highlight {
+  color: #03d626;
+  text-decoration: none
+}
+
+.highlight:hover{
+  text-decoration: none;
+}
+
+#wordMenu.collapsed #menuBody{
+display:none;
+}
+
+.control-row{
+display:flex;
+}
+
+.control-row button{
+flex:1;
+}
+
+#overlaySelector,
+#hintButton,
+#clearButton,
+#toggleClickMode,
+#toggleSound,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:calc(8px * var(--mobile-menu-ui-scale));
+font-family:'Times New Roman', Times, serif;
+cursor:pointer;
+
+}
+
+.control-row #toggleSound{
+border-left:1px solid white;
+}
+
+#mobileMenuOptions{
+display:none;
+border-top:1px solid white;
+padding:calc(8px * var(--mobile-menu-ui-scale));
+gap:calc(6px * var(--mobile-menu-ui-scale));
+flex-direction:column;
+font-size:inherit;
+font-family:inherit;
+}
+
+#mobileMenuOptions label{
+display:flex;
+flex-direction:column;
+gap:calc(4px * var(--mobile-menu-ui-scale));
+font-size:inherit;
+}
+
+#mobileMenuOptions input,
+#mobileMenuOptions select{
+width:100%;
+font-size:inherit;
+font-family:inherit;
+}
+
+@media (max-width: 900px) and (any-pointer: coarse){
+  :root{
+    --mandala-display-size:min(2048px, 100vw);
+  }
+
+  html,
+  body{
+    margin:0;
+    padding:0;
+    height:auto;
+  }
+
+  .container img{
+    display:block;
+  }
+
+ #wordMenu{
+    top:auto;
+    top:8px;
+    left:8px;
+    bottom: auto;
+    right:auto;
+    width:max(
+      calc(var(--mobile-menu-base-width) * var(--mobile-menu-ui-scale)),
+      calc(var(--mandala-render-size) * var(--mobile-menu-scale))
+    );
+    max-width:calc(100vw - 16px);
+    max-height:40vh;
+    font-size:calc(0.78rem * var(--mobile-menu-ui-scale));
+  }
+
+  #wordMenu.pinned-bottom-collapsed{
+    left:8px !important;
+    right:auto !important;
+    top:655px !important;
+    bottom:auto !important;
+    max-height:none;
+  }
+
+  #wordMenu.pinned-top-left{
+    top:8px !important;
+    left:8px !important;
+    right:auto !important;
+    bottom:auto !important;
+  }
+
+  #wordMenu.pinned-top-right{
+    top:8px !important;
+    right:8px !important;
+    left:auto !important;
+    bottom:auto !important;
+  }
+
+  #mobileMenuOptions{
+    display:flex;
+  }
+
+  #mobileMenuOptions label{
+    font-size: inherit
+  }
+
+  .tooltip.help-tooltip{
+    width:230px;
+  }
+
+
+  #overlaySelector,
+  #clearButton,
+  #toggleClickMode,
+  #toggleSound,
+  #rotateMandala{
+    padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
+    font-size:calc(0.78rem * var(--mobile-menu-ui-scale));
+  }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class= "title">Los Gatos</span>
+
+<div class="right">
+<span id="counter"></span>
+
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+
+    <span class="tooltip credits-tooltip">
+      <div class="credit-line">Cat Meow 3 by ebcrosby -- https://freesound.org/s/334435/ -- License: Attribution 3.0</div>
+      <div class="credit-line">Cat meow.m4a by Christyboy100 -- https://freesound.org/s/495694/ -- License: Attribution 3.0</div>
+      <div class="credit-line">Cat Meowing by lextrack -- https://freesound.org/s/333916/ -- License: Creative Commons 0</div>
+      <div class="credit-line">cat meow short by skymary -- https://freesound.org/s/412017/ -- License: Creative Commons 0</div>
+      <div class="credit-line">New Cat Meow 1 by steffcaffrey -- https://freesound.org/s/479272/ -- License: Creative Commons 0</div>
+    </span>
+  </span>
+  <span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras escondidas. Para uma dica, clique no botão Dica e o jogo vai destacar a região de um gato ainda não encontrado.
+    </span>
+  </span>
+  
+  <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleMenu">–</button>
+</div>
+</div>
+  
+<div id="menuBody">
+
+<div id="mobileMenuOptions">
+  <label for="mobileMenuPin">
+    Fixação menu (mobile)
+    <select id="mobileMenuPin">
+      <option value="free">Livre (arrastar)</option>
+      <option value="bottom-collapsed">Recolhido inferior</option>
+      <option value="top-left">Superior esquerdo</option>
+      <option value="top-right">Superior direito</option>
+    </select>
+  </label>
+</div>
+
+<div id="wordTooltip"></div>
+  
+<button id="hintButton">Dica</button>
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<div class="control-row">
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="toggleSound">Som: ON</button>
+</div>
+<button id="rotateMandala">Rotate (0°)</button>
+
+<select id="overlaySelector">
+<option value="losgatos_gabarito_01.png">Azul</option>
+<option value="losgatos_gabarito_02.png">Rosa</option>
+<option value="losgatos_gabarito_03.png">Amarelo</option>
+</select>
+
+</div>
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container">
+
+<img src="losgatos.png" usemap="#image-map">
+
+<div id="answersOverlay"></div>
+<div id="regionHints">
+  <div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
+  <div id="regionHint-2" class="hint-region" style="left:1px;top:693px;width:2045px;height:667px;"></div>
+  <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
+</div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
+
+<map name="image-map">
+
+<area coords="622,1926,611,1942,628,1959,646,1946,639,1924"
+  shape="poly" onclick="toggleAnswer(this,'Gato_01');return false;">
+
+<area coords="692,1706,679,1711,681,1728,699,1733,707,1720"
+  shape="poly" onclick="toggleAnswer(this,'Gato_02');return false;">
+
+<area coords="756,1794,743,1805,751,1820,769,1816,769,1802"
+  shape="poly" onclick="toggleAnswer(this,'Gato_03');return false;">
+
+<area coords="53,1554,66,1565,86,1554,82,1532,58,1536"
+  shape="poly" onclick="toggleAnswer(this,'Gato_04');return false;">
+
+<area coords="45,1020,31,1029,42,1053,62,1044"
+  shape="poly" onclick="toggleAnswer(this,'Gato_05');return false;">
+
+<area coords="209,1102,205,1115,222,1125,235,1116,227,1093"
+  shape="poly" onclick="toggleAnswer(this,'Gato_06');return false;">
+
+<area coords="20,85,25,115,12,148,-2,166,-2,69"
+  shape="poly" onclick="toggleAnswer(this,'Gato_07');return false;">
+
+<area coords="657,1072,646,1090,637,1109,657,1118,679,1105,681,1083"
+  shape="poly" onclick="toggleAnswer(this,'Gato_08');return false;">
+
+<area coords="470,679,466,692,475,712,495,705,488,681"
+  shape="poly" onclick="toggleAnswer(this,'Gato_09');return false;">
+
+<area coords="1105,426,1083,446,1103,472,1122,461,1122,447,1118,437"
+  shape="poly" onclick="toggleAnswer(this,'Gato_10');return false;">
+
+<area coords="1388,518,1368,522,1364,537,1373,551,1390,548,1403,531"
+  shape="poly" onclick="toggleAnswer(this,'Gato_11');return false;">
+
+<area coords="988,1066,973,1077,962,1099,977,1108,988,1099,997,1083"
+  shape="poly" onclick="toggleAnswer(this,'Gato_12');return false;">
+
+<area coords="1329,1519,1294,1519,1280,1537,1298,1550,1331,1548,1342,1537"
+  shape="poly" onclick="toggleAnswer(this,'Gato_13');return false;">
+
+<area coords="1970,1084,1965,1108,1970,1121,1983,1128,1998,1117,1998,1093,1983,1079"
+  shape="poly" onclick="toggleAnswer(this,'Gato_14');return false;">
+
+<area coords="1781,407,1770,422,1779,435,1790,448,1807,453,1814,442,1798,418"
+  shape="poly" onclick="toggleAnswer(this,'Gato_15');return false;">
+
+<area coords="655,-3,690,-3,668,21"
+  shape="poly" onclick="toggleAnswer(this,'Gato_16');return false;">
+
+<area coords="1021,131,1004,138,1006,160,1026,162,1039,151"
+  shape="poly" onclick="toggleAnswer(this,'Gato_17');return false;">
+
+<area coords="1201,1383,1195,1409,1195,1429,1219,1426,1225,1405,1219,1383"
+  shape="poly" onclick="toggleAnswer(this,'Gato_18');return false;">
+
+<area coords="1283,1207,1272,1215,1261,1235,1272,1248,1287,1240,1298,1222"
+  shape="poly" onclick="toggleAnswer(this,'Gato_19');return false;">
+
+<area coords="1956,1917,1939,1928,1945,1945,1961,1961,1981,1948"
+  shape="poly" onclick="toggleAnswer(this,'Gato_20');return false;">
+
+<area coords="523,1149,488,1149,490,1176,516,1180"
+  shape="poly" onclick="toggleAnswer(this,'Gato_21');return false;">
+
+<area coords="1564,1843,1555,1856,1568,1869,1590,1865,1592,1843"
+  shape="poly" onclick="toggleAnswer(this,'Gato_22');return false;">
+
+<area coords="356,438,343,454,358,465,376,456"
+  shape="poly" onclick="toggleAnswer(this,'Gato_23');return false;">
+
+<area coords="1506,1275,1489,1283,1495,1303,1524,1297,1522,1279"
+  shape="poly" onclick="toggleAnswer(this,'Gato_24');return false;">
+
+<area coords="2029,1260,2014,1271,2014,1284,2031,1293,2040,1282"
+  shape="poly" onclick="toggleAnswer(this,'Gato_25');return false;">
+
+<area coords="1913,1354,1893,1376,1895,1403,1921,1407,1934,1372"
+  shape="poly" onclick="toggleAnswer(this,'Gato_26');return false;">
+
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+const overlayStorageKey = "losgatos_selectedOverlay";
+const progressStorageKey = "losgatosPuzzleProgress";
+const hintStorageKey = "losgatos_wordHints";
+const mobileMenuSizeKey = "losgatos_mobileMenuSize";
+const mobileMenuPinKey = "losgatos_mobileMenuPin";
+const soundEnabledKey = "losgatos_soundEnabled";
+const defaultOverlay = "losgatos_gabarito_01";
+const baseMandalaSize = 2048;
+const areaRegionMap = {};
+const allWords = [];
+const foundWords = new Set();
+const catSoundFiles = [
+  "../sound_effects/333916__lextrack__cat-meowing.mp3",
+  "../sound_effects/334435__ebcrosby__cat-meow-3.wav",
+  "../sound_effects/412017__skymary__cat-meow-short.wav",
+  "../sound_effects/479272__steffcaffrey__new-cat-meow-1.wav",
+  "../sound_effects/495694__christyboy100__cat-meow.m4a"
+];
+const catSoundStartOffsets = {
+  "../sound_effects/412017__skymary__cat-meow-short.wav": 0.5
+};
+
+let currentOverlay = defaultOverlay;
+let allowToggleOff = true;
+let soundEnabled = true;
+let rotation = 0;
+let completionShown = false;
+let isBootstrapping = true;
+let activeCatSound = null;
+
+const answerClips = {};
+const answersOverlay = document.getElementById("answersOverlay");
+const counter = document.getElementById("counter");
+const overlaySelector = document.getElementById("overlaySelector");
+const toggleClickMode = document.getElementById("toggleClickMode");
+const toggleSound = document.getElementById("toggleSound");
+const toggleMenu = document.getElementById("toggleMenu");
+const rotateMandala = document.getElementById("rotateMandala");
+const hintButton = document.getElementById("hintButton");
+const wordMenu = document.getElementById("wordMenu");
+const menuHeader = document.getElementById("menuHeader");
+
+function clamp(value, min, max){
+  return Math.min(max, Math.max(min, value));
+}
+
+function updateCounter(){
+  let found = foundWords.size;
+  let total = allWords.length;
+
+  counter.textContent = found + " / " + total;
+
+  if(isBootstrapping) return;
+
+  if(found === total && total > 0 && !completionShown){
+    completionShown = true;
+    setTimeout(function(){
+      alert("fim! 🎉🎉");
+    }, 200);
+  }else if(found < total){
+    completionShown = false;
+  }
+}
+
+function computeAreaRegion(coordsText){
+  let coords = coordsText.split(",").map(Number).filter(n => !Number.isNaN(n));
+  if(coords.length < 4) return 2;
+  let ys = [];
+  for(let i=1;i<coords.length;i+=2){
+    ys.push(coords[i]);
+  }
+  let avgY = ys.reduce((acc, y) => acc + y, 0) / ys.length;
+  if(avgY <= baseMandalaSize / 3) return 1;
+  if(avgY <= (baseMandalaSize / 3) * 2) return 2;
+  return 3;
+}
+
+function findAreaByWord(word){
+  return Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area => {
+    let handler = area.getAttribute("onclick") || "";
+    return handler.includes("'" + word + "'");
+  }) || null;
+}
+
+function getAreaBounds(area){
+  let coords = (area?.coords || "").split(",").map(Number).filter(Number.isFinite);
+  if(coords.length < 2) return null;
+
+  let xs = [];
+  let ys = [];
+
+  for(let i = 0; i < coords.length; i += 2){
+    xs.push(coords[i]);
+    ys.push(coords[i + 1]);
+  }
+
+  if(!xs.length || !ys.length) return null;
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys)
+  };
+}
+
+function centerViewOnArea(area){
+  let bounds = getAreaBounds(area);
+  if(!bounds) return;
+
+  let container = document.querySelector(".container");
+  if(!container) return;
+
+  let containerRect = container.getBoundingClientRect();
+  let areaCenterX = (bounds.minX + bounds.maxX) / 2;
+  let areaCenterY = (bounds.minY + bounds.maxY) / 2;
+
+  let targetX = window.scrollX + containerRect.left + areaCenterX - (window.innerWidth / 2);
+  let targetY = window.scrollY + containerRect.top + areaCenterY - (window.innerHeight / 2);
+
+  let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+  let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+  window.scrollTo({
+    left: clamp(targetX, 0, maxX),
+    top: clamp(targetY, 0, maxY),
+    behavior: "smooth"
+  });
+}
+
+function showRegionHint(regionId){
+  document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+  let el = document.getElementById("regionHint-" + regionId);
+  if(!el) return;
+  el.classList.add("active");
+  setTimeout(() => el.classList.remove("active"), 1800);
+}
+
+function saveHints(){
+  let hints = {};
+  allWords.forEach(word => {
+    if(localStorage.getItem(hintStorageKey + ":" + word) === "1"){
+      hints[word] = 1;
+    }
+  });
+  localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+  let raw = localStorage.getItem(hintStorageKey);
+  if(!raw) return;
+  let hints;
+  try{
+    hints = JSON.parse(raw);
+  }catch{
+    return;
+  }
+  allWords.forEach(word => {
+    if(hints[word]){
+      localStorage.setItem(hintStorageKey + ":" + word, "1");
+    }
+  });
+}
+
+function markHintUsed(word){
+  localStorage.setItem(hintStorageKey + ":" + word, "1");
+  saveHints();
+}
+
+function getRandomUnfoundWord(){
+  let unfoundWords = allWords.filter(word => !foundWords.has(word));
+  if(!unfoundWords.length) return null;
+  return unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+}
+
+function activateHintForWord(word){
+  if(!word) return;
+  let area = findAreaByWord(word);
+  let regionId = areaRegionMap[word];
+  if(area){
+    centerViewOnArea(area);
+  }
+  if(regionId){
+    markHintUsed(word);
+    showRegionHint(regionId);
+  }
+}
+
+function playRandomCatSound(){
+  if(!soundEnabled || !catSoundFiles.length) return;
+
+  let soundPath = catSoundFiles[Math.floor(Math.random() * catSoundFiles.length)];
+  let startOffset = catSoundStartOffsets[soundPath] || 0;
+
+  if(activeCatSound){
+    activeCatSound.pause();
+    activeCatSound.currentTime = 0;
+  }
+
+  activeCatSound = new Audio(soundPath);
+  if(startOffset > 0){
+    activeCatSound.addEventListener("loadedmetadata", function handleLoadedMetadata(){
+      activeCatSound.currentTime = Math.min(startOffset, Math.max(0, activeCatSound.duration || startOffset));
+      activeCatSound.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    });
+  }
+  activeCatSound.play().catch(() => {});
+}
+
+function toggleAnswer(area, word, shouldPersist=true){
+  if(!area || !area.coords) return;
+
+  if(!answerClips[word]){
+    let coords = area.coords.split(",");
+    let points = [];
+    for(let i=0;i<coords.length;i+=2){
+      points.push(coords[i] + "px " + coords[i+1] + "px");
+    }
+
+    let clip = document.createElement("div");
+    clip.className = "answerClip";
+    clip.style.clipPath = "polygon(" + points.join(",") + ")";
+    clip.style.backgroundImage = "url('" + currentOverlay + "')";
+    answersOverlay.appendChild(clip);
+    answerClips[word] = clip;
+  }
+
+  if(!answerClips[word].classList.contains("visible")){
+    answerClips[word].classList.add("visible");
+    foundWords.add(word);
+    if(shouldPersist){
+      playRandomCatSound();
+    }
+  }else if(allowToggleOff){
+    answerClips[word].classList.remove("visible");
+    foundWords.delete(word);
+  }
+
+  updateCounter();
+  if(shouldPersist){
+    saveProgress();
+  }
+}
+
+function saveProgress(){
+  localStorage.setItem(
+    progressStorageKey,
+    JSON.stringify(Object.keys(answerClips).filter(w => answerClips[w].classList.contains("visible")))
+  );
+}
+
+function loadProgress(){
+  let saved = localStorage.getItem(progressStorageKey);
+  if(!saved) return;
+  let words;
+  try{
+    words = JSON.parse(saved);
+  }catch{
+    return;
+  }
+
+  words.forEach(word => {
+    let area = document.querySelector(`area[onclick*="${word}"]`);
+    if(area){
+      toggleAnswer(area, word, false);
+    }
+  });
+  updateCounter();
+}
+
+function clearAll(){
+  Object.values(answerClips).forEach(clip => clip.classList.remove("visible"));
+  foundWords.clear();
+  document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+  localStorage.removeItem(progressStorageKey);
+  localStorage.removeItem(hintStorageKey);
+  allWords.forEach(word => localStorage.removeItem(hintStorageKey + ":" + word));
+  updateCounter();
+}
+
+function confirmReset(){
+  if(confirm("Reset?")){
+    clearAll();
+  }
+}
+
+function isMobileViewport(){
+  return window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
+}
+
+function setMobileMenuScaleVars(menuScale){
+  let safeScale = clamp(menuScale, 0.20, 0.60);
+  document.documentElement.style.setProperty("--mobile-menu-scale", safeScale.toFixed(2));
+  let uiScale = isMobileViewport() ? clamp(safeScale / 0.25, 0.85, 1.65) : 1;
+  document.documentElement.style.setProperty("--mobile-menu-ui-scale", uiScale.toFixed(2));
+}
+
+function applyMobileMenuPin(pinMode){
+  let menu = wordMenu;
+  menu.classList.remove("mobile-pinned", "pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right");
+
+  if(!isMobileViewport() || pinMode === "free"){
+    localStorage.setItem(mobileMenuPinKey, "free");
+    return;
+  }
+
+  menu.classList.add("mobile-pinned");
+
+  if(pinMode === "bottom-collapsed"){
+    menu.classList.add("collapsed", "pinned-bottom-collapsed");
+  }else if(pinMode === "top-left"){
+    menu.classList.remove("collapsed");
+    menu.classList.add("pinned-top-left");
+  }else if(pinMode === "top-right"){
+    menu.classList.remove("collapsed");
+    menu.classList.add("pinned-top-right");
+  }
+
+  localStorage.setItem(mobileMenuPinKey, pinMode);
+}
+
+function applyMenuBounds(){
+  if(isMobileViewport() && wordMenu.classList.contains("mobile-pinned")) return;
+  let maxLeft = Math.max(0, window.innerWidth - wordMenu.offsetWidth);
+  let maxTop = Math.max(0, window.innerHeight - wordMenu.offsetHeight);
+  let currentLeft = parseFloat(wordMenu.style.left || wordMenu.offsetLeft || 0);
+  let currentTop = parseFloat(wordMenu.style.top || wordMenu.offsetTop || 0);
+  wordMenu.style.left = clamp(currentLeft, 0, maxLeft) + "px";
+  wordMenu.style.top = clamp(currentTop, 0, maxTop) + "px";
+}
+
+function initMobileMenuOptions(){
+  let sizeInput = document.getElementById("mobileMenuSize");
+  let pinSelect = document.getElementById("mobileMenuPin");
+  if(!pinSelect) return;
+
+  let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+  let scale = Number.isFinite(savedScale) && savedScale >= 0.2 && savedScale <= 0.6 ? savedScale : 0.25;
+  setMobileMenuScaleVars(scale);
+  if(sizeInput){
+    sizeInput.value = scale.toFixed(2);
+
+    sizeInput.addEventListener("input", () => {
+      let nextScale = Number(sizeInput.value || 0.25);
+      setMobileMenuScaleVars(nextScale);
+      localStorage.setItem(mobileMenuSizeKey, nextScale.toFixed(2));
+      applyMenuBounds();
+    });
+  }
+
+  let savedPin = localStorage.getItem(mobileMenuPinKey) || "free";
+  pinSelect.value = savedPin;
+  applyMobileMenuPin(savedPin);
+
+  pinSelect.addEventListener("change", () => {
+    applyMobileMenuPin(pinSelect.value);
+    applyMenuBounds();
+  });
+}
+
+/* prevent image dragging */
+document.addEventListener("dragstart", e => e.preventDefault());
+
+document.querySelectorAll("area").forEach(area => {
+  let onclickText = area.getAttribute("onclick") || "";
+  let match = onclickText.match(/'([^']+)'/);
+  if(!match) return;
+  let word = match[1];
+  areaRegionMap[word] = computeAreaRegion(area.coords || "");
+  allWords.push(word);
+});
+
+overlaySelector.onchange = function(){
+  currentOverlay = this.value;
+  Object.values(answerClips).forEach(clip => {
+    clip.style.backgroundImage = "url('" + currentOverlay + "')";
+  });
+  localStorage.setItem(overlayStorageKey, currentOverlay);
+};
+
+toggleClickMode.onclick = function(){
+  allowToggleOff = !allowToggleOff;
+  this.textContent = allowToggleOff ? "Desmarcar: ON" : "Desmarcar: OFF";
+};
+
+toggleSound.onclick = function(){
+  soundEnabled = !soundEnabled;
+  this.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+  localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+
+  if(!soundEnabled && activeCatSound){
+    activeCatSound.pause();
+    activeCatSound.currentTime = 0;
+  }
+};
+
+toggleMenu.onclick = () => {
+  wordMenu.classList.toggle("collapsed");
+  applyMenuBounds();
+};
+
+hintButton.onclick = function(){
+  let word = getRandomUnfoundWord();
+  if(!word){
+    alert("Todos os gatos ja foram encontrados.");
+    return;
+  }
+  activateHintForWord(word);
+};
+
+rotateMandala.onclick = function(){
+  rotation = (rotation + 90) % 360;
+  document.querySelector(".container").style.transform = "rotate(" + rotation + "deg)";
+  this.textContent = "Rotate (" + rotation + "°)";
+};
+
+/* menu drag */
+let draggingMenu = false;
+let offsetX = 0;
+let offsetY = 0;
+
+function startMenuDrag(clientX, clientY){
+  if(isMobileViewport() && document.getElementById("mobileMenuPin").value !== "free") return;
+  draggingMenu = true;
+  offsetX = clientX - wordMenu.offsetLeft;
+  offsetY = clientY - wordMenu.offsetTop;
+}
+
+menuHeader.addEventListener("mousedown", e => startMenuDrag(e.clientX, e.clientY));
+menuHeader.addEventListener("touchstart", e => {
+  if(!e.touches[0]) return;
+  startMenuDrag(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+
+document.addEventListener("mousemove", e => {
+  if(!draggingMenu) return;
+  wordMenu.style.left = (e.clientX - offsetX) + "px";
+  wordMenu.style.top = (e.clientY - offsetY) + "px";
+  applyMenuBounds();
+});
+
+document.addEventListener("touchmove", e => {
+  if(!draggingMenu || !e.touches[0]) return;
+  wordMenu.style.left = (e.touches[0].clientX - offsetX) + "px";
+  wordMenu.style.top = (e.touches[0].clientY - offsetY) + "px";
+  applyMenuBounds();
+}, { passive: true });
+
+document.addEventListener("mouseup", () => draggingMenu = false);
+document.addEventListener("touchend", () => draggingMenu = false);
+
+/* drag scroll */
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let scrollLeft = 0;
+let scrollTop = 0;
+
+document.addEventListener("mousedown", e => {
+  if(e.target.closest("#wordMenu")) return;
+  isDragging = true;
+  document.body.classList.add("dragging");
+  startX = e.clientX;
+  startY = e.clientY;
+  scrollLeft = window.scrollX;
+  scrollTop = window.scrollY;
+});
+
+document.addEventListener("mousemove", e => {
+  if(!isDragging) return;
+  window.scrollTo(
+    scrollLeft - (e.clientX - startX),
+    scrollTop - (e.clientY - startY)
+  );
+});
+
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+  document.body.classList.remove("dragging");
+});
+
+window.addEventListener("load", function(){
+  let savedOverlay = localStorage.getItem(overlayStorageKey);
+  let validOverlays = Array.from(overlaySelector.options).map(option => option.value);
+  currentOverlay = savedOverlay && validOverlays.includes(savedOverlay) ? savedOverlay : defaultOverlay;
+  overlaySelector.value = currentOverlay;
+  overlaySelector.dispatchEvent(new Event("change"));
+
+  let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
+  soundEnabled = savedSoundEnabled !== "0";
+  toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+
+  initMobileMenuOptions();
+  loadHints();
+  loadProgress();
+  applyMenuBounds();
+  isBootstrapping = false;
+  updateCounter();
+});
+
+window.addEventListener("resize", () => {
+  let sizeInput = document.getElementById("mobileMenuSize");
+  if(sizeInput){
+    setMobileMenuScaleVars(Number(sizeInput.value || 0.25));
+  }else{
+    let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+    let fallbackScale = Number.isFinite(savedScale) ? clamp(savedScale, 0.20, 0.60) : 0.25;
+    setMobileMenuScaleVars(fallbackScale);
+  }
+  let pinSelect = document.getElementById("mobileMenuPin");
+  if(pinSelect){
+    applyMobileMenuPin(pinSelect.value);
+  }
+  applyMenuBounds();
+});
+
+</script>
+
+
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>imageMapResize();</script>
+
+</body>
+</html>

@@ -327,6 +327,7 @@ background:#5c2208;
   </select>
   <label for="menuOrder" hidden>Reordenar mandalas</label>
   <select id="menuOrder">
+    <option value="original">padrão (original)</option>
     <option value="crescente">crescente</option>
     <option value="decrescente">decrescente</option>
     <option value="nao-finalizadas">não finalizadas</option>
@@ -883,8 +884,16 @@ let grid = document.querySelector(".grid");
 if(!grid) return;
 
 let orderSelect = document.getElementById("menuOrder");
-let selected = orderSelect ? orderSelect.value : "crescente";
+let selected = orderSelect ? orderSelect.value : "original";
 let cards = Array.from(grid.querySelectorAll(".card"));
+
+if(selected === "original"){
+cards
+.slice()
+.sort((a, b) => Number(a.dataset.originalOrder || 0) - Number(b.dataset.originalOrder || 0))
+.forEach(card => grid.appendChild(card));
+return;
+}
 
 let sorted = cards.slice().sort((a, b) => {
 let ratioA = Number(a.dataset.progressRatio || 0);
@@ -893,8 +902,8 @@ let foundA = Number(a.dataset.progressFound || 0);
 let foundB = Number(b.dataset.progressFound || 0);
 let totalA = Number(a.dataset.progressTotal);
 let totalB = Number(b.dataset.progressTotal);
-let hasTotalA = Number.isFinite(totalA);
-let hasTotalB = Number.isFinite(totalB);
+let hasTotalA = a.dataset.progressTotal !== "" && Number.isFinite(totalA);
+let hasTotalB = b.dataset.progressTotal !== "" && Number.isFinite(totalB);
 let completeA = a.dataset.progressComplete === "1";
 let completeB = b.dataset.progressComplete === "1";
 let amountA = hasTotalA ? totalA : foundA;
@@ -985,6 +994,10 @@ reader.readAsText(file);
 }
 
 window.addEventListener("DOMContentLoaded", function(){
+document.querySelectorAll(".card").forEach((card, index) => {
+card.dataset.originalOrder = String(index);
+});
+
 let exportButton = document.getElementById("exportProgressButton");
 let importButton = document.getElementById("importProgressButton");
 let importInput = document.getElementById("importProgressInput");

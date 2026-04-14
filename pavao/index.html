@@ -909,12 +909,8 @@
     });
 
     mainMenuBtn.addEventListener("click", () => {
-      pieces.forEach(p => { p.placed = false; });
-      layoutTray();
-      renderBoard();
-      renderTray();
-      updateStats();
-      clearProgress();
+      saveProgress(true);
+      window.location.href = "/";
     });
 
     soundToggleBtn.addEventListener("click", () => {

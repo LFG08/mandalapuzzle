@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
   <title>Pavão Quebra-Cabeça</title>
   <style>
     :root {
@@ -245,7 +246,6 @@
               </div>
               <div class="menuMeta">
                 <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 0</strong></div>
-                <div class="line"><span class="small">Status</span><br><strong id="status" class="value">Carregando</strong></div>
               </div>
               <div class="actions">
                 <button id="mainMenu" class="btn" type="button">Menu Principal</button>
@@ -278,7 +278,6 @@
     const dragLayer = document.getElementById("dragLayer");
     const trayEl = document.getElementById("tray");
     const placedEl = document.getElementById("placed");
-    const statusEl = document.getElementById("status");
     const guideEl = document.getElementById("guide");
     const guideValEl = document.getElementById("guideVal");
     const menuCard = document.getElementById("menuCard");
@@ -295,6 +294,7 @@
     const pieceImg = new Image();
 
     const PROGRESS_KEY = "pavaoPuzzleProgress";
+    const PIECE_PLACE_SOUND_SRC = "../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     let guideMaxOpacity = 0;
     let pieces = [];
     let drag = null;
@@ -303,6 +303,10 @@
     let trayHeight = 1200;
     let soundOn = true;
     let menuCollapsed = false;
+    let saveProgressTimer = null;
+
+    const placeSound = new Audio(PIECE_PLACE_SOUND_SRC);
+    placeSound.preload = "auto";
 
     function loadImage(img, src) {
       return new Promise((resolve, reject) => {
@@ -611,7 +615,7 @@
       return applied;
     }
 
-    function saveProgress() {
+    function persistProgress() {
       try {
         localStorage.setItem(PROGRESS_KEY, JSON.stringify({
           pieces: capturePieceState(),
@@ -625,6 +629,22 @@
       }
     }
 
+    function saveProgress(immediate = false) {
+      if (immediate) {
+        if (saveProgressTimer !== null) {
+          clearTimeout(saveProgressTimer);
+          saveProgressTimer = null;
+        }
+        persistProgress();
+        return;
+      }
+      if (saveProgressTimer !== null) return;
+      saveProgressTimer = setTimeout(() => {
+        saveProgressTimer = null;
+        persistProgress();
+      }, 120);
+    }
+
     function loadProgress() {
       try {
         const raw = localStorage.getItem(PROGRESS_KEY);
@@ -636,6 +656,10 @@
     }
 
     function clearProgress() {
+      if (saveProgressTimer !== null) {
+        clearTimeout(saveProgressTimer);
+        saveProgressTimer = null;
+      }
       try {
         localStorage.removeItem(PROGRESS_KEY);
       } catch (err) {
@@ -781,7 +805,6 @@
       const placed = pieces.filter(p => p.placed).length;
       const complete = placed === pieces.length;
       placedEl.textContent = `${placed} / ${pieces.length}`;
-      statusEl.textContent = complete ? "Completo" : placed ? "Em andamento" : "Embaralhado";
       boardEl.classList.toggle("isComplete", complete);
     }
 
@@ -808,6 +831,14 @@
       };
     }
 
+    function playPlaceSound() {
+      if (!soundOn) return;
+      try {
+        placeSound.currentTime = 0;
+        placeSound.play().catch(() => {});
+      } catch {}
+    }
+
     function tryPlace(piece, clientX, clientY) {
       const br = boardRect();
       const localX = clientX - br.left - drag.offsetX;
@@ -815,6 +846,7 @@
       const snapDistance = Math.max(40, Math.min(piece.raster.width, piece.raster.height) * piece.scale * 0.22);
       if (Math.hypot(localX - piece.homeX, localY - piece.homeY) < snapDistance) {
         piece.placed = true;
+        playPlaceSound();
         updateStats();
         saveProgress();
         return true;
@@ -889,16 +921,6 @@
       renderTray();
     }
 
-    function snapHint() {
-      const next = pieces.find(p => !p.placed);
-      if (!next) return;
-      next.placed = true;
-      updateStats();
-      saveProgress();
-      renderBoard();
-      renderTray();
-    }
-
     function resizeCanvases() {
       const prevState = capturePieceState();
       boardSize = Math.round(boardCanvas.getBoundingClientRect().width || 768);
@@ -924,7 +946,6 @@
     }
 
     async function start() {
-      statusEl.textContent = "Carregando";
       await Promise.all([loadImage(boardImg, BOARD_SRC), loadImage(pieceImg, BOARD_SRC)]);
       boardGuide.src = BOARD_SRC;
       boardFinal.src = BOARD_SRC;
@@ -948,14 +969,12 @@
         renderTray();
         updateStats();
         trayEl.scrollTop = Number.isFinite(progress.trayScrollTop) ? progress.trayScrollTop : 0;
-        statusEl.textContent = pieces.every(p => p.placed) ? "Completo" : "Em andamento";
       } else {
         syncGuideOpacity();
         layoutTray();
         renderBoard();
         renderTray();
         updateStats();
-        statusEl.textContent = "Embaralhado";
       }
     }
 
@@ -1015,7 +1034,6 @@
 
     start().catch(err => {
       console.error(err);
-      statusEl.textContent = "Erro ao carregar";
     });
   </script>
 </body>

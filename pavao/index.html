@@ -325,15 +325,6 @@
       };
     }
 
-    function wobble(value, variantA, variantB) {
-      return (
-        Math.sin(value * (3 + variantA) + variantB * 0.7) * 0.028 +
-        Math.sin(value * (7 + variantB % 5) - variantA * 0.9) * 0.018 +
-        Math.cos(value * 11 - variantB * 0.3) * 0.013 +
-        Math.sin(value * (15 + (variantA + variantB) % 4) + variantA * 0.35) * 0.009
-      );
-    }
-
     function seededUnit(key) {
       const str = String(key);
       let h = 2166136261;
@@ -353,169 +344,94 @@
       };
     }
 
-    function boundaryRadius(boundaryIndex, angle) {
-      const base = [0.0, 0.18, 0.41, 0.66][boundaryIndex];
-      if (boundaryIndex === 0) return 0;
-      const petal = Math.sin(angle * (4 + boundaryIndex * 2) + boundaryIndex * 0.55) * 0.012;
-      return Math.max(0.06, base + petal + wobble(angle + boundaryIndex * 0.11, boundaryIndex + 1, boundaryIndex * 3) * (1.15 / (5 - boundaryIndex)));
+    function uvToNormalized(u, v) {
+      return {
+        nx: 1 - (u * 2),
+        ny: (v * 2) - 1
+      };
     }
 
-    function ringBoundaryPoints(boundaryIndex, aStart, aEnd, steps = 14) {
-      const pts = [];
+    function generateEdgeMap(rows, cols) {
+      const map = Array.from({ length: rows }, () => Array.from({ length: cols }, () => ({ right: 0, bottom: 0 })));
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          if (col < cols - 1) map[row][col].right = seededUnit(`edge-r:${row}:${col}`) > 0.5 ? 1 : -1;
+          if (row < rows - 1) map[row][col].bottom = seededUnit(`edge-b:${row}:${col}`) > 0.5 ? 1 : -1;
+        }
+      }
+      return map;
+    }
+
+    function appendHorizontalEdge(points, xStart, xEnd, y, outward, depth) {
+      if (!outward) {
+        points.push({ x: xEnd, y });
+        return;
+      }
+      const t0 = 0.24;
+      const t1 = 0.76;
+      const steps = 14;
+      const run = xEnd - xStart;
+      points.push({ x: xStart + run * t0, y });
       for (let i = 0; i <= steps; i++) {
         const t = i / steps;
-        const a = aStart + (aEnd - aStart) * t;
-        const r = boundaryRadius(boundaryIndex, a);
-        pts.push({ nx: Math.cos(a) * r, ny: Math.sin(a) * r });
+        const curveX = xStart + run * (t0 + ((t1 - t0) * t));
+        const smooth = Math.sin(t * Math.PI);
+        points.push({ x: curveX, y: y + outward * depth * smooth });
       }
-      return pts;
+      points.push({ x: xEnd, y });
     }
 
-    function rayToSquare(angle) {
-      const dx = Math.cos(angle);
-      const dy = Math.sin(angle);
-      const scale = 1 / Math.max(Math.abs(dx), Math.abs(dy));
-      return { nx: dx * scale, ny: dy * scale };
-    }
-
-    function perimeterT(point) {
-      const eps = 1e-6;
-      const x = Math.max(-1, Math.min(1, point.nx));
-      const y = Math.max(-1, Math.min(1, point.ny));
-      if (Math.abs(y + 1) < eps) return x + 1;
-      if (Math.abs(x - 1) < eps) return 2 + (y + 1);
-      if (Math.abs(y - 1) < eps) return 4 + (1 - x);
-      return 6 + (1 - y);
-    }
-
-    function perimeterPoint(t) {
-      const p = ((t % 8) + 8) % 8;
-      if (p <= 2) return { nx: -1 + p, ny: -1 };
-      if (p <= 4) return { nx: 1, ny: -1 + (p - 2) };
-      if (p <= 6) return { nx: 1 - (p - 4), ny: 1 };
-      return { nx: -1, ny: 1 - (p - 6) };
-    }
-
-    function perimeterPathCounterClockwise(fromPoint, toPoint) {
-      let fromT = perimeterT(fromPoint);
-      let toT = perimeterT(toPoint);
-      if (toT < fromT) toT += 8;
-      const pts = [];
-      const step = 0.25;
-      for (let t = fromT + step; t < toT; t += step) {
-        pts.push(perimeterPoint(t));
+    function appendVerticalEdge(points, x, yStart, yEnd, outward, depth) {
+      if (!outward) {
+        points.push({ x, y: yEnd });
+        return;
       }
-      pts.push({ nx: toPoint.nx, ny: toPoint.ny });
-      return pts;
-    }
-
-    function buildCenterPiece() {
-      const pts = [];
-      const steps = 32;
-      for (let i = 0; i < steps; i++) {
-        const a = (Math.PI * 2 * i) / steps;
-        const r = boundaryRadius(1, a) * (0.84 + Math.sin(a * 6 + 0.35) * 0.045 + Math.cos(a * 3 - 0.4) * 0.018);
-        pts.push({ nx: Math.cos(a) * r, ny: Math.sin(a) * r });
-      }
-      return pts;
-    }
-
-    function sectorBoundaryAngle(count, boundaryIndex) {
-      const sectorAngle = (Math.PI * 2) / count;
-      const normalized = ((boundaryIndex % count) + count) % count;
-      const turns = Math.floor(boundaryIndex / count);
-      const base = normalized * sectorAngle + turns * Math.PI * 2;
-      const skew = (seededUnit(`sector:${count}:${normalized}`) - 0.5) * sectorAngle * 0.24;
-      const petal = Math.sin((normalized + 0.35) * sectorAngle * 3) * sectorAngle * 0.05;
-      return base + skew + petal;
-    }
-
-    function seamPoints(startPoint, endPoint, key, steps = 6, bendScale = 0.06) {
-      const pts = [];
-      const dx = endPoint.nx - startPoint.nx;
-      const dy = endPoint.ny - startPoint.ny;
-      const len = Math.hypot(dx, dy) || 1;
-      const px = -dy / len;
-      const py = dx / len;
-      const bend = (seededUnit(`${key}:bend`) - 0.5) * bendScale * 2;
-      const ripplePhase = seededUnit(`${key}:phase`) * Math.PI * 2;
-      const rippleFreq = 2 + Math.floor(seededUnit(`${key}:freq`) * 3);
-      for (let i = 1; i < steps; i++) {
+      const t0 = 0.24;
+      const t1 = 0.76;
+      const steps = 14;
+      const run = yEnd - yStart;
+      points.push({ x, y: yStart + run * t0 });
+      for (let i = 0; i <= steps; i++) {
         const t = i / steps;
-        const envelope = Math.sin(Math.PI * t);
-        const ripple = Math.sin(ripplePhase + t * Math.PI * rippleFreq) * bendScale * 0.35;
-        const offset = (bend + ripple) * envelope;
-        pts.push({
-          nx: Math.max(-1, Math.min(1, startPoint.nx + dx * t + px * offset)),
-          ny: Math.max(-1, Math.min(1, startPoint.ny + dy * t + py * offset))
-        });
+        const curveY = yStart + run * (t0 + ((t1 - t0) * t));
+        const smooth = Math.sin(t * Math.PI);
+        points.push({ x: x + outward * depth * smooth, y: curveY });
       }
-      return pts;
+      points.push({ x, y: yEnd });
     }
 
-    function buildRingPiece(boundaryInner, boundaryOuter, count, sectorIndex) {
-      const aStart = sectorBoundaryAngle(count, sectorIndex);
-      const aEnd = sectorBoundaryAngle(count, sectorIndex + 1);
-      const outer = ringBoundaryPoints(boundaryOuter, aStart, aEnd, 15);
-      const inner = ringBoundaryPoints(boundaryInner, aStart, aEnd, 13);
-      const seamEnd = seamPoints(
-        outer[outer.length - 1],
-        inner[inner.length - 1],
-        `ring:${boundaryInner}:${boundaryOuter}:${count}:${sectorIndex}:end`,
-        5,
-        0.05
-      );
-      const seamStart = seamPoints(
-        inner[0],
-        outer[0],
-        `ring:${boundaryInner}:${boundaryOuter}:${count}:${sectorIndex}:start`,
-        5,
-        0.05
-      );
-      return [...outer, ...seamEnd, ...inner.slice().reverse(), ...seamStart];
-    }
+    function buildJigsawPiece(row, col, rows, cols, edges) {
+      const cellW = 1 / cols;
+      const cellH = 1 / rows;
+      const x0 = col * cellW;
+      const y0 = row * cellH;
+      const x1 = x0 + cellW;
+      const y1 = y0 + cellH;
+      const tabDepth = Math.min(cellW, cellH) * 0.26;
 
-    function buildOuterMandalaPiece(count, sectorIndex) {
-      const aStart = sectorBoundaryAngle(count, sectorIndex);
-      const aEnd = sectorBoundaryAngle(count, sectorIndex + 1);
-      const inner = ringBoundaryPoints(3, aStart, aEnd, 15);
-      const innerBack = [...inner].reverse();
-      const edgeStart = rayToSquare(aStart);
-      const edgeEnd = rayToSquare(aEnd);
-      const perimeter = perimeterPathCounterClockwise(edgeStart, edgeEnd);
-      const seamEnd = seamPoints(
-        edgeEnd,
-        innerBack[0],
-        `outer:${count}:${sectorIndex}:end`,
-        6,
-        0.07
-      );
-      const seamStart = seamPoints(
-        innerBack[innerBack.length - 1],
-        edgeStart,
-        `outer:${count}:${sectorIndex}:start`,
-        6,
-        0.07
-      );
-      return [edgeStart, ...perimeter, ...seamEnd, ...innerBack, ...seamStart];
+      const top = row === 0 ? 0 : -edges[row - 1][col].bottom;
+      const right = col === cols - 1 ? 0 : edges[row][col].right;
+      const bottom = row === rows - 1 ? 0 : edges[row][col].bottom;
+      const left = col === 0 ? 0 : -edges[row][col - 1].right;
+
+      const poly = [{ x: x0, y: y0 }];
+      appendHorizontalEdge(poly, x0, x1, y0, -top, tabDepth);
+      appendVerticalEdge(poly, x1, y0, y1, right, tabDepth);
+      appendHorizontalEdge(poly, x1, x0, y1, bottom, tabDepth);
+      appendVerticalEdge(poly, x0, y1, y0, -left, tabDepth);
+      return poly.map(p => uvToNormalized(p.x, p.y));
     }
 
     function buildMandalaPieces() {
       const built = [];
+      const rows = 10;
+      const cols = 10;
+      const edges = generateEdgeMap(rows, cols);
       let id = 0;
-      built.push(makePiece(buildCenterPiece(), id++));
-      const rings = [
-        { inner: 1, outer: 2, count: 14 },
-        { inner: 2, outer: 3, count: 20 }
-      ];
-      for (const ring of rings) {
-        for (let i = 0; i < ring.count; i++) {
-          built.push(makePiece(buildRingPiece(ring.inner, ring.outer, ring.count, i), id++));
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          built.push(makePiece(buildJigsawPiece(row, col, rows, cols, edges), id++));
         }
-      }
-      const outerCount = 28;
-      for (let i = 0; i < outerCount; i++) {
-        built.push(makePiece(buildOuterMandalaPiece(outerCount, i), id++));
       }
       return built;
     }

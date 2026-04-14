@@ -511,14 +511,23 @@
       placedEl.textContent = `0 / ${pieces.length}`;
     }
 
-    function capturePieceState() {
-      return pieces.map(piece => ({
-        id: piece.id,
-        placed: piece.placed
-      }));
+    function capturePlacedPieceIds() {
+      return pieces.filter(piece => piece.placed).map(piece => piece.id);
     }
 
-    function applyPieceState(stateList) {
+    function applyPlacedPieceIds(idList) {
+      if (!Array.isArray(idList)) return false;
+      const idSet = new Set(idList);
+      let applied = false;
+      pieces.forEach(piece => {
+        if (!idSet.has(piece.id)) return;
+        piece.placed = true;
+        applied = true;
+      });
+      return applied;
+    }
+
+    function applyLegacyPieceState(stateList) {
       if (!Array.isArray(stateList) || !stateList.length) return false;
       const byId = new Map(stateList.map(item => [item.id, item]));
       let applied = false;
@@ -534,7 +543,7 @@
     function persistProgress() {
       try {
         localStorage.setItem(PROGRESS_KEY, JSON.stringify({
-          pieces: capturePieceState(),
+          placedPieceIds: capturePlacedPieceIds(),
           guide: Number(guideEl.value) || 0,
           soundOn,
           menuCollapsed,
@@ -816,7 +825,7 @@
     }
 
     function resizeCanvases() {
-      const prevState = capturePieceState();
+      const prevState = capturePlacedPieceIds();
       boardSize = Math.round(boardCanvas.getBoundingClientRect().width || 768);
       boardCanvas.width = boardSize;
       boardCanvas.height = boardSize;
@@ -831,7 +840,7 @@
 
       if (boardImg.complete && pieceImg.complete) {
         buildPieces();
-        applyPieceState(prevState);
+        applyPlacedPieceIds(prevState);
         layoutTray();
         renderBoard();
         renderTray();
@@ -847,7 +856,9 @@
       resizeCanvases();
       const progress = loadProgress();
       if (progress) {
-        if (Array.isArray(progress.pieces) && applyPieceState(progress.pieces)) {
+        if (Array.isArray(progress.placedPieceIds) && applyPlacedPieceIds(progress.placedPieceIds)) {
+          layoutTray();
+        } else if (Array.isArray(progress.pieces) && applyLegacyPieceState(progress.pieces)) {
           layoutTray();
         }
         if (Number.isFinite(progress.guide)) {

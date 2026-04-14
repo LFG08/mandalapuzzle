@@ -374,11 +374,12 @@ cursor:pointer;
 <li id="menu-Jellyfish" class="hidden-word" data-hidden="Jellyfish" data-def="(en) Animal marinho gelatinoso com tentáculos que flutua nas águas."></li>
 <li id="menu-Kala" class="hidden-word" data-hidden="Kala" data-def="(fi) Animal aquático com nadadeiras e respiração branquial."></li>
 <li id="menu-Lula" class="hidden-word" data-hidden="Lula" data-def="Molusco marinho de corpo alongado e tentáculos."></li>
+<li id="menu-Machhli" class="hidden-word" data-hidden="Machhli" data-def="(مچھلی - urdu) Animal aquático com nadadeiras e respiração branquial (grande)"></li>
+<li id="menu-Mahi" class="hidden-word" data-hidden="Māhi" data-def="(ماهی - farsi/persa) Animal aquático com nadadeiras e respiração branquial."></li>
+<li id="menu-Mazu" class="hidden-word" data-hidden="Mazu" data-def="(eu) Animal aquático com nadadeiras e respiração branquial."></li>
 <li id="menu-Medusa" class="hidden-word" data-hidden="Medusa" data-def="(es/it) Animal marinho gelatinoso com tentáculos que flutua nas águas."></li>
 <li id="menu-Meduse" class="hidden-word" data-hidden="Méduse" data-def="(fr) Animal marinho gelatinoso com tentáculos que flutua nas águas."></li>
-<li id="menu-Mazu" class="hidden-word" data-hidden="Mazu" data-def="(eu) Animal aquático com nadadeiras e respiração branquial."></li>
 <li id="menu-Peixe" class="hidden-word" data-hidden="Peixe" data-def="Animal aquático com nadadeiras e respiração branquial."></li>
-<li id="menu-Machhli" class="hidden-word" data-hidden="Machhli" data-def="(مچھلی - urdu) Animal aquático com nadadeiras e respiração branquial (grande)"></li>
 <li id="menu-Pesce" class="hidden-word" data-hidden="Pesce" data-def="(it) Animal aquático com nadadeiras e respiração branquial."></li>
 <li id="menu-Pez" class="hidden-word" data-hidden="Pez" data-def="(es) Animal aquático com nadadeiras e respiração branquial."></li>
 <li id="menu-Poisson" class="hidden-word" data-hidden="Poisson" data-def="(fr) Animal aquático com nadadeiras e respiração branquial."></li>
@@ -499,13 +500,17 @@ shape="poly" onclick="toggleAnswer(this,'Méduse'); return false;">
 coords="139,432,134,445,139,461,148,466,154,452,152,432"
 shape="poly" onclick="toggleAnswer(this,'Mazu'); return false;">
 
+<area id="area-Mahi"
+coords="383,420,375,441,397,446,408,429"
+shape="poly" onclick="toggleAnswer(this,'Māhi'); return false;">
+
 <area id="area-Peixe"
 coords="1,30,12,32,14,10,0,9"
 shape="poly" onclick="toggleAnswer(this,'Peixe'); return false;">
 
 <area id="area-Machhli"
 coords="201,635,211,657,238,663,263,659,272,640,240,624,213,625"
-shape="poly" onclick="toggleAnswer(this,'Peixão'); return false;">
+shape="poly" onclick="toggleAnswer(this,'Machhli'); return false;">
 
 <area id="area-Pesce"
 coords="769,557,775,581,790,563"
@@ -842,18 +847,17 @@ let container = document.querySelector(".container");
 if(!container) return;
 
 let rect = container.getBoundingClientRect();
-let scaleX = rect.width / displayMapSize;
 let scaleY = rect.height / displayMapSize;
 
-let hintCenterX = (bounds.left + (bounds.width / 2)) * scaleX;
 let hintCenterY = (bounds.top + (bounds.height / 2)) * scaleY;
 
-let targetLeft = window.scrollX + rect.left + hintCenterX - (window.innerWidth / 2);
-let targetTop = window.scrollY + rect.top + hintCenterY - (window.innerHeight / 2);
+let fixedTopOffset = 80;
+let targetTop = window.scrollY + rect.top + hintCenterY - ((window.innerHeight / 2) - fixedTopOffset);
+let maxTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
 
 window.scrollTo({
-left: Math.max(0, targetLeft),
-top: Math.max(0, targetTop),
+left: window.scrollX,
+top: Math.min(Math.max(0, targetTop), maxTop),
 behavior: "smooth"
 });
 }

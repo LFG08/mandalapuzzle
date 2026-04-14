@@ -621,6 +621,14 @@ let parsed = JSON.parse(localStorage.getItem(key) || "[]");
 if(Array.isArray(parsed)) return parsed.length;
 if(parsed && Array.isArray(parsed.placed)) return parsed.placed.length;
 if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds.length;
+if(parsed && Array.isArray(parsed.pieces)){
+return parsed.pieces.filter(piece => {
+if(piece && typeof piece === "object"){
+return !!piece.placed;
+}
+return false;
+}).length;
+}
 return 0;
 }catch{
 return 0;

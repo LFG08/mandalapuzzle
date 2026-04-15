@@ -810,6 +810,7 @@
       const maxY = Math.max(8, trayHeight - piece.raster.height * piece.scale - 8);
       piece.trayX = Math.max(8, Math.min(maxX, pt.x - drag.offsetX));
       piece.trayY = Math.max(8, Math.min(maxY, pt.y - drag.offsetY));
+      layoutTray();
       saveProgress();
     }
 

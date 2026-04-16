@@ -111,8 +111,8 @@
     };
     const NOTE_SEQUENCE=["fa","mib","re","do","sib","do","re","sib"];
     const LEVEL_TWO_SOUNDS=["Dó.mp3","Ré.mp3","Mib.mp3","Fá.mp3","Sol.mp3"];
-    const SOUND_VOLUMES={"Dó.mp3":.78,"Ré.mp3":.72,"Mib.mp3":.76,"Fá.mp3":.84,"Sol.mp3":.94};
-    const AUDIO_START_OFFSETS={"Dó.mp3":.5};
+    const SOUND_VOLUMES={"Dó.mp3":.78,"Ré.mp3":.72,"Mib.mp3":.76,"Fá.mp3":.84,"Sol.mp3":1};
+    const AUDIO_START_OFFSETS={"Dó.mp3":0};
     const LEVEL_ONE_PLACE_SOUND="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     const SEQUENCE_NOTE_DURATION=420;
     const el={
@@ -221,7 +221,7 @@
       const audio=getAudio(spot.sound,spot.playbackRate??1);
       try{
         audio.pause();
-        audio.currentTime=AUDIO_START_OFFSETS[spot.sound]??0;
+        setAudioStartOffset(audio,spot.sound);
         audio.playbackRate=spot.playbackRate??1;
         audio.volume=SOUND_VOLUMES[spot.sound]??.75;
         audio.preservesPitch=false;
@@ -241,6 +241,15 @@
         }
       }catch{}
     }
+    function setAudioStartOffset(audio,sound){
+      const wantedOffset=AUDIO_START_OFFSETS[sound]??0;
+      const safeSetOffset=()=>{try{audio.currentTime=Math.max(0,wantedOffset)}catch{}};
+      if(audio.readyState>=1)safeSetOffset();
+      else{
+        const onLoaded=()=>{safeSetOffset();audio.removeEventListener("loadedmetadata",onLoaded)};
+        audio.addEventListener("loadedmetadata",onLoaded);
+      }
+    }
     function getAudio(name,playbackRate=1){
       const cacheKey=`${name}:${playbackRate}`;
       let audio=st.audioCache.get(cacheKey);
@@ -258,7 +267,7 @@
       const audio=getAudio(name,1);
       try{
         audio.pause();
-        audio.currentTime=AUDIO_START_OFFSETS[name]??0;
+        setAudioStartOffset(audio,name);
         audio.playbackRate=1;
         audio.volume=SOUND_VOLUMES[name]??.75;
         audio.preservesPitch=true;

@@ -115,7 +115,8 @@
     const AUDIO_START_OFFSETS={"Dó.mp3":0};
     const LEVEL_TWO_TRANSITION_TRACK="https://commons.wikimedia.org/wiki/Special:FilePath/Johan_Halvorsen_-_Passacaglia_on_a_theme_by_Handel.ogg";
     const LEVEL_TWO_TRANSITION_START=15;
-    const LEVEL_TWO_TRANSITION_END=28;
+    const LEVEL_TWO_TRANSITION_END=29;
+    const LEVEL_TWO_TRANSITION_DELAY=1000;
     const LEVEL_ONE_PLACE_SOUND="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     const SEQUENCE_NOTE_DURATION=420;
     const el={
@@ -586,6 +587,7 @@
     }
     async function celebrateSequenceAndUnlock(){
       st.sequenceAnimating=true;
+      await wait(LEVEL_TWO_TRANSITION_DELAY);
       await playLevelTransitionPassacaglia();
       st.activeHotspots.clear();
       syncHotspots();

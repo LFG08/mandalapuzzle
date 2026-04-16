@@ -43,6 +43,8 @@
     .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#ece1a8;line-height:1.5}.celebrate{color:#fbefb1;font-weight:700}
     .credits{margin:20px 0 0;color:#e7ddaa;font-size:.82rem;line-height:1.45}
     .credits p{margin:0}
+    .credits p+p{margin-top:8px}
+    .credits .is-hidden{display:none}
     @keyframes crackSpread{0%{opacity:0;transform:scale(.18)}35%{opacity:.92;transform:scale(.58)}68%{opacity:.82;transform:scale(.9)}100%{opacity:0;transform:scale(1)}}
     @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:20px}.actions,.stats{grid-template-columns:1fr}}
@@ -78,6 +80,7 @@
         <div id="tray" class="tray"></div>
         <div class="credits">
           <p>Keyboard tactile 9 by StavSounds — <a href="https://freesound.org/s/766640/" target="_blank" rel="noopener noreferrer">https://freesound.org/s/766640/</a> — License: Attribution 4.0</p>
+          <p id="passacagliaCredits" class="is-hidden">Passacaglia on a theme by Handel (Halvorsen) — <a href="https://commons.wikimedia.org/wiki/File:Johan_Halvorsen_-_Passacaglia_on_a_theme_by_Handel.ogg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> — Public domain</p>
         </div>
       </aside>
     </section>
@@ -138,7 +141,8 @@
       closeModal:document.getElementById("closeModal"),
       trayWrap:document.querySelector(".trayWrap"),
       menuCard:document.querySelector(".card"),
-      stageBadge:document.getElementById("stageBadge")
+      stageBadge:document.getElementById("stageBadge"),
+      passacagliaCredits:document.getElementById("passacagliaCredits")
     };
     const st={boardRect:null,trayRect:null,pieces:[],levels:[],current:0,drag:null,z:2,intro:false,breakAudio:null,levelOneComplete:false,notePhase:false,notesProgress:0,activeHotspots:new Set(),audioCache:new Map(),muted:false,minimized:false,sequenceAnimating:false,finalComplete:false,levelTwoSoundIndex:0};
     init().catch(e=>{console.error(e);alert(`The puzzle could not be initialized. ${e.message||""}`.trim())});
@@ -205,6 +209,10 @@
         st.activeHotspots.add(id);
         st.notesProgress++;
         if(st.notesProgress===NOTE_SEQUENCE.length){
+          syncHotspots();
+          status();
+          empty();
+          save();
           celebrateSequenceAndUnlock();
           return;
         }
@@ -552,6 +560,7 @@
     }
     function setLevelOneVisibility(visible){for(const p of st.pieces)if(p.levelId==="levelOne")p.node.classList.toggle("level1-hidden",!visible)}
     function setLevelTwoVisibility(visible){for(const p of st.pieces)if(p.levelId==="levelTwo")p.node.classList.toggle("level1-hidden",!visible)}
+    function syncCredits(){el.passacagliaCredits?.classList.toggle("is-hidden",!(st.levelOneComplete&&!st.notePhase))}
     function done(level){
       if(level.placed!==level.total)return;
       if(level.id==="levelOne"){
@@ -563,6 +572,7 @@
         for(const p of st.pieces)if(p.levelId==="levelTwo"){p.active=false;p.node.classList.remove("active")}
         setLevelOneVisibility(false);
         syncHotspots();
+        syncCredits();
         status();
         empty();
         save();
@@ -572,6 +582,7 @@
       for(const p of st.pieces){p.node.style.visibility="hidden";p.node.style.pointerEvents="none"}
       setLevelTwoVisibility(false);
       syncHotspots();
+      syncCredits();
       empty();
       status();
       save()
@@ -638,6 +649,7 @@
       const nextPieces=st.pieces.filter(p=>p.levelId==="levelTwo"&&!p.placed);
       for(const p of nextPieces){p.active=true;p.node.classList.add("active")}
       syncHotspots();
+      syncCredits();
       clearEmpty();
       status();
       if(nextPieces.length){
@@ -665,6 +677,7 @@
       }else setLevelOneVisibility(true)
       for(const p of st.pieces)if(ids.has(p.id))restorePiece(p);
       syncHotspots();
+      syncCredits();
       if(st.notePhase)empty();else shuffleLoose()
     }
     function restorePiece(piece){

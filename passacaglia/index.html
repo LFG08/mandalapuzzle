@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Passacaglia</title>
+  <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
   <style>
     :root{--boardImage:url("board.png");--boardComposite:url("first_layer.png"),url("board.png");--finalComposite:url("second_layer.png"),url("first_layer.png"),url("board.png");--buttonsImage:url("buttons.png")}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:"Palatino Linotype","Book Antiqua",Georgia,serif;color:#fbf5d3;background:radial-gradient(circle at top,rgba(250,228,131,.12),transparent 28%),radial-gradient(circle at 15% 20%,rgba(148,172,39,.15),transparent 24%),linear-gradient(180deg,#4b6107 0%,#314400 48%,#1d2900 100%)}
@@ -40,7 +41,8 @@
     .piece.shattering{pointer-events:none;transform-origin:center center}.piece.shattering canvas{filter:drop-shadow(0 22px 30px rgba(28,14,7,.34))}
     .piece.cracking{pointer-events:none;transform-origin:center center}.piece.cracking canvas{filter:drop-shadow(0 10px 14px rgba(255,244,230,.22)) drop-shadow(0 0 10px rgba(255,255,255,.18))}
     .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#ece1a8;line-height:1.5}.celebrate{color:#fbefb1;font-weight:700}
-    .credits{display:none}
+    .credits{margin:20px 0 0;color:#e7ddaa;font-size:.82rem;line-height:1.45}
+    .credits p{margin:0}
     @keyframes crackSpread{0%{opacity:0;transform:scale(.18)}35%{opacity:.92;transform:scale(.58)}68%{opacity:.82;transform:scale(.9)}100%{opacity:0;transform:scale(1)}}
     @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:20px}.actions,.stats{grid-template-columns:1fr}}
@@ -74,6 +76,9 @@
         </div>
         <h2 class="trayLabel" style="margin:0 0 14px;color:#f4dd78">Bandeja de Peças</h2>
         <div id="tray" class="tray"></div>
+        <div class="credits">
+          <p>Keyboard tactile 9 by StavSounds — <a href="https://freesound.org/s/766640/" target="_blank" rel="noopener noreferrer">https://freesound.org/s/766640/</a> — License: Attribution 4.0</p>
+        </div>
       </aside>
     </section>
   </main>
@@ -107,6 +112,8 @@
     const NOTE_SEQUENCE=["fa","mib","re","do","sib","do","re","sib"];
     const LEVEL_TWO_SOUNDS=["Dó.mp3","Ré.mp3","Mib.mp3","Fá.mp3","Sol.mp3"];
     const SOUND_VOLUMES={"Dó.mp3":.78,"Ré.mp3":.72,"Mib.mp3":.76,"Fá.mp3":.84,"Sol.mp3":.94};
+    const AUDIO_START_OFFSETS={"Dó.mp3":.5};
+    const LEVEL_ONE_PLACE_SOUND="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     const SEQUENCE_NOTE_DURATION=420;
     const el={
       board:document.getElementById("board"),
@@ -141,7 +148,7 @@
       el.shuffle.onclick=shuffleLoose;
       el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
       el.minimize.onclick=toggleMinimize;
-      el.mainMenu.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
+      el.mainMenu.onclick=()=>{window.location.href="../index.html"};
       el.soundToggle.onclick=toggleSound;
       el.aboutImage.onclick=()=>setModal(true);
       el.closeModal.onclick=()=>setModal(false);
@@ -214,7 +221,7 @@
       const audio=getAudio(spot.sound,spot.playbackRate??1);
       try{
         audio.pause();
-        audio.currentTime=0;
+        audio.currentTime=AUDIO_START_OFFSETS[spot.sound]??0;
         audio.playbackRate=spot.playbackRate??1;
         audio.volume=SOUND_VOLUMES[spot.sound]??.75;
         audio.preservesPitch=false;
@@ -251,7 +258,7 @@
       const audio=getAudio(name,1);
       try{
         audio.pause();
-        audio.currentTime=0;
+        audio.currentTime=AUDIO_START_OFFSETS[name]??0;
         audio.playbackRate=1;
         audio.volume=SOUND_VOLUMES[name]??.75;
         audio.preservesPitch=true;
@@ -423,7 +430,21 @@
     function placeAt(piece,left,top){piece.currentX=left;piece.currentY=top;piece.node.style.left=`${left}px`;piece.node.style.top=`${top}px`}
     function dropOnBoard(piece){
       el.board.appendChild(piece.node);piece.node.style.position="absolute";piece.node.classList.add("placed");piece.placed=true;piece.node.style.left=`${piece.targetX}px`;piece.node.style.top=`${piece.targetY}px`;
-      piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;const level=st.levels.find(v=>v.id===piece.levelId);level.placed++;if(piece.levelId==="levelTwo")playLevelTwoPlacementSound();compact();save();status();done(level)
+      piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;const level=st.levels.find(v=>v.id===piece.levelId);level.placed++;
+      if(piece.levelId==="levelOne")playLevelOnePlacementSound();
+      if(piece.levelId==="levelTwo")playLevelTwoPlacementSound();
+      compact();save();status();done(level)
+    }
+    function playLevelOnePlacementSound(){
+      if(st.muted)return;
+      const audio=getAudio(LEVEL_ONE_PLACE_SOUND,1);
+      try{
+        audio.pause();
+        audio.currentTime=0;
+        audio.playbackRate=1;
+        audio.volume=.52;
+        audio.play().catch(()=>{});
+      }catch{}
     }
     function backToTray(piece){
       if(!el.tray.contains(piece.node))el.tray.appendChild(piece.node);
@@ -594,9 +615,10 @@
       st.notesProgress=Math.max(0,Math.min(NOTE_SEQUENCE.length,saved.notesProgress||0));
       st.finalComplete=!!saved.finalComplete;
       st.levelTwoSoundIndex=saved.levelTwoSoundIndex||0;
+      const levelTwoUnlocked=st.levelOneComplete&&(!st.notePhase||hasL2||st.finalComplete);
       if(st.levelOneComplete){
         st.current=1;
-        for(const p of st.pieces)if(p.levelId==="levelTwo"){p.active=hasL2;p.node.classList.toggle("active",hasL2)}
+        for(const p of st.pieces)if(p.levelId==="levelTwo"){p.active=levelTwoUnlocked;p.node.classList.toggle("active",levelTwoUnlocked)}
         setLevelOneVisibility(false)
       }else setLevelOneVisibility(true)
       for(const p of st.pieces)if(ids.has(p.id))restorePiece(p);

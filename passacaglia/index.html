@@ -113,6 +113,9 @@
     const LEVEL_TWO_SOUNDS=["Dó.mp3","Ré.mp3","Mib.mp3","Fá.mp3","Sol.mp3"];
     const SOUND_VOLUMES={"Dó.mp3":.78,"Ré.mp3":.72,"Mib.mp3":.76,"Fá.mp3":.84,"Sol.mp3":1};
     const AUDIO_START_OFFSETS={"Dó.mp3":0};
+    const LEVEL_TWO_TRANSITION_TRACK="https://commons.wikimedia.org/wiki/Special:FilePath/Johan_Halvorsen_-_Passacaglia_on_a_theme_by_Handel.ogg";
+    const LEVEL_TWO_TRANSITION_START=15;
+    const LEVEL_TWO_TRANSITION_END=29;
     const LEVEL_ONE_PLACE_SOUND="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     const SEQUENCE_NOTE_DURATION=420;
     const el={
@@ -583,20 +586,51 @@
     }
     async function celebrateSequenceAndUnlock(){
       st.sequenceAnimating=true;
-      HOTSPOTS.forEach(spot=>st.activeHotspots.add(spot.id));
-      syncHotspots();
       await wait(1000);
-      for(const id of NOTE_SEQUENCE){
-        st.activeHotspots.add(id);
-        syncHotspots();
-        playHotspotSound(id,SEQUENCE_NOTE_DURATION);
-        await wait(SEQUENCE_NOTE_DURATION);
-      }
+      await playLevelTransitionPassacaglia();
       st.activeHotspots.clear();
       syncHotspots();
       await wait(220);
       await unlockLevelTwo();
       st.sequenceAnimating=false;
+    }
+    async function playLevelTransitionPassacaglia(){
+      const clipDurationMs=Math.max(0,(LEVEL_TWO_TRANSITION_END-LEVEL_TWO_TRANSITION_START)*1000);
+      const audio=getAudio(LEVEL_TWO_TRANSITION_TRACK,1);
+      const pulseMs=320;
+      const maxPulses=Math.max(1,Math.ceil((clipDurationMs||2200)/pulseMs));
+      let stopAudio=null;
+      const startTransitionAudio=()=>{
+        if(st.muted||clipDurationMs<=0)return;
+        try{
+          audio.pause();
+          audio.currentTime=LEVEL_TWO_TRANSITION_START;
+          audio.playbackRate=1;
+          audio.volume=.84;
+          audio.preservesPitch=true;
+          audio.mozPreservesPitch=true;
+          audio.webkitPreservesPitch=true;
+          audio.play().catch(()=>{});
+          stopAudio=setTimeout(()=>{
+            try{
+              audio.pause();
+              audio.currentTime=0;
+            }catch{}
+          },clipDurationMs);
+        }catch{}
+      };
+      for(let i=0;i<maxPulses;i++){
+        st.activeHotspots.clear();
+        for(const spot of HOTSPOTS)if((i+NOTE_SEQUENCE.indexOf(spot.id))%2===0)st.activeHotspots.add(spot.id);
+        if(i===0)startTransitionAudio();
+        syncHotspots();
+        await wait(pulseMs);
+      }
+      if(stopAudio)clearTimeout(stopAudio);
+      try{
+        audio.pause();
+        audio.currentTime=0;
+      }catch{}
     }
     async function unlockLevelTwo(){
       st.notePhase=false;

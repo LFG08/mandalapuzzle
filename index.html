@@ -110,26 +110,22 @@ align-items:start;
 
 .menu-section{
 padding:0 0 8px 0;
+text-align:center;
 }
 
 .menu-section-title{
-margin:0;
-padding:0;
+margin:0 0 10px 0;
+display:inline-block;
+padding:8px 18px;
 font-size:20px;
 font-weight:normal;
-opacity:0.9;
-}
-
-.menu-section{
-padding:0 0 8px 0;
-}
-
-.menu-section-title{
-margin:0;
-padding:0 40px;
-font-size:20px;
-font-weight:normal;
-opacity:0.9;
+opacity:0.95;
+text-align:center;
+border:1px solid rgba(255,255,255,0.25);
+background:#2a0d02;
+color:#f5e6d3;
+border-radius:999px;
+box-shadow:0 4px 12px rgba(0,0,0,0.35);
 }
 
 /* ===== CARD ===== */
@@ -369,7 +365,7 @@ background:#5c2208;
 
 <div class="menu-sections">
 <section class="menu-section" data-menu-section>
-<h2 class="menu-section-title">caça-palavras e caça-elementos</h2>
+<h2 class="menu-section-title">caça-palavras/elementos</h2>
 <div class="grid">
 
 <a href="goya" class="card"
@@ -531,7 +527,7 @@ data-total="40">
 </section>
 
 <section class="menu-section" data-menu-section>
-<h2 class="menu-section-title">jigsaws</h2>
+<h2 class="menu-section-title">quebra-cabeça</h2>
 <div class="grid">
 
 <a href="passacaglia" class="card"
@@ -543,7 +539,11 @@ data-total="52">
     <img src="thumb_passacaglia.png" loading="lazy">
   </div>
 
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #Passacaglia #Música #Puzzle</div>
+  <div class="tags">#jigsawpuzzle #quebra-cabeça #??? #Música #Puzzle
+    <span class="tag locked-tag"
+          data-unlock-stage="passacagliaLevelTwoUnlocked"
+          data-real="#enigma">#???</span>
+  </div>
   
   <div class="status"></div>
 
@@ -718,6 +718,15 @@ return getTwoLevelJigsawStatus("tyreJigsawProgress", total);
 
 function getFlowerStatus(total){
 return getTwoLevelJigsawStatus("flowerJigsawProgress", total);
+}
+
+function getPassacagliaStatus(total){
+let status = getTwoLevelJigsawStatus("passacagliaPuzzleProgress", total);
+return {
+found: status.found,
+total: status.total,
+levelTwoUnlocked: status.total !== null
+};
 }
 
 function getStoredObjectFromKeys(keys){
@@ -1169,6 +1178,21 @@ let flowerStatus = getFlowerStatus(total);
 setCardProgressMeta(card, flowerStatus.found, flowerStatus.total);
 renderStatus(statusEl, flowerStatus.found, flowerStatus.total);
 let percentage = flowerStatus.total > 0 ? (flowerStatus.found / flowerStatus.total) * 100 : 0;
+applyThumbBorder(card, percentage);
+return;
+}
+
+if(card.id === "passacagliaCard"){
+let total = parseInt(card.dataset.total);
+if(Number.isNaN(total)) return;
+let statusEl = card.querySelector(".status");
+let passacagliaStatus = getPassacagliaStatus(total);
+setCardProgressMeta(card, passacagliaStatus.found, passacagliaStatus.total);
+renderStatus(statusEl, passacagliaStatus.found, passacagliaStatus.total);
+updateLockedTags(card, passacagliaStatus.found, {
+passacagliaLevelTwoUnlocked: passacagliaStatus.levelTwoUnlocked
+});
+let percentage = passacagliaStatus.total > 0 ? (passacagliaStatus.found / passacagliaStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
 return;
 }

@@ -95,9 +95,22 @@ box-shadow:0 4px 12px rgba(0,0,0,0.35);
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+grid-template-columns:minmax(250px, 420px);
+justify-content:center;
 gap:10px;
 padding:40px;
+}
+
+.menu-section{
+padding:0 0 8px 0;
+}
+
+.menu-section-title{
+margin:0;
+padding:0 40px;
+font-size:20px;
+font-weight:normal;
+opacity:0.9;
 }
 
 /* ===== CARD ===== */
@@ -335,6 +348,8 @@ background:#5c2208;
   </select>
 </div>
 
+<section class="menu-section" data-menu-section>
+<h2 class="menu-section-title">caça-palavras e caça-elementos</h2>
 <div class="grid">
 
 <a href="goya" class="card"
@@ -440,7 +455,26 @@ data-total="34">
   <div class="status"></div>
   
 </a>
+
+<a href="rotadeseda" class="card"
+data-key="silkPuzzleProgress"
+data-total="50">
+
+  <div class="thumb">
+    <img src="thumb_SILK.png" loading="lazy">
+  </div>
   
+  <div class="tags">#caça-palavras #caça-elementos #RotaDaSeda #História #ÁsiaCentral</div>
+  <div class="status"></div>
+
+</a>
+</div>
+</section>
+
+<section class="menu-section" data-menu-section>
+<h2 class="menu-section-title">???</h2>
+<div class="grid">
+
 <a href="celtic" class="card" id="celticCard"
 data-celtic="true"
 data-total="40">
@@ -460,18 +494,25 @@ data-total="40">
 
 </a>
 
-<a href="rotadeseda" class="card"
-data-key="silkPuzzleProgress"
-data-total="50">
-
+<a href="fundodomar" class="card" id="polvoCard">
   <div class="thumb">
-    <img src="thumb_SILK.png" loading="lazy">
+    <img src="fundodomar/thumb_polvo.png" loading="lazy">
   </div>
-  
-  <div class="tags">#caça-palavras #caça-elementos #RotaDaSeda #História #ÁsiaCentral</div>
+
+  <div class="tags">#jigsawpuzzle #quebra-cabeça #fundodomar
+    <span class="tag locked-tag"
+          data-unlock-stage="levelThreeUnlocked"
+          data-real="#caça-elementos">#???</span>
+  </div>
   <div class="status"></div>
 
 </a>
+</div>
+</section>
+
+<section class="menu-section" data-menu-section>
+<h2 class="menu-section-title">jigsaws</h2>
+<div class="grid">
 
 <a href="passacaglia" class="card"
 id="passacagliaCard"
@@ -543,24 +584,8 @@ data-total="138">
   <div class="status"></div>
 
 </a>
-
- 
-<a href="fundodomar" class="card" id="polvoCard">
-  <div class="thumb">
-    <img src="fundodomar/thumb_polvo.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #fundodomar
-    <span class="tag locked-tag"
-          data-unlock-stage="levelThreeUnlocked"
-          data-real="#caça-elementos">#???</span>
-  </div>
-  <div class="status"></div>
-
-</a>
- 
-  
 </div>
+</section>
 
 <div class="bottom-actions">
   <button id="exportProgressButton" type="button">Exportar progresso</button>
@@ -895,6 +920,12 @@ let selected = filterSelect ? filterSelect.value : "todos";
 document.querySelectorAll(".card").forEach(card => {
 card.style.display = cardMatchesFilter(card, selected) ? "block" : "none";
 });
+
+document.querySelectorAll("[data-menu-section]").forEach(section => {
+let hasVisibleCards = Array.from(section.querySelectorAll(".card"))
+.some(card => card.style.display !== "none");
+section.style.display = hasVisibleCards ? "block" : "none";
+});
 }
 
 function setCardProgressMeta(card, found, total){
@@ -912,11 +943,9 @@ card.dataset.progressComplete = completed ? "1" : "0";
 }
 
 function applyMenuOrdering(){
-let grid = document.querySelector(".grid");
-if(!grid) return;
-
 let orderSelect = document.getElementById("menuOrder");
 let selected = orderSelect ? orderSelect.value : "original";
+document.querySelectorAll(".grid").forEach(grid => {
 let cards = Array.from(grid.querySelectorAll(".card"));
 
 if(selected === "original"){
@@ -960,6 +989,7 @@ return ratioA - ratioB;
 });
 
 sorted.forEach(card => grid.appendChild(card));
+});
 }
 
 function applyThumbBorder(card, percentage){

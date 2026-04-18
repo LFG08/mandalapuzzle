@@ -95,10 +95,29 @@ box-shadow:0 4px 12px rgba(0,0,0,0.35);
 
 .grid{
 display:grid;
-grid-template-columns:minmax(250px, 420px);
-justify-content:center;
+grid-template-columns:repeat(2, minmax(250px, 1fr));
 gap:10px;
-padding:40px;
+padding:20px 0 40px 0;
+}
+
+.menu-sections{
+display:grid;
+grid-template-columns:repeat(3, minmax(320px, 1fr));
+gap:20px;
+padding:0 40px;
+align-items:start;
+}
+
+.menu-section{
+padding:0 0 8px 0;
+}
+
+.menu-section-title{
+margin:0;
+padding:0;
+font-size:20px;
+font-weight:normal;
+opacity:0.9;
 }
 
 .menu-section{
@@ -348,6 +367,7 @@ background:#5c2208;
   </select>
 </div>
 
+<div class="menu-sections">
 <section class="menu-section" data-menu-section>
 <h2 class="menu-section-title">caça-palavras e caça-elementos</h2>
 <div class="grid">
@@ -584,6 +604,8 @@ data-total="138">
   <div class="status"></div>
 
 </a>
+</div>
+</section>
 </div>
 </section>
 

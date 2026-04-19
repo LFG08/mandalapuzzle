@@ -272,46 +272,66 @@ z-index:20;
 background:#5c2208;
 }
 /* ===== MOBILE ===== */
-  @media (max-width: 900px) and (hover: none) and (pointer: coarse){
-
-  /* Header image: taller + more zoom */
-  #header{
-    height: 180px;
-    overflow: hidden;
+@media (max-width: 900px){
+  .header{
+    height:180px;
   }
 
-  #header img{
-    width: 150%;
-    height: 150%;
-    object-fit: cover;
-    object-position: center 35%;
-    transform: scale(1.35);
+  .title{
+    margin-top:-130px;
+    margin-bottom:28px;
+    padding:0 10px;
   }
 
-  /* Bigger title and subtitle */
-  #header h1{
-    font-size: 2.7rem;
-    margin-bottom: 0.15em;
+  .title h1{
+    font-size:36px;
   }
 
-  #header p{
-    font-size: 1.15rem;
+  .subtitle{
+    font-size:18px;
   }
 
-  /* Smaller mandala cards */
-  .mandala-preview img,
-  .mandala-card img,
-  .menu-item img{
-    width: 72vw;
-    max-width: 300px;
-    height: auto;
+  .menu-filter{
+    margin-top:60px;
+    padding:0 10px;
   }
 
-  /* Slightly reduce the card padding so more fits on screen */
-  .mandala-preview,
-  .mandala-card,
-  .menu-item{
-    padding: 12px 0;
+  /* Collapse sections into one mobile-friendly grid */
+  .menu-sections{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+    padding:0 12px 96px 12px;
+    align-items:stretch;
+  }
+
+  .menu-section{
+    display:contents;
+  }
+
+  .menu-section-title{
+    display:none;
+  }
+
+  .menu-section .grid{
+    display:contents;
+    border:0;
+    background:transparent;
+    padding:0;
+    gap:0;
+  }
+
+  .card{
+    min-width:0;
+    padding:10px 6px;
+  }
+
+  .thumb{
+    width:min(42vw, 170px);
+    height:min(42vw, 170px);
+  }
+
+  .tags{
+    font-size:11px;
   }
 
   .bottom-actions{

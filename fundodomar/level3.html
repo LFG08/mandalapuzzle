@@ -1011,10 +1011,12 @@ finishGuessEdit(item);
 
 let currentHint = Number(item.dataset.hintLevel || 0);
 
-if(currentHint >= 2){
-  alert("Essa palavra já recebeu todas as dicas.");
-  return;
-}
+	if(currentHint >= 2){
+	  let wantsAreaHintAgain = confirm("Deseja ver novamente a 2° dica (região)?");
+	  if(!wantsAreaHintAgain) return;
+	  applyHint(item, 2);
+	  return;
+	}
 
 let nextHint = currentHint + 1;
 let wantsHint = confirm("Deseja a " + nextHint + "° dica?");

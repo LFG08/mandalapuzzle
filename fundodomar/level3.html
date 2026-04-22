@@ -680,11 +680,21 @@ function getMaskedWord(li){
 return "?".repeat(getHiddenLength(li.dataset.hidden));
 }
 
+function getHintLevel(li){
+let parsedLevel = Number(li.dataset.hintLevel || 0);
+
+if(!Number.isFinite(parsedLevel)){
+  return 0;
+}
+
+return Math.min(2, Math.max(0, Math.floor(parsedLevel)));
+}
+
 function renderMenuWord(li){
 
 if(!li.classList.contains("hidden-word")) return;
 
-let hintLevel = Number(li.dataset.hintLevel || 0);
+let hintLevel = getHintLevel(li);
 li.classList.toggle("hint-revealed", hintLevel >= 1 && !li.classList.contains("found"));
 
 if(revealAllMenuWords){
@@ -748,7 +758,7 @@ function saveHints(){
 let hints = {};
 
 document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
-let hintLevel = Number(li.dataset.hintLevel || 0);
+let hintLevel = getHintLevel(li);
 if(hintLevel > 0){
   hints[li.id] = hintLevel;
 }
@@ -882,10 +892,11 @@ activeRegionHintTimeout = setTimeout(() => {
 
 function applyHint(item, hintLevel){
 
-let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
+let safeHintLevel = Math.min(2, Math.max(1, Number(hintLevel) || 1));
+let nextLevel = Math.max(getHintLevel(item), safeHintLevel);
 item.dataset.hintLevel = String(Math.min(nextLevel, 2));
 
-if(hintLevel === 2){
+if(safeHintLevel === 2){
   let area = findAreaByWord(item.dataset.hidden);
   let region = area ? getRegionForArea(area) : null;
 
@@ -961,7 +972,7 @@ item.addEventListener("click", e => {
 if(e.button !== 0) return;
 if(!item.classList.contains("hidden-word")) return;
 if(item.classList.contains("found")) return;
-if(Number(item.dataset.hintLevel || 0) >= 1) return;
+if(getHintLevel(item) >= 1) return;
 
 item.contentEditable = "true";
 item.dataset.editing = "true";
@@ -1009,7 +1020,7 @@ if(item.classList.contains("found")) return;
 
 finishGuessEdit(item);
 
-let currentHint = Number(item.dataset.hintLevel || 0);
+let currentHint = getHintLevel(item);
 
 	if(currentHint >= 2){
 	  let wantsAreaHintAgain = confirm("Deseja ver novamente a 2° dica (região)?");

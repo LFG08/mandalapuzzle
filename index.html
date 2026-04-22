@@ -95,7 +95,7 @@ box-shadow:0 4px 12px rgba(0,0,0,0.35);
 
 .grid{
 display:grid;
-grid-template-columns:repeat(2, minmax(250px, 1fr));
+grid-template-columns:repeat(2, minmax(0, 1fr));
 gap:10px;
 padding:20px 10px 40px 10px;
 border:1px solid rgba(255,255,255,0.22);
@@ -105,7 +105,7 @@ background:rgba(0,0,0,0.08);
 
 .menu-sections{
 display:grid;
-grid-template-columns:repeat(3, minmax(320px, 1fr));
+grid-template-columns:repeat(3, minmax(0, 1fr));
 gap:20px;
 padding:0 40px;
 align-items:start;
@@ -205,6 +205,7 @@ box-shadow:0 0 25px rgba(255,200,100,0.4);
 font-size:12px;
 margin-top:4px;
 opacity:0.7;
+overflow-wrap:anywhere;
 }
 
 
@@ -271,6 +272,12 @@ z-index:20;
 .report-problem-link:hover{
 background:#5c2208;
 }
+@media (max-width: 1300px){
+  .menu-sections{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ===== MOBILE ===== */
 @media (max-width: 900px){
   .header{

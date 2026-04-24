@@ -479,6 +479,15 @@
       35%{opacity:1;filter:brightness(1.35) drop-shadow(0 0 18px rgba(255,223,162,.55))}
       100%{opacity:.75;filter:brightness(1.08)}
     }
+    .bellReveal.songFlicker{
+      opacity:1;
+      animation:bellFlicker .22s steps(2,end) infinite;
+    }
+    @keyframes bellFlicker{
+      0%{opacity:.38;filter:brightness(.92)}
+      45%{opacity:.98;filter:brightness(1.5) drop-shadow(0 0 22px rgba(190,228,255,.65))}
+      100%{opacity:.52;filter:brightness(1.05)}
+    }
         .credits{margin:16px 4px 0;color:var(--muted);font-size:.82rem;line-height:1.5}
     .credits .finalSongCredit{display:none}
     .credits .finalSongCredit.show{display:block}
@@ -737,7 +746,7 @@ const BELL_AUDIO_VOICES = 24;
 const BELL_REPLAY_DELAY = 300;
 const FINAL_SONG_SRC = "https://upload.wikimedia.org/wikipedia/commons/4/46/Kevin_MacLeod_-_Camille_Saint-Sans_Danse_Macabre.ogg";
 const FINAL_SONG_START = 20;
-const FINAL_SONG_END = 31;
+const FINAL_SONG_END = 33;
 
     init().catch((error) => {
       console.error(error);
@@ -1036,7 +1045,7 @@ const FINAL_SONG_END = 31;
       el.guide.disabled = true;
       el.controls.classList.add("hidden");
       el.shuffle.textContent = "✨";
-      el.shuffle.classList.add("iconOnly");
+      el.shuffle.classList.remove("iconOnly");
       el.testSolve.classList.add("hidden");
       el.trayTitle.textContent = "";
       el.tray.innerHTML = "";
@@ -1148,11 +1157,17 @@ function clearBellReplayTimer(){
 }
 
 function clearBellSongTimers(){
-  state.bellSongTimers.forEach((timer) => clearTimeout(timer));
+  state.bellSongTimers.forEach((timer) => {
+    clearTimeout(timer);
+    clearInterval(timer);
+  });
   state.bellSongTimers = [];
   state.bellDanceTimers.forEach((timer) => clearTimeout(timer));
   state.bellDanceTimers = [];
-  el.searchLayer.querySelectorAll(".bellReveal.dance").forEach((reveal) => reveal.classList.remove("dance"));
+  el.searchLayer.querySelectorAll(".bellReveal.dance, .bellReveal.songFlicker").forEach((reveal) => {
+    reveal.classList.remove("dance");
+    reveal.classList.remove("songFlicker");
+  });
   if(state.bellSongAudio){
     state.bellSongAudio.pause();
     state.bellSongAudio.src = "";
@@ -1216,23 +1231,28 @@ function revealBellTarget(targetId){
 
 function choreographBellDance(){
   const duration = Math.max(0.2, FINAL_SONG_END - FINAL_SONG_START);
-  const sequence = [
-    ...BELL_FIRST_MELODY,
-    ...BELL_FIRST_MELODY.slice(0, 8),
-    ...BELL_FIRST_MELODY.slice(3, 12)
-  ];
-  const interval = (duration * 1000) / Math.max(1, sequence.length);
-  sequence.forEach((step, index) => {
-    const timer = setTimeout(() => {
-      const reveal = el.searchLayer.querySelector(`.bellReveal[data-target="${step.id}"]`);
-      if(!reveal) return;
+  const reveals = [...el.searchLayer.querySelectorAll(".bellReveal")];
+  if(!reveals.length) return;
+
+  reveals.forEach((reveal) => reveal.classList.add("songFlicker"));
+  const pulseTimer = setInterval(() => {
+    reveals.forEach((reveal) => {
       reveal.classList.remove("dance");
       void reveal.offsetWidth;
       reveal.classList.add("dance");
-      setTimeout(() => reveal.classList.remove("dance"), Math.min(440, interval * 0.88));
-    }, Math.round(index * interval));
-    state.bellDanceTimers.push(timer);
-  });
+      setTimeout(() => reveal.classList.remove("dance"), 170);
+    });
+  }, 260);
+  state.bellSongTimers.push(pulseTimer);
+
+  const cleanupTimer = setTimeout(() => {
+    clearInterval(pulseTimer);
+    reveals.forEach((reveal) => {
+      reveal.classList.remove("dance");
+      reveal.classList.remove("songFlicker");
+    });
+  }, Math.ceil(duration * 1000) + 250);
+  state.bellSongTimers.push(cleanupTimer);
 }
 
 function playFinalBellSong(){
@@ -1692,9 +1712,7 @@ function renderSearchPanel(){
       piece.currentX = state.boardRect.left + piece.targetX * state.scale;
       piece.currentY = state.boardRect.top + piece.targetY * state.scale;
       playPlaceSound();
-      if(state.currentLevel < 2){
-        layoutLoosePieces();
-      }
+      layoutLoosePieces();
       updatePlaced();
     }
 
@@ -1705,20 +1723,7 @@ function renderSearchPanel(){
       piece.placed = false;
       piece.node.classList.remove("placed");
       piece.node.style.position = "absolute";
-      if(state.currentLevel < 2){
-        layoutLoosePieces();
-      }else{
-        const localLeft = piece.currentX - state.trayRect.left + el.tray.scrollLeft;
-        const localTop = piece.currentY - state.trayRect.top + el.tray.scrollTop;
-        const maxLeft = Math.max(0, el.tray.scrollWidth - piece.w);
-        const maxTop = Math.max(0, el.tray.scrollHeight - piece.h);
-        piece.node.style.left = `${clamp(localLeft, 0, maxLeft)}px`;
-        piece.node.style.top = `${clamp(localTop, 0, maxTop)}px`;
-        piece.sourceX = clamp(localLeft, 0, maxLeft);
-        piece.sourceY = clamp(localTop, 0, maxTop);
-        piece.currentX = state.trayRect.left + piece.sourceX;
-        piece.currentY = state.trayRect.top + piece.sourceY;
-      }
+      layoutLoosePieces();
       updatePlaced();
     }
 

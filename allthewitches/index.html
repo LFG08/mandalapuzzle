@@ -144,6 +144,10 @@
       background-repeat:no-repeat;
     }
     .bellReveal.show{opacity:1}
+    .bellReveal.dance{
+      opacity:1;
+      animation:bellPulse .52s ease;
+    }
     .bellSpot{
       position:absolute;
       transform:translate(-50%,-50%);
@@ -464,7 +468,14 @@
       from{filter:brightness(1) drop-shadow(0 0 0 rgba(255,223,162,0))}
       to{filter:brightness(1.26) drop-shadow(0 0 18px rgba(255,223,162,.62))}
     }
+    @keyframes bellPulse{
+      0%{opacity:.45;filter:brightness(1)}
+      35%{opacity:1;filter:brightness(1.35) drop-shadow(0 0 18px rgba(255,223,162,.55))}
+      100%{opacity:.75;filter:brightness(1.08)}
+    }
         .credits{margin:16px 4px 0;color:var(--muted);font-size:.82rem;line-height:1.5}
+    .credits .finalSongCredit{display:none}
+    .credits .finalSongCredit.show{display:block}
     .credits a{color:#ffd7ab}
     .info{border:1px solid var(--line);border-radius:16px;max-width:540px;background:linear-gradient(180deg,var(--panel),var(--panel-2));color:var(--text)}
     .info::backdrop{background:rgba(0,0,0,.45)}
@@ -533,7 +544,7 @@
       </aside>
     </section>
   </main>
-  <div class="credits"><div>L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a></div><div>Hand Bells & Keyboard tactile by InspectorJ/StavSounds — arquivos em <code>/sound_effects</code>.</div></div>
+  <div class="credits"><div>L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a></div><div>Hand Bells & Keyboard tactile by InspectorJ/StavSounds — arquivos em <code>/sound_effects</code>.</div><div id="finalSongCredit" class="finalSongCredit">Música final: Camille Saint-Saëns, <em>Danse Macabre</em> (interpretação de Kevin MacLeod), Wikimedia Commons.</div></div>
   <dialog id="aboutDialog" class="info">
     <div class="infoInner">
       <h2>Sobre esta imagem</h2>
@@ -555,7 +566,7 @@
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6},
       {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC, guideMaxOpacity:1, cols:9, rows:3},
-      {name:"Bando de Bruxas", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:8, rows:6}
+      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:8, rows:6}
     ];
     const THEMES = {
       default: {
@@ -591,7 +602,8 @@
       menuCard: document.getElementById("menuCard"),
       menuToggle: document.getElementById("menuToggle"),
       searchLayer: document.getElementById("searchLayer"),
-      complete: document.getElementById("complete")
+      complete: document.getElementById("complete"),
+      finalSongCredit: document.getElementById("finalSongCredit")
       ,screenFade: document.getElementById("screenFade")
     };
 
@@ -609,6 +621,7 @@
       bellReplayTimer: null,
       bellSongAudio: null,
       bellSongTimers: [],
+      bellDanceTimers: [],
       bellSongPlaying: false,
       image: null,
       edges: [],
@@ -713,9 +726,9 @@ const STACCATO_DURATION = 1000;
 const STACCATO_FADE_DURATION = 90;
 const BELL_AUDIO_VOICES = 24;
 const BELL_REPLAY_DELAY = 300;
-const FINAL_SONG_SRC = "../sound_effects/danse_macabre.ogg";
+const FINAL_SONG_SRC = "https://upload.wikimedia.org/wikipedia/commons/4/46/Kevin_MacLeod_-_Camille_Saint-Sans_Danse_Macabre.ogg";
 const FINAL_SONG_START = 20;
-const FINAL_SONG_END = 30.5;
+const FINAL_SONG_END = 31;
 
     init().catch((error) => {
       console.error(error);
@@ -937,6 +950,7 @@ const FINAL_SONG_END = 30.5;
       el.trayTitle.textContent = "Bandeja de Peças";
       el.magicDisplay.innerHTML = "";
       el.magicDisplay.className = "magicDisplay empty";
+      el.finalSongCredit.classList.remove("show");
       el.screenFade.classList.remove("show");
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
@@ -966,9 +980,9 @@ const FINAL_SONG_END = 30.5;
       el.searchLayer.className = "searchLayer active";
       el.complete.textContent = "Quebra-cabeça concluído.";
       el.complete.classList.add("show");
-      el.puzzleTitle.textContent = "Bando de Bruxas";
+      el.puzzleTitle.textContent = "Flock of Witches";
       el.levelLabel.textContent = "Final";
-      document.title = "Bando de Bruxas";
+      document.title = "Flock of Witches";
       document.documentElement.style.setProperty("--guide-image", `url("${IMAGE_SRC_LEVEL3}")`);
       document.documentElement.style.setProperty("--guide-opacity", "0");
       el.guide.value = "100";
@@ -978,9 +992,10 @@ const FINAL_SONG_END = 30.5;
       el.shuffle.textContent = "Embaralhar Peças Soltas";
       el.shuffle.classList.remove("iconOnly");
       el.testSolve.classList.add("hidden");
-      el.trayTitle.textContent = "";
+      el.trayTitle.textContent = "baba yaga";
       el.magicDisplay.innerHTML = "";
       el.magicDisplay.className = "magicDisplay empty";
+      el.finalSongCredit.classList.remove("show");
       applyTheme("flock");
       el.screenFade.classList.remove("show");
       renderBellTargets();
@@ -1015,6 +1030,7 @@ const FINAL_SONG_END = 30.5;
       el.trayTitle.textContent = "";
       el.tray.innerHTML = "";
       el.magicDisplay.className = "magicDisplay";
+      el.finalSongCredit.classList.remove("show");
       applyTheme("default");
       el.screenFade.classList.remove("show");
       rects();
@@ -1122,6 +1138,9 @@ function clearBellReplayTimer(){
 function clearBellSongTimers(){
   state.bellSongTimers.forEach((timer) => clearTimeout(timer));
   state.bellSongTimers = [];
+  state.bellDanceTimers.forEach((timer) => clearTimeout(timer));
+  state.bellDanceTimers = [];
+  el.searchLayer.querySelectorAll(".bellReveal.dance").forEach((reveal) => reveal.classList.remove("dance"));
   if(state.bellSongAudio){
     state.bellSongAudio.pause();
     state.bellSongAudio.src = "";
@@ -1170,6 +1189,27 @@ function revealBellTarget(targetId){
   el.searchLayer.querySelector(`.bellReveal[data-target="${targetId}"]`)?.classList.add("show");
 }
 
+function choreographBellDance(){
+  const duration = Math.max(0.2, FINAL_SONG_END - FINAL_SONG_START);
+  const sequence = [
+    ...BELL_FIRST_MELODY,
+    ...BELL_FIRST_MELODY.slice(0, 8),
+    ...BELL_FIRST_MELODY.slice(3, 12)
+  ];
+  const interval = (duration * 1000) / Math.max(1, sequence.length);
+  sequence.forEach((step, index) => {
+    const timer = setTimeout(() => {
+      const reveal = el.searchLayer.querySelector(`.bellReveal[data-target="${step.id}"]`);
+      if(!reveal) return;
+      reveal.classList.remove("dance");
+      void reveal.offsetWidth;
+      reveal.classList.add("dance");
+      setTimeout(() => reveal.classList.remove("dance"), Math.min(440, interval * 0.88));
+    }, Math.round(index * interval));
+    state.bellDanceTimers.push(timer);
+  });
+}
+
 function playFinalBellSong(){
   clearBellSongTimers();
   state.bellSongPlaying = true;
@@ -1192,6 +1232,7 @@ function playFinalBellSong(){
     updateProgressDisplay();
     el.complete.textContent = "Melodia concluída.";
     el.complete.classList.add("show");
+    el.finalSongCredit.classList.add("show");
     showBabaYagaFinale();
     save();
   };
@@ -1203,6 +1244,7 @@ function playFinalBellSong(){
   const startAudio = () => {
     audio.currentTime = FINAL_SONG_START;
     audio.play().catch(() => {});
+    choreographBellDance();
   };
   if(audio.readyState >= 1){
     startAudio();
@@ -1895,4 +1937,3 @@ function renderSearchPanel(){
   </script>
 </body>
 </html>
-

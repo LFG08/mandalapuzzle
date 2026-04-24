@@ -21,6 +21,8 @@
       --tray-glow:rgba(255,226,187,.08);
       --guide-opacity:.3;
       --board-size:min(92vw,768px);
+      --board-size-flock:min(96vw,960px);
+      --board-size-current:var(--board-size);
     }
     *{box-sizing:border-box}
     body{
@@ -54,7 +56,7 @@
     .boardWrap{padding:18px; position:sticky; top:16px}
     .board{
       position:relative;
-      width:var(--board-size);
+      width:var(--board-size-current);
       aspect-ratio:1;
       margin:0 auto;
       border-radius:18px;
@@ -198,21 +200,6 @@
       -webkit-clip-path:inset(0 0 0 0);
       filter:drop-shadow(0 0 8px rgba(255,214,130,.6));
     }
-    .boardComplete{
-      position:absolute;
-      inset:auto 18px 18px 18px;
-      z-index:5;
-      text-align:center;
-      padding:10px 12px;
-      border-radius:999px;
-      background:rgba(34,22,28,.78);
-      border:1px solid rgba(255,222,188,.22);
-      opacity:0;
-      transform:translateY(6px);
-      transition:.35s ease;
-      pointer-events:none;
-    }
-    .boardComplete.show{opacity:1;transform:translateY(0)}
     .controls{
       margin:14px 4px 0;
       display:flex;
@@ -295,6 +282,20 @@
       padding:0;
     }
     .trayTitle{margin:0 0 12px}
+    .trayTopBanner{
+      margin:0 0 10px;
+      padding:10px 12px;
+      border-radius:12px;
+      text-align:center;
+      font-family:"Palatino Linotype", Georgia, serif;
+      font-size:clamp(1.4rem,2.8vw,2rem);
+      letter-spacing:.08em;
+      color:#fff7ec;
+      background:linear-gradient(180deg,rgba(255,235,205,.22),rgba(255,235,205,.08));
+      border:1px solid rgba(255,231,200,.35);
+      box-shadow:0 6px 16px rgba(0,0,0,.22);
+      text-transform:lowercase;
+    }
     .tray{
       position:relative;
       min-height:620px;
@@ -326,6 +327,20 @@
       transition:none;
     }
     .piece.placed{cursor:default}
+    .piece.fading-out canvas{
+      opacity:0;
+      transition:opacity 1.2s ease, filter 1.2s ease;
+      filter:drop-shadow(0 2px 6px rgba(0,0,0,.08));
+    }
+    .piece.fading-in canvas{
+      opacity:0;
+      transition:opacity 1.6s ease, filter 1.6s ease;
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,.18));
+    }
+    .piece.fading-in.appear canvas{
+      opacity:1;
+      filter:drop-shadow(0 14px 24px rgba(0,0,0,.28));
+    }
     .piece canvas{
       display:block;
       filter:drop-shadow(0 14px 24px rgba(0,0,0,.28));
@@ -521,7 +536,6 @@
         <div id="board" class="board">
           <div class="boardGlow"></div>
           <div id="searchLayer" class="searchLayer"></div>
-          <div id="complete" class="boardComplete">Quebra-cabeça concluído.</div>
         </div>
         <div class="controls">
           <label class="label" for="guide">Visibilidade da imagem</label>
@@ -537,12 +551,8 @@
           </div>
           <div id="menuBody" class="menuBody">
             <div class="line">
-              <span class="small">Peças colocadas</span><br>
+              <span class="small">Progresso</span><br>
               <strong id="placed" class="value">0 / ?</strong>
-            </div>
-            <div class="line">
-              <span class="small">Nível</span><br>
-              <strong id="levelLabel" class="value">1 / 2</strong>
             </div>
             <div class="actions">
               <a href="/" class="btn" role="button">Menu Principal</a>
@@ -582,7 +592,7 @@
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6},
       {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC, guideMaxOpacity:1, cols:9, rows:3},
-      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:8, rows:6}
+      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:10, rows:10}
     ];
     const THEMES = {
       default: {
@@ -597,6 +607,8 @@
     const LENVOUTEUSE_TITLE = "L’Envoûteuse";
     const FINAL_WORD_STEPS = ["جادوگر", "Envoûteuse", "Sorceress", "Feiticeira"];
 
+    const noopClassList = {add(){}, remove(){}};
+
     const el = {
       board: document.getElementById("board"),
       tray: document.getElementById("tray"),
@@ -607,7 +619,6 @@
       guideVal: document.getElementById("guideVal"),
       placed: document.getElementById("placed"),
       puzzleTitle: document.getElementById("puzzleTitle"),
-      levelLabel: document.getElementById("levelLabel"),
       shuffle: document.getElementById("shuffle"),
       testSolve: document.getElementById("testSolve"),
       reset: document.getElementById("reset"),
@@ -620,7 +631,7 @@
       menuCard: document.getElementById("menuCard"),
       menuToggle: document.getElementById("menuToggle"),
       searchLayer: document.getElementById("searchLayer"),
-      complete: document.getElementById("complete"),
+      complete: document.getElementById("complete") || {textContent:"", classList:noopClassList},
       finalSongCredit: document.getElementById("finalSongCredit")
       ,screenFade: document.getElementById("screenFade")
     };
@@ -933,7 +944,17 @@ const FINAL_SONG_END = 33;
     }
 
     function updateProgressDisplay(){
-      el.placed.textContent = `${getCumulativeProgressCount()} / ?`;
+      const unlockedFinalLevel = state.currentLevel >= 2 || state.mode === "bells";
+      if(unlockedFinalLevel){
+        el.placed.textContent = `${getCumulativeProgressCount()} / ${getGrandTotal()}`;
+      }else{
+        el.placed.textContent = `${getCumulativeProgressCount()} / ?`;
+      }
+    }
+
+    function getGrandTotal(){
+      const puzzleTotal = LEVELS.reduce((sum, level) => sum + (level.cols * level.rows), 0);
+      return puzzleTotal + MAGIC_TARGETS.length + BELL_FIRST_MELODY.length;
     }
 
     function getTab(level = getLevel()){
@@ -944,7 +965,6 @@ const FINAL_SONG_END = 33;
       const levelNumber = state.currentLevel + 1;
       const displayName = state.currentLevel < 2 ? LENVOUTEUSE_TITLE : LEVELS[state.currentLevel].name;
       el.puzzleTitle.textContent = displayName;
-      el.levelLabel.textContent = `${levelNumber} / ${LEVELS.length}`;
       document.title = displayName;
       el.complete.textContent = levelNumber < LEVELS.length
         ? `Level ${levelNumber} complete. Loading level ${levelNumber + 1}...`
@@ -970,9 +990,11 @@ const FINAL_SONG_END = 33;
       el.magicDisplay.className = "magicDisplay empty";
       el.finalSongCredit.classList.remove("show");
       el.screenFade.classList.remove("show");
+      clearTrayTopBanner();
       setAboutContent(levelIndex === 2 ? "flock" : "sorceress");
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
+      document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "min(96vw,960px)" : "min(92vw,768px)");
       state.image = state.images[levelIndex];
       state.edges = createEdges(LEVELS[levelIndex].rows, LEVELS[levelIndex].cols);
       state.pieces.forEach((piece) => piece.node.remove());
@@ -994,13 +1016,13 @@ const FINAL_SONG_END = 33;
       state.pieces.forEach((piece) => piece.node.remove());
       state.pieces = [];
       clearEmpty();
+      clearTrayTopBanner();
       el.tray.innerHTML = "";
       el.searchLayer.replaceChildren();
       el.searchLayer.className = "searchLayer active";
       el.complete.textContent = "Quebra-cabeça concluído.";
       el.complete.classList.add("show");
       el.puzzleTitle.textContent = "Flock of Witches";
-      el.levelLabel.textContent = "Final";
       document.title = "Flock of Witches";
       document.documentElement.style.setProperty("--guide-image", `url("${IMAGE_SRC_LEVEL3}")`);
       document.documentElement.style.setProperty("--guide-opacity", "0");
@@ -1016,6 +1038,7 @@ const FINAL_SONG_END = 33;
       el.magicDisplay.className = "magicDisplay empty";
       el.finalSongCredit.classList.remove("show");
       applyTheme("flock");
+      document.documentElement.style.setProperty("--board-size-current", "min(96vw,960px)");
       el.screenFade.classList.remove("show");
       setAboutContent("flock");
       renderBellTargets();
@@ -1031,14 +1054,15 @@ const FINAL_SONG_END = 33;
       state.finalWord = FINAL_WORD_STEPS[0];
       state.pieces.forEach((piece) => piece.node.remove());
       state.pieces = [];
+      clearTrayTopBanner();
       el.searchLayer.replaceChildren();
       el.searchLayer.className = "searchLayer active";
       el.complete.textContent = "Encontre os símbolos ocultos.";
       el.complete.classList.remove("show");
       el.puzzleTitle.textContent = LENVOUTEUSE_TITLE;
-      el.levelLabel.textContent = "Final";
       document.title = LENVOUTEUSE_TITLE;
       document.documentElement.style.setProperty("--guide-image", `url("${FINAL_BOARD_IMAGE}")`);
+      document.documentElement.style.setProperty("--board-size-current", "min(92vw,768px)");
       document.documentElement.style.setProperty("--guide-opacity", "1");
       el.guide.value = "100";
       el.guideVal.textContent = "100%";
@@ -1175,13 +1199,24 @@ function clearBellSongTimers(){
   }
 }
 
+function clearTrayTopBanner(){
+  el.tray.querySelector("#trayTopBanner")?.remove();
+}
+
 function showBabaYagaFinale(){
-  el.trayTitle.textContent = "baba yaga";
+  clearTrayTopBanner();
+  const banner = document.createElement("div");
+  banner.id = "trayTopBanner";
+  banner.className = "trayTopBanner";
+  banner.textContent = "baba yaga";
+  el.tray.prepend(banner);
+
   el.tray.innerHTML = `
     <div class="trayFinalWord" aria-label="baba yaga">
       <div class="magicPhrase">baba yag<span class="finalSuffix">a</span></div>
     </div>
   `;
+  el.tray.prepend(banner);
   const phrase = el.tray.querySelector(".magicPhrase");
   const suffix = el.tray.querySelector(".finalSuffix");
   requestAnimationFrame(() => {
@@ -1793,6 +1828,27 @@ function renderSearchPanel(){
       save();
     }
 
+
+    function sleep(ms){
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function transitionLevelOneToTwo(){
+      state.transitioning = true;
+      clearEmpty();
+      save();
+      state.pieces.forEach((piece) => piece.node.classList.add("fading-out"));
+      await sleep(1000);
+      buildLevel(1);
+      state.pieces.forEach((piece, index) => {
+        piece.node.classList.add("fading-in");
+        setTimeout(() => piece.node.classList.add("appear"), index * 16);
+        setTimeout(() => piece.node.classList.remove("fading-in", "appear"), 2100 + index * 10);
+      });
+      await sleep(1700);
+      state.transitioning = false;
+    }
+
     function updatePlaced(){
       if(state.mode !== "puzzle") return;
       const placed = state.pieces.filter((piece) => piece.placed).length;
@@ -1801,14 +1857,7 @@ function renderSearchPanel(){
       if(placed === total){
         if(state.currentLevel < 1){
           if(!state.transitioning){
-            state.transitioning = true;
-            el.complete.classList.add("show");
-            clearEmpty();
-            save();
-            setTimeout(() => {
-              state.transitioning = false;
-              buildLevel(state.currentLevel + 1);
-            }, 700);
+            transitionLevelOneToTwo();
           }
         }else if(state.currentLevel === 1){
           el.complete.textContent = "Level 2 complete. Loading search...";
@@ -1834,8 +1883,6 @@ function renderSearchPanel(){
             }, 700);
           }
         }
-      }else{
-        el.complete.classList.remove("show");
       }
     }
 

@@ -267,6 +267,12 @@
       cursor:pointer;
     }
     .btn:hover{filter:brightness(1.06)}
+    a.btn{
+      display:block;
+      text-align:center;
+      text-decoration:none;
+      color:#fff4e8;
+    }
     .btn.hidden{display:none}
     .btn.iconOnly{
       width:64px;
@@ -476,7 +482,8 @@
         .credits{margin:16px 4px 0;color:var(--muted);font-size:.82rem;line-height:1.5}
     .credits .finalSongCredit{display:none}
     .credits .finalSongCredit.show{display:block}
-    .credits a{color:#ffd7ab}
+    .credits a,
+    .info a{color:var(--line)}
     .info{border:1px solid var(--line);border-radius:16px;max-width:540px;background:linear-gradient(180deg,var(--panel),var(--panel-2));color:var(--text)}
     .info::backdrop{background:rgba(0,0,0,.45)}
     .infoInner{padding:18px}
@@ -548,8 +555,8 @@
   <dialog id="aboutDialog" class="info">
     <div class="infoInner">
       <h2>Sobre esta imagem</h2>
-      <img src="sorceress.jpg" alt="L’Envoûteuse (A Feiticeira), Georges Merle, 1883" style="width:100%;border-radius:12px;margin:0 0 12px;display:block;">
-      <p>L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a></p>
+      <img id="aboutImage" src="sorceress.jpg" alt="L’Envoûteuse (A Feiticeira), Georges Merle, 1883" style="width:100%;border-radius:12px;margin:0 0 12px;display:block;">
+      <p id="aboutText">L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a></p>
       <button id="closeAbout" class="btn" type="button">Fechar</button>
     </div>
   </dialog>
@@ -598,6 +605,8 @@
       volume: document.getElementById("volume"),
       about: document.getElementById("about"),
       aboutDialog: document.getElementById("aboutDialog"),
+      aboutImage: document.getElementById("aboutImage"),
+      aboutText: document.getElementById("aboutText"),
       closeAbout: document.getElementById("closeAbout"),
       menuCard: document.getElementById("menuCard"),
       menuToggle: document.getElementById("menuToggle"),
@@ -952,6 +961,7 @@ const FINAL_SONG_END = 31;
       el.magicDisplay.className = "magicDisplay empty";
       el.finalSongCredit.classList.remove("show");
       el.screenFade.classList.remove("show");
+      setAboutContent(levelIndex === 2 ? "flock" : "sorceress");
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
       state.image = state.images[levelIndex];
@@ -992,12 +1002,13 @@ const FINAL_SONG_END = 31;
       el.shuffle.textContent = "Embaralhar Peças Soltas";
       el.shuffle.classList.remove("iconOnly");
       el.testSolve.classList.add("hidden");
-      el.trayTitle.textContent = "baba yaga";
+      el.trayTitle.textContent = "";
       el.magicDisplay.innerHTML = "";
       el.magicDisplay.className = "magicDisplay empty";
       el.finalSongCredit.classList.remove("show");
       applyTheme("flock");
       el.screenFade.classList.remove("show");
+      setAboutContent("flock");
       renderBellTargets();
       updateBellStatus();
       save();
@@ -1033,6 +1044,7 @@ const FINAL_SONG_END = 31;
       el.finalSongCredit.classList.remove("show");
       applyTheme("default");
       el.screenFade.classList.remove("show");
+      setAboutContent("sorceress");
       rects();
       renderSearchTargets();
       renderSearchPanel();
@@ -1149,6 +1161,7 @@ function clearBellSongTimers(){
 }
 
 function showBabaYagaFinale(){
+  el.trayTitle.textContent = "baba yaga";
   el.tray.innerHTML = `
     <div class="trayFinalWord" aria-label="baba yaga">
       <div class="magicPhrase">baba yag<span class="finalSuffix">a</span></div>
@@ -1160,6 +1173,18 @@ function showBabaYagaFinale(){
     suffix?.classList.add("show");
     setTimeout(() => phrase?.classList.add("shine"), 900);
   });
+}
+
+function setAboutContent(mode){
+  if(mode === "flock"){
+    el.aboutImage.src = "flock.jpg";
+    el.aboutImage.alt = "Lightning Struck a Flock of Witches, William Holbrook Beard, ca. 1859–1896";
+    el.aboutText.innerHTML = `William Holbrook Beard, <em>Lightning Struck a Flock of Witches</em>, ca. 1859–1896, cortesia do <a href="https://americanart.si.edu/artwork/lightning-struck-flock-witches-114182">Smithsonian American Art Museum</a>.`;
+    return;
+  }
+  el.aboutImage.src = "sorceress.jpg";
+  el.aboutImage.alt = "L’Envoûteuse (A Feiticeira), Georges Merle, 1883";
+  el.aboutText.innerHTML = `L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a>`;
 }
 
 function resetBellMelody(round = 0){

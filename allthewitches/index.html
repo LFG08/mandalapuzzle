@@ -21,7 +21,7 @@
       --tray-glow:rgba(255,226,187,.08);
       --guide-opacity:.3;
       --board-size:768px;
-      --board-size-flock:768px;
+      --board-size-flock:860px;
       --board-size-current:var(--board-size);
     }
     *{box-sizing:border-box}
@@ -40,6 +40,11 @@
       width:min(1480px,calc(100vw - 28px));
       margin:0 auto;
       padding:22px 0 34px;
+    }
+    body[data-theme="flock"] .app{
+      width:min(1620px,calc(100vw - 14px));
+      margin-left:14px;
+      margin-right:auto;
     }
     .layout{
       display:grid;
@@ -256,6 +261,19 @@
 .card.minimized .menuBody{display:none}
     .menuHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
     .value{display:inline-block; margin-top:4px; color:#fff6ea}
+    .volumeControl{
+      grid-column:1 / -1;
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid rgba(255,231,200,.12);
+      border-radius:14px;
+      background:rgba(0,0,0,.16);
+    }
+    .volumeControl .small{margin:0}
+    .volumeControl .value{margin:0;color:var(--muted);font-size:.85rem}
     .actions{
       display:grid;
       gap:8px;
@@ -566,6 +584,7 @@
       gap:10px;
     }
     @media (max-width:1360px){
+      body[data-theme="flock"] .app{margin:0 auto; width:min(100vw - 18px,100%)}
       .layout{grid-template-columns:1fr}
       .boardWrap{position:static}
       .board{margin:0 auto}
@@ -614,7 +633,11 @@
               <button id="shuffle" class="btn" type="button">Embaralhar Peças Soltas</button>
               <button id="testSolve" class="btn" type="button">Auto-completar (teste)</button>
               <button id="reset" class="btn" type="button">Reiniciar</button>
-              <button id="volume" class="btn" type="button">Som: Ligado</button>
+              <div class="volumeControl">
+                <label class="small" for="volume">Volume</label>
+                <input id="volume" class="slider" type="range" min="0" max="100" value="75">
+                <span id="volumeVal" class="value">75%</span>
+              </div>
               <button id="about" class="btn" type="button">Sobre esta imagem</button>
             </div>
           </div>
@@ -657,7 +680,7 @@
     const SNAP = 34;
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6},
-      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC_LEVEL2, guideMaxOpacity:1, cols:9, rows:3},
+      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:FINAL_BOARD_IMAGE, guideMaxOpacity:1, cols:9, rows:3},
       {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:14, rows:14}
     ];
     const THEMES = {
@@ -693,6 +716,7 @@
       testSolve: document.getElementById("testSolve"),
       reset: document.getElementById("reset"),
       volume: document.getElementById("volume"),
+      volumeVal: document.getElementById("volumeVal"),
       about: document.getElementById("about"),
       aboutDialog: document.getElementById("aboutDialog"),
       aboutImage: document.getElementById("aboutImage"),
@@ -740,7 +764,7 @@
       finaleTimers: [],
       wordPhase: "letters",
       finalWord: FINAL_WORD_STEPS[0],
-      sound: true,
+      volume: 0.75,
       menuMin: false,
       splitterDrag: null
     };
@@ -854,8 +878,10 @@ const FINAL_SONG_END = 33;
         }
         state.bellFound = [...new Set(getBellMelody().slice(0, state.bellStep).map((step) => step.id))];
         state.mode = ["search", "bells"].includes(saved.mode) ? saved.mode : "puzzle";
+        state.volume = typeof saved.volume === "number" ? clamp(saved.volume, 0, 1) : (saved.sound === false ? 0 : 0.75);
       }
       applyGuide(saved && typeof saved.guide === "number" ? saved.guide : 1);
+      applyVolume(state.volume, false);
       if(state.mode === "search"){
         buildSearchStage();
       }else if(state.mode === "bells"){
@@ -874,7 +900,9 @@ const FINAL_SONG_END = 33;
         localStorage.removeItem(STORAGE_KEY);
         location.reload();
       });
-      el.volume.addEventListener("click", toggleSound);
+      el.volume.addEventListener("input", (event) => {
+        applyVolume(Number(event.target.value) / 100);
+      });
       el.about.addEventListener("click", () => el.aboutDialog.showModal());
       el.closeAbout.addEventListener("click", () => el.aboutDialog.close());
       el.aboutDialog.addEventListener("click", (event) => { if(event.target === el.aboutDialog) el.aboutDialog.close(); });
@@ -900,18 +928,19 @@ const FINAL_SONG_END = 33;
 
     function playSearchFoundSound(index){
       revealHandbellsCredit();
-      if(!state.sound) return;
+      if(state.volume <= 0) return;
       const src = SEARCH_FOUND_SOUNDS[index % SEARCH_FOUND_SOUNDS.length];
       const sound = new Audio(src);
       sound.preload = "auto";
       sound.currentTime = 0;
+      sound.volume = state.volume;
       sound.play().catch(() => {});
     }
 
     function playBellSound(targetId, staccato = false, strong = false, staccatoDuration = STACCATO_DURATION){
       const target = BELL_TARGETS.find((item) => item.id === targetId);
       if(target) revealHandbellsCredit();
-      if(!state.sound || !target || !target.audio) return;
+      if(state.volume <= 0 || !target || !target.audio) return;
       let sounds = state.bellSounds[targetId];
       if(!sounds){
         sounds = Array.from({length: BELL_AUDIO_VOICES}, () => {
@@ -935,21 +964,22 @@ const FINAL_SONG_END = 33;
         clearTimeout(Number(sound.dataset.fadeTimer));
         delete sound.dataset.fadeTimer;
       }
+      const baseVolume = state.volume;
       sound.pause();
       sound.currentTime = 0;
-      sound.volume = 1;
+      sound.volume = baseVolume;
       sound.play().catch(() => {});
       if(strong){
         setTimeout(() => playBellSound(targetId, false, false), 45);
       }
       if(staccato){
         sound.dataset.fadeTimer = String(setTimeout(() => {
-          sound.volume = 0.35;
+          sound.volume = Math.max(0, baseVolume * 0.35);
         }, Math.max(0, staccatoDuration - STACCATO_FADE_DURATION)));
         state.bellSoundTimers[timerId] = setTimeout(() => {
           sound.pause();
           sound.currentTime = 0;
-          sound.volume = 1;
+          sound.volume = baseVolume;
           delete sound.dataset.fadeTimer;
           state.bellSoundTimers[timerId] = null;
         }, staccatoDuration);
@@ -1174,18 +1204,23 @@ const FINAL_SONG_END = 33;
 
 
     function playPlaceSound(){
-      if(!state.sound) return;
+      if(state.volume <= 0) return;
       const sound = new Audio(PLACE_SOUND);
       sound.preload = "auto";
-      sound.volume = 0.58;
+      sound.volume = Math.max(0, Math.min(1, 0.58 * state.volume));
       sound.currentTime = 0;
       sound.play().catch(() => {});
     }
 
-    function toggleSound(){
-      state.sound = !state.sound;
-      el.volume.textContent = `Som: ${state.sound ? "Ligado" : "Desligado"}`;
-      if(!state.sound) clearBellSongTimers();
+    function applyVolume(value, persist = true){
+      state.volume = clamp(value, 0, 1);
+      const percent = Math.round(state.volume * 100);
+      el.volume.value = String(percent);
+      el.volumeVal.textContent = `${percent}%`;
+      if(state.bellSongAudio){
+        state.bellSongAudio.volume = state.volume;
+      }
+      if(persist) save();
     }
 
     function toggleMenu(){
@@ -1411,10 +1446,10 @@ function playFinalBellSong(){
     save();
   };
 
-  if(!state.sound) return finishSong();
   const audio = new Audio(FINAL_SONG_SRC);
   state.bellSongAudio = audio;
   audio.preload = "auto";
+  audio.volume = state.volume;
   const startAudio = () => {
     audio.currentTime = FINAL_SONG_START;
     audio.play().catch(() => {});
@@ -1929,6 +1964,7 @@ function renderSearchPanel(){
 
     async function transitionLevelOneToTwo(){
       state.transitioning = true;
+      state.guide = 1;
       clearEmpty();
       save();
       state.pieces.forEach((piece) => piece.node.classList.add("fading-out"));
@@ -2087,7 +2123,8 @@ function renderSearchPanel(){
           searchFound: state.searchFound,
           bellFound: state.bellFound,
           bellStep: state.bellStep,
-          bellRound: state.bellRound
+          bellRound: state.bellRound,
+          volume: state.volume
         }));
       }catch(_error){}
     }
@@ -2106,7 +2143,8 @@ function renderSearchPanel(){
             searchFound: Array.isArray(parsed.searchFound) ? parsed.searchFound : [],
             bellFound: Array.isArray(parsed.bellFound) ? parsed.bellFound : [],
             bellStep: typeof parsed.bellStep === "number" ? parsed.bellStep : 0,
-            bellRound: typeof parsed.bellRound === "number" ? parsed.bellRound : 0
+            bellRound: typeof parsed.bellRound === "number" ? parsed.bellRound : 0,
+            volume: typeof parsed.volume === "number" ? parsed.volume : (parsed.sound === false ? 0 : 0.75)
           };
         }
         if(Array.isArray(parsed.placed)){
@@ -2115,6 +2153,7 @@ function renderSearchPanel(){
             mode: "puzzle",
             currentLevel: 0,
             progress: [parsed.placed, [], []],
+            volume: typeof parsed.volume === "number" ? parsed.volume : (parsed.sound === false ? 0 : 0.75),
             searchFound: [],
             bellFound: [],
             bellStep: 0,

@@ -20,7 +20,7 @@
       --tray-grad-3:#2a1118;
       --tray-glow:rgba(255,226,187,.08);
       --guide-opacity:.3;
-      --board-size:min(86vw,700px);
+      --board-size:min(70vw,640px);
       --board-size-flock:min(96vw,960px);
       --board-size-current:var(--board-size);
     }
@@ -37,13 +37,13 @@
     }
     button,input{font:inherit}
     .app{
-      width:min(1680px,calc(100vw - 24px));
+      width:min(1780px,calc(100vw - 24px));
       margin:0;
       padding:18px 0 28px;
     }
     .layout{
       display:grid;
-      grid-template-columns:minmax(0,1fr) minmax(380px,520px);
+      grid-template-columns:minmax(0,max-content) minmax(440px,1fr);
       gap:22px;
       align-items:start;
     }
@@ -53,12 +53,12 @@
       border-radius:24px;
       box-shadow:0 24px 60px rgba(0,0,0,.28);
     }
-    .boardWrap{padding:18px; position:sticky; top:16px}
+    .boardWrap{padding:18px; position:sticky; top:16px; width:fit-content; max-width:100%; display:flex; flex-direction:column; align-items:center}
     .board{
       position:relative;
       width:min(100%,var(--board-size-current));
       aspect-ratio:1;
-      margin:0;
+      margin:0 auto;
       border-radius:18px;
       overflow:hidden;
       background:linear-gradient(rgba(255,247,235,.08),rgba(255,247,235,.08));
@@ -200,6 +200,7 @@
     }
     .controls{
       margin:14px 4px 0;
+      width:min(100%,var(--board-size-current));
       display:flex;
       gap:12px;
       align-items:center;
@@ -280,6 +281,17 @@
       padding:0;
     }
     .trayTitle{margin:0 0 12px}
+    .trayTitle.morph{
+      opacity:.45;
+      filter:blur(.8px);
+      transform:translateY(-2px);
+      transition:opacity .9s ease, filter .9s ease, transform .9s ease;
+    }
+    .trayTitle.revealed{
+      opacity:1;
+      filter:none;
+      transform:translateY(0);
+    }
     .trayTopBanner{
       margin:0 0 10px;
       padding:10px 12px;
@@ -345,6 +357,9 @@
     }
     .piece.placed canvas{
       filter:drop-shadow(0 8px 12px rgba(0,0,0,.1));
+    }
+    body[data-theme="flock"] .piece.placed canvas{
+      filter:none;
     }
     .empty{
       display:grid;
@@ -461,6 +476,15 @@
       width:auto;
       min-height:0;
       padding:0;
+      opacity:0;
+      transform:translateY(8px) scale(.985);
+      transition:opacity 1.4s ease, transform 1.4s ease, filter 1.4s ease;
+      filter:drop-shadow(0 0 0 rgba(255,223,162,0));
+    }
+    .trayFinalWord .magicPhrase.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+      filter:drop-shadow(0 0 18px rgba(255,223,162,.35));
     }
     .trayFinalWord .magicPhrase.shine::before,
     .trayFinalWord .magicPhrase.shine::after{
@@ -473,6 +497,10 @@
     }
     .trayFinalWord .magicPhrase.shine::before{right:calc(100% + .35em)}
     .trayFinalWord .magicPhrase.shine::after{left:calc(100% + .35em)}
+    .trayFinalWord .magicPhrase.shine::before,
+    .trayFinalWord .magicPhrase.shine::after{
+      animation:traySparkle 1.2s ease-in-out infinite alternate;
+    }
     .screenFade{
       position:fixed;
       inset:0;
@@ -483,9 +511,15 @@
       z-index:999;
     }
     .screenFade.show{opacity:1}
+    .endInfo h2{margin:0 0 10px}
+    .endInfo p{line-height:1.55}
     @keyframes wordShine{
       from{filter:brightness(1) drop-shadow(0 0 0 rgba(255,223,162,0))}
       to{filter:brightness(1.26) drop-shadow(0 0 18px rgba(255,223,162,.62))}
+    }
+    @keyframes traySparkle{
+      from{opacity:.25;transform:translateY(-50%) scale(.85)}
+      to{opacity:1;transform:translateY(-50%) scale(1.05)}
     }
     @keyframes bellPulse{
       0%{opacity:.45;filter:brightness(1)}
@@ -512,7 +546,7 @@
       gap:10px;
     }
     @media (max-width:1360px){
-      .layout{grid-template-columns:minmax(0,1fr) minmax(340px,460px)}
+      .layout{grid-template-columns:minmax(0,max-content) minmax(380px,1fr)}
     }
     @media (max-width:1200px){
       .layout{grid-template-columns:1fr}
@@ -567,13 +601,20 @@
       </aside>
     </section>
   </main>
-  <div class="credits"><div>L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a></div><div>Hand Bells & Keyboard tactile by InspectorJ/StavSounds — arquivos em <code>/sound_effects</code>.</div><div id="finalSongCredit" class="finalSongCredit">Música final: Camille Saint-Saëns, <em>Danse Macabre</em> (interpretação de Kevin MacLeod), Wikimedia Commons.</div></div>
+  <div class="credits"><div>Hand Bells & Keyboard tactile by InspectorJ/StavSounds — arquivos em <code>/sound_effects</code>.</div><div id="finalSongCredit" class="finalSongCredit">Música final: Camille Saint-Saëns, <em>Danse Macabre</em> (interpretação de Kevin MacLeod), Wikimedia Commons.</div></div>
   <dialog id="aboutDialog" class="info">
     <div class="infoInner">
       <h2>Sobre esta imagem</h2>
       <img id="aboutImage" src="sorceress.jpg" alt="L’Envoûteuse (A Feiticeira), Georges Merle, 1883" style="width:100%;border-radius:12px;margin:0 0 12px;display:block;">
       <p id="aboutText">L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a></p>
       <button id="closeAbout" class="btn" type="button">Fechar</button>
+    </div>
+  </dialog>
+  <dialog id="endDialog" class="info endInfo">
+    <div class="infoInner">
+      <h2>Fim 🎉</h2>
+      <p>Parabéns! Você concluiu todos os níveis deste feitiço.</p>
+      <button id="closeEnd" class="btn" type="button">Fechar</button>
     </div>
   </dialog>
   <div id="screenFade" class="screenFade"></div>
@@ -588,8 +629,8 @@
     const SNAP = 34;
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6},
-      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC, guideMaxOpacity:1, cols:9, rows:3},
-      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:12, rows:12}
+      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC_LEVEL2, guideMaxOpacity:1, cols:9, rows:3},
+      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:14, rows:14}
     ];
     const THEMES = {
       default: {
@@ -625,6 +666,8 @@
       aboutImage: document.getElementById("aboutImage"),
       aboutText: document.getElementById("aboutText"),
       closeAbout: document.getElementById("closeAbout"),
+      endDialog: document.getElementById("endDialog"),
+      closeEnd: document.getElementById("closeEnd"),
       menuCard: document.getElementById("menuCard"),
       menuToggle: document.getElementById("menuToggle"),
       searchLayer: document.getElementById("searchLayer"),
@@ -801,6 +844,8 @@ const FINAL_SONG_END = 33;
       el.about.addEventListener("click", () => el.aboutDialog.showModal());
       el.closeAbout.addEventListener("click", () => el.aboutDialog.close());
       el.aboutDialog.addEventListener("click", (event) => { if(event.target === el.aboutDialog) el.aboutDialog.close(); });
+      el.closeEnd?.addEventListener("click", () => el.endDialog?.close());
+      el.endDialog?.addEventListener("click", (event) => { if(event.target === el.endDialog) el.endDialog.close(); });
       el.menuToggle.addEventListener("click", toggleMenu);
       syncMenu();
     }
@@ -890,6 +935,7 @@ const FINAL_SONG_END = 33;
       root.style.setProperty("--tray-grad-2", theme.tray2);
       root.style.setProperty("--tray-grad-3", theme.tray3);
       root.style.setProperty("--tray-glow", theme.trayGlow);
+      document.body.dataset.theme = themeName;
     }
 
     function clearFinaleTimers(){
@@ -991,7 +1037,7 @@ const FINAL_SONG_END = 33;
       setAboutContent(levelIndex === 2 ? "flock" : "sorceress");
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
-      document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "min(96vw,960px)" : "min(86vw,700px)");
+      document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "min(96vw,960px)" : "min(70vw,640px)");
       state.image = state.images[levelIndex];
       state.edges = createEdges(LEVELS[levelIndex].rows, LEVELS[levelIndex].cols);
       state.pieces.forEach((piece) => piece.node.remove());
@@ -1059,7 +1105,7 @@ const FINAL_SONG_END = 33;
       el.puzzleTitle.textContent = LENVOUTEUSE_TITLE;
       document.title = LENVOUTEUSE_TITLE;
       document.documentElement.style.setProperty("--guide-image", `url("${FINAL_BOARD_IMAGE}")`);
-      document.documentElement.style.setProperty("--board-size-current", "min(86vw,700px)");
+      document.documentElement.style.setProperty("--board-size-current", "min(70vw,640px)");
       document.documentElement.style.setProperty("--guide-opacity", "1");
       el.guide.value = "100";
       el.guideVal.textContent = "100%";
@@ -1201,24 +1247,26 @@ function clearTrayTopBanner(){
 
 function showBabaYagaFinale(){
   clearTrayTopBanner();
-  const banner = document.createElement("div");
-  banner.id = "trayTopBanner";
-  banner.className = "trayTopBanner";
-  banner.textContent = "baba yaga";
-  el.tray.prepend(banner);
+  el.trayTitle.textContent = "Bandeja de Peças";
+  el.trayTitle.classList.remove("revealed");
+  el.trayTitle.classList.add("morph");
+  queueFinale(700, () => {
+    el.trayTitle.textContent = "próximo feitiço...";
+    el.trayTitle.classList.add("revealed");
+    queueFinale(40, () => el.trayTitle.classList.remove("morph"));
+  });
 
   el.tray.innerHTML = `
     <div class="trayFinalWord" aria-label="baba yaga">
       <div class="magicPhrase">baba yag<span class="finalSuffix">a</span></div>
     </div>
   `;
-  el.tray.prepend(banner);
   const phrase = el.tray.querySelector(".magicPhrase");
   const suffix = el.tray.querySelector(".finalSuffix");
-  requestAnimationFrame(() => {
-    suffix?.classList.add("show");
-    setTimeout(() => phrase?.classList.add("shine"), 900);
-  });
+  queueFinale(120, () => phrase?.classList.add("show"));
+  queueFinale(1250, () => suffix?.classList.add("show"));
+  queueFinale(1700, () => phrase?.classList.add("shine"));
+  queueFinale(2700, () => el.endDialog?.showModal());
 }
 
 function setAboutContent(mode){

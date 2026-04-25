@@ -676,6 +676,7 @@
     const IMAGE_SRC_LEVEL3 = "flock_of_witches.png";
     const STORAGE_KEY = "lenvouteuse_jigsaw_levels";
     const IMAGE_SIZE = 768;
+    const FLOCK_PLACED_SCALE = 1.01;
     const BELL_IMAGE_SIZE = 1280;
     const SNAP = 34;
     const LEVELS = [
@@ -1073,6 +1074,10 @@ const FINAL_SONG_END = 33;
 
     function getTab(level = getLevel()){
       return Math.round(Math.min(IMAGE_SIZE / level.cols, IMAGE_SIZE / level.rows) * 0.24);
+    }
+
+    function getPlacedPieceScale(){
+      return state.currentLevel === 2 ? state.scale * FLOCK_PLACED_SCALE : state.scale;
     }
 
     function setLevelUi(){
@@ -1875,7 +1880,7 @@ function renderSearchPanel(){
         piece.node.classList.add("placed");
       }
       el.board.appendChild(piece.node);
-      setPieceScale(piece, state.scale);
+      setPieceScale(piece, getPlacedPieceScale());
       piece.node.style.position = "absolute";
       piece.node.style.left = `${piece.targetX * state.scale}px`;
       piece.node.style.top = `${piece.targetY * state.scale}px`;
@@ -2104,7 +2109,7 @@ function renderSearchPanel(){
       if(state.mode !== "puzzle") return;
       state.pieces.forEach((piece) => {
         if(piece.placed){
-          setPieceScale(piece, state.scale);
+          setPieceScale(piece, getPlacedPieceScale());
           piece.node.style.left = `${piece.targetX * state.scale}px`;
           piece.node.style.top = `${piece.targetY * state.scale}px`;
           piece.currentX = state.boardRect.left + piece.targetX * state.scale;

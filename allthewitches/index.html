@@ -676,7 +676,7 @@
     const IMAGE_SRC_LEVEL3 = "flock_of_witches.png";
     const STORAGE_KEY = "lenvouteuse_jigsaw_levels";
     const IMAGE_SIZE = 768;
-    const FLOCK_PLACED_SCALE = 1.01;
+    const FLOCK_PLACED_SCALE = 1;
     const BELL_IMAGE_SIZE = 1280;
     const SNAP = 34;
     const LEVELS = [
@@ -1682,13 +1682,17 @@ function renderSearchPanel(){
       const pw = IMAGE_SIZE / level.cols;
       const ph = IMAGE_SIZE / level.rows;
       const tab = getTab(level);
+      const createdPieces = [];
       for(let row = 0; row < level.rows; row++){
         for(let col = 0; col < level.cols; col++){
           const piece = makePiece(row, col, pw, ph, tab, state.edges[row][col]);
-          state.pieces.push(piece);
-          el.tray.appendChild(piece.node);
+          createdPieces.push(piece);
         }
       }
+      shuffle(createdPieces).forEach((piece) => {
+        state.pieces.push(piece);
+        el.tray.appendChild(piece.node);
+      });
     }
 
     function makePiece(row, col, pw, ph, tab, edge){

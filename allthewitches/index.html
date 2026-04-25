@@ -20,7 +20,7 @@
       --tray-grad-3:#2a1118;
       --tray-glow:rgba(255,226,187,.08);
       --guide-opacity:.3;
-      --board-size:min(92vw,768px);
+      --board-size:min(86vw,700px);
       --board-size-flock:min(96vw,960px);
       --board-size-current:var(--board-size);
     }
@@ -37,13 +37,13 @@
     }
     button,input{font:inherit}
     .app{
-      width:min(1500px,calc(100vw - 24px));
-      margin:0 auto;
+      width:min(1680px,calc(100vw - 24px));
+      margin:0;
       padding:18px 0 28px;
     }
     .layout{
       display:grid;
-      grid-template-columns:minmax(0,1fr) minmax(300px,380px);
+      grid-template-columns:minmax(0,1fr) minmax(380px,520px);
       gap:22px;
       align-items:start;
     }
@@ -58,7 +58,7 @@
       position:relative;
       width:min(100%,var(--board-size-current));
       aspect-ratio:1;
-      margin:0 auto;
+      margin:0;
       border-radius:18px;
       overflow:hidden;
       background:linear-gradient(rgba(255,247,235,.08),rgba(255,247,235,.08));
@@ -146,10 +146,8 @@
       background-repeat:no-repeat;
     }
     .bellReveal.show{opacity:1}
-    .bellReveal.dance{
-      opacity:1;
-      animation:bellPulse .52s ease;
-    }
+    .bellReveal.lit{opacity:1}
+    .bellReveal.blink{animation:bellBlink .42s ease-in-out 1}
     .bellSpot{
       position:absolute;
       transform:translate(-50%,-50%);
@@ -494,14 +492,10 @@
       35%{opacity:1;filter:brightness(1.35) drop-shadow(0 0 18px rgba(255,223,162,.55))}
       100%{opacity:.75;filter:brightness(1.08)}
     }
-    .bellReveal.songFlicker{
-      opacity:1;
-      animation:bellFlicker .22s steps(2,end) infinite;
-    }
-    @keyframes bellFlicker{
-      0%{opacity:.38;filter:brightness(.92)}
-      45%{opacity:.98;filter:brightness(1.5) drop-shadow(0 0 22px rgba(190,228,255,.65))}
-      100%{opacity:.52;filter:brightness(1.05)}
+    @keyframes bellBlink{
+      0%{opacity:1;filter:brightness(1.06)}
+      45%{opacity:.2;filter:brightness(.7)}
+      100%{opacity:1;filter:brightness(1.18) drop-shadow(0 0 20px rgba(190,228,255,.55))}
     }
         .credits{margin:16px 4px 0;color:var(--muted);font-size:.82rem;line-height:1.5}
     .credits .finalSongCredit{display:none}
@@ -518,7 +512,7 @@
       gap:10px;
     }
     @media (max-width:1360px){
-      .layout{grid-template-columns:minmax(0,1fr) minmax(280px,340px)}
+      .layout{grid-template-columns:minmax(0,1fr) minmax(340px,460px)}
     }
     @media (max-width:1200px){
       .layout{grid-template-columns:1fr}
@@ -595,7 +589,7 @@
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6},
       {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC, guideMaxOpacity:1, cols:9, rows:3},
-      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:10, rows:10}
+      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:12, rows:12}
     ];
     const THEMES = {
       default: {
@@ -997,7 +991,7 @@ const FINAL_SONG_END = 33;
       setAboutContent(levelIndex === 2 ? "flock" : "sorceress");
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
-      document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "min(96vw,960px)" : "min(92vw,768px)");
+      document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "min(96vw,960px)" : "min(86vw,700px)");
       state.image = state.images[levelIndex];
       state.edges = createEdges(LEVELS[levelIndex].rows, LEVELS[levelIndex].cols);
       state.pieces.forEach((piece) => piece.node.remove());
@@ -1065,7 +1059,7 @@ const FINAL_SONG_END = 33;
       el.puzzleTitle.textContent = LENVOUTEUSE_TITLE;
       document.title = LENVOUTEUSE_TITLE;
       document.documentElement.style.setProperty("--guide-image", `url("${FINAL_BOARD_IMAGE}")`);
-      document.documentElement.style.setProperty("--board-size-current", "min(92vw,768px)");
+      document.documentElement.style.setProperty("--board-size-current", "min(86vw,700px)");
       document.documentElement.style.setProperty("--guide-opacity", "1");
       el.guide.value = "100";
       el.guideVal.textContent = "100%";
@@ -1191,9 +1185,8 @@ function clearBellSongTimers(){
   state.bellSongTimers = [];
   state.bellDanceTimers.forEach((timer) => clearTimeout(timer));
   state.bellDanceTimers = [];
-  el.searchLayer.querySelectorAll(".bellReveal.dance, .bellReveal.songFlicker").forEach((reveal) => {
-    reveal.classList.remove("dance");
-    reveal.classList.remove("songFlicker");
+  el.searchLayer.querySelectorAll(".bellReveal.blink").forEach((reveal) => {
+    reveal.classList.remove("blink");
   });
   if(state.bellSongAudio){
     state.bellSongAudio.pause();
@@ -1247,7 +1240,10 @@ function resetBellMelody(round = 0){
   state.bellFound = [];
   state.bellStep = 0;
   state.bellRound = round;
-  el.searchLayer.querySelectorAll(".bellReveal.show").forEach((reveal) => reveal.classList.remove("show"));
+  el.searchLayer.querySelectorAll(".bellReveal.show, .bellReveal.lit").forEach((reveal) => {
+    reveal.classList.remove("show");
+    reveal.classList.remove("lit");
+  });
   updateBellStatus();
   save();
 }
@@ -1272,23 +1268,25 @@ function choreographBellDance(){
   const reveals = [...el.searchLayer.querySelectorAll(".bellReveal")];
   if(!reveals.length) return;
 
-  reveals.forEach((reveal) => reveal.classList.add("songFlicker"));
-  const pulseTimer = setInterval(() => {
-    reveals.forEach((reveal) => {
-      reveal.classList.remove("dance");
-      void reveal.offsetWidth;
-      reveal.classList.add("dance");
-      setTimeout(() => reveal.classList.remove("dance"), 170);
+  const blinkOneWave = () => {
+    reveals.forEach((reveal) => reveal.classList.remove("blink"));
+    const maxGroup = Math.max(1, Math.min(3, reveals.length - 1));
+    const groupSize = Math.max(1, Math.floor(Math.random() * maxGroup) + 1);
+    const chosen = [...reveals].sort(() => Math.random() - 0.5).slice(0, groupSize);
+    chosen.forEach((reveal) => {
+      reveal.classList.add("blink");
+      const offTimer = setTimeout(() => reveal.classList.remove("blink"), 200 + Math.random() * 120);
+      state.bellDanceTimers.push(offTimer);
     });
-  }, 260);
+  };
+
+  blinkOneWave();
+  const pulseTimer = setInterval(blinkOneWave, 150 + Math.floor(Math.random() * 110));
   state.bellSongTimers.push(pulseTimer);
 
   const cleanupTimer = setTimeout(() => {
     clearInterval(pulseTimer);
-    reveals.forEach((reveal) => {
-      reveal.classList.remove("dance");
-      reveal.classList.remove("songFlicker");
-    });
+    reveals.forEach((reveal) => reveal.classList.remove("blink"));
   }, Math.ceil(duration * 1000) + 250);
   state.bellSongTimers.push(cleanupTimer);
 }
@@ -1298,6 +1296,7 @@ function playFinalBellSong(){
   state.bellSongPlaying = true;
   state.bellRound = 1;
   state.bellStep = BELL_FIRST_MELODY.length;
+  el.searchLayer.querySelectorAll(".bellReveal").forEach((reveal) => reveal.classList.add("lit"));
   updateProgressDisplay();
   el.complete.textContent = "Canção final.";
   el.complete.classList.add("show");

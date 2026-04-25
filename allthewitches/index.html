@@ -20,8 +20,8 @@
       --tray-grad-3:#2a1118;
       --tray-glow:rgba(255,226,187,.08);
       --guide-opacity:.3;
-      --board-size:min(70vw,640px);
-      --board-size-flock:min(96vw,960px);
+      --board-size:768px;
+      --board-size-flock:min(98vw,1100px);
       --board-size-current:var(--board-size);
     }
     *{box-sizing:border-box}
@@ -37,23 +37,41 @@
     }
     button,input{font:inherit}
     .app{
-      width:min(1780px,calc(100vw - 24px));
-      margin:0;
-      padding:18px 0 28px;
+      width:min(1480px,calc(100vw - 28px));
+      margin:0 auto;
+      padding:22px 0 34px;
     }
     .layout{
       display:grid;
-      grid-template-columns:minmax(0,max-content) minmax(440px,1fr);
-      gap:22px;
+      grid-template-columns:minmax(768px,820px) minmax(320px,1fr);
+      gap:24px;
       align-items:start;
     }
+    .layoutSplitter{
+      display:none;
+      width:12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.08));
+      cursor:col-resize;
+      align-self:stretch;
+      touch-action:none;
+      opacity:.7;
+      transition:opacity .2s ease;
+    }
+    .layoutSplitter:hover{opacity:1}
+    .layout.flockResizable{
+      grid-template-columns:minmax(360px,var(--resizable-left,58vw)) 12px minmax(320px,1fr);
+      gap:14px;
+    }
+    .layout.flockResizable .layoutSplitter{display:block}
     .panel{
       background:linear-gradient(180deg,var(--panel),var(--panel-2));
       border:1px solid var(--line);
       border-radius:24px;
       box-shadow:0 24px 60px rgba(0,0,0,.28);
     }
-    .boardWrap{padding:18px; position:sticky; top:16px; width:fit-content; max-width:100%; display:flex; flex-direction:column; align-items:center}
+    .boardWrap{padding:18px; position:sticky; top:18px; width:fit-content; max-width:100%; display:flex; flex-direction:column; align-items:center}
     .board{
       position:relative;
       width:min(100%,var(--board-size-current));
@@ -532,7 +550,9 @@
       100%{opacity:1;filter:brightness(1.18) drop-shadow(0 0 20px rgba(190,228,255,.55))}
     }
         .credits{margin:16px 4px 0;color:var(--muted);font-size:.82rem;line-height:1.5}
+    .credits .handbellsCredit,
     .credits .finalSongCredit{display:none}
+    .credits .handbellsCredit.show{display:block}
     .credits .finalSongCredit.show{display:block}
     .credits a,
     .info a{color:var(--line)}
@@ -546,15 +566,17 @@
       gap:10px;
     }
     @media (max-width:1360px){
-      .layout{grid-template-columns:minmax(0,max-content) minmax(380px,1fr)}
-    }
-    @media (max-width:1200px){
       .layout{grid-template-columns:1fr}
       .boardWrap{position:static}
-      .tray{height:700px}
+      .board{margin:0 auto}
+      .tray{height:780px}
+    }
+    @media (max-width:1200px){
+      .layout.flockResizable{grid-template-columns:1fr}
+      .layout.flockResizable .layoutSplitter{display:none}
     }
     @media (max-width:760px){
-      .app{width:min(100vw - 14px,100%)}
+      .app{width:min(100vw - 18px,100%)}
       .panel{border-radius:18px}
       .controls{flex-wrap:wrap}
     }
@@ -562,7 +584,7 @@
 </head>
 <body>
   <main class="app">
-    <section class="layout">
+    <section id="layout" class="layout">
       <div class="panel boardWrap">
         <div id="board" class="board">
           <div class="boardGlow"></div>
@@ -574,6 +596,7 @@
           <span id="guideVal">100%</span>
         </div>
       </div>
+      <div id="layoutSplitter" class="layoutSplitter" aria-hidden="true"></div>
       <aside class="panel side">
         <div id="menuCard" class="card">
           <div class="menuHeader">
@@ -601,7 +624,11 @@
       </aside>
     </section>
   </main>
-  <div class="credits"><div>Hand Bells & Keyboard tactile by InspectorJ/StavSounds — arquivos em <code>/sound_effects</code>.</div><div id="finalSongCredit" class="finalSongCredit">Música final: Camille Saint-Saëns, <em>Danse Macabre</em> (interpretação de Kevin MacLeod), Wikimedia Commons.</div></div>
+  <div class="credits">
+    <div>Keyboard tactile 9 by StavSounds -- <a href="https://freesound.org/s/766640/">https://freesound.org/s/766640/</a> -- License: Attribution 4.0</div>
+    <div id="handbellsCredit" class="handbellsCredit">Hand Bells by InspectorJ -- arquivos em <code>/sound_effects</code>.</div>
+    <div id="finalSongCredit" class="finalSongCredit">Música final: Camille Saint-Saëns, <em>Danse Macabre</em> (interpretação de Kevin MacLeod), Wikimedia Commons.</div>
+  </div>
   <dialog id="aboutDialog" class="info">
     <div class="infoInner">
       <h2>Sobre esta imagem</h2>
@@ -648,6 +675,10 @@
     const noopClassList = {add(){}, remove(){}};
 
     const el = {
+      layout: document.getElementById("layout"),
+      boardWrap: document.querySelector(".boardWrap"),
+      side: document.querySelector(".side"),
+      layoutSplitter: document.getElementById("layoutSplitter"),
       board: document.getElementById("board"),
       tray: document.getElementById("tray"),
       trayTitle: document.querySelector(".trayTitle"),
@@ -672,6 +703,7 @@
       menuToggle: document.getElementById("menuToggle"),
       searchLayer: document.getElementById("searchLayer"),
       complete: document.getElementById("complete") || {textContent:"", classList:noopClassList},
+      handbellsCredit: document.getElementById("handbellsCredit"),
       finalSongCredit: document.getElementById("finalSongCredit")
       ,screenFade: document.getElementById("screenFade")
     };
@@ -708,7 +740,8 @@
       wordPhase: "letters",
       finalWord: FINAL_WORD_STEPS[0],
       sound: true,
-      menuMin: false
+      menuMin: false,
+      splitterDrag: null
     };
 
 const SEARCH_REFERENCE_IMAGE = "jadugar.png";
@@ -847,6 +880,7 @@ const FINAL_SONG_END = 33;
       el.closeEnd?.addEventListener("click", () => el.endDialog?.close());
       el.endDialog?.addEventListener("click", (event) => { if(event.target === el.endDialog) el.endDialog.close(); });
       el.menuToggle.addEventListener("click", toggleMenu);
+      el.layoutSplitter.addEventListener("pointerdown", startSplitterDrag);
       syncMenu();
     }
 
@@ -864,6 +898,7 @@ const FINAL_SONG_END = 33;
     }
 
     function playSearchFoundSound(index){
+      revealHandbellsCredit();
       if(!state.sound) return;
       const src = SEARCH_FOUND_SOUNDS[index % SEARCH_FOUND_SOUNDS.length];
       const sound = new Audio(src);
@@ -874,6 +909,7 @@ const FINAL_SONG_END = 33;
 
     function playBellSound(targetId, staccato = false, strong = false, staccatoDuration = STACCATO_DURATION){
       const target = BELL_TARGETS.find((item) => item.id === targetId);
+      if(target) revealHandbellsCredit();
       if(!state.sound || !target || !target.audio) return;
       let sounds = state.bellSounds[targetId];
       if(!sounds){
@@ -951,6 +987,10 @@ const FINAL_SONG_END = 33;
       const timer = setTimeout(callback, delay);
       state.finaleTimers.push(timer);
       return timer;
+    }
+
+    function revealHandbellsCredit(){
+      el.handbellsCredit?.classList.add("show");
     }
 
     function applyGuide(value){
@@ -1037,7 +1077,8 @@ const FINAL_SONG_END = 33;
       setAboutContent(levelIndex === 2 ? "flock" : "sorceress");
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
-      document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "min(96vw,960px)" : "min(70vw,640px)");
+      document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "var(--board-size-flock)" : "var(--board-size)");
+      setResizableLayout(levelIndex === 2);
       state.image = state.images[levelIndex];
       state.edges = createEdges(LEVELS[levelIndex].rows, LEVELS[levelIndex].cols);
       state.pieces.forEach((piece) => piece.node.remove());
@@ -1081,7 +1122,8 @@ const FINAL_SONG_END = 33;
       el.magicDisplay.className = "magicDisplay empty";
       el.finalSongCredit.classList.remove("show");
       applyTheme("flock");
-      document.documentElement.style.setProperty("--board-size-current", "min(96vw,960px)");
+      document.documentElement.style.setProperty("--board-size-current", "var(--board-size-flock)");
+      setResizableLayout(true);
       el.screenFade.classList.remove("show");
       setAboutContent("flock");
       renderBellTargets();
@@ -1105,7 +1147,8 @@ const FINAL_SONG_END = 33;
       el.puzzleTitle.textContent = LENVOUTEUSE_TITLE;
       document.title = LENVOUTEUSE_TITLE;
       document.documentElement.style.setProperty("--guide-image", `url("${FINAL_BOARD_IMAGE}")`);
-      document.documentElement.style.setProperty("--board-size-current", "min(70vw,640px)");
+      document.documentElement.style.setProperty("--board-size-current", "var(--board-size)");
+      setResizableLayout(false);
       document.documentElement.style.setProperty("--guide-opacity", "1");
       el.guide.value = "100";
       el.guideVal.textContent = "100%";
@@ -1956,7 +1999,63 @@ function renderSearchPanel(){
       state.scale = state.boardRect.width / IMAGE_SIZE;
     }
 
+    function setResizableLayout(enabled){
+      el.layout.classList.toggle("flockResizable", enabled);
+      if(!enabled){
+        document.documentElement.style.removeProperty("--resizable-left");
+        stopSplitterDrag();
+        return;
+      }
+      if(window.innerWidth <= 1200) return;
+      const boardWrapRect = el.boardWrap.getBoundingClientRect();
+      const min = 360;
+      const max = Math.max(min, window.innerWidth - 360);
+      const width = clamp(boardWrapRect.width || window.innerWidth * 0.58, min, max);
+      document.documentElement.style.setProperty("--resizable-left", `${width}px`);
+    }
+
+    function startSplitterDrag(event){
+      if(!el.layout.classList.contains("flockResizable") || window.innerWidth <= 1200) return;
+      event.preventDefault();
+      state.splitterDrag = {pointerId:event.pointerId};
+      el.layoutSplitter.setPointerCapture(event.pointerId);
+      addEventListener("pointermove", onSplitterDrag);
+      addEventListener("pointerup", stopSplitterDrag);
+      addEventListener("pointercancel", stopSplitterDrag);
+    }
+
+    function onSplitterDrag(event){
+      if(!state.splitterDrag) return;
+      const layoutRect = el.layout.getBoundingClientRect();
+      const min = 360;
+      const max = Math.max(min, layoutRect.width - 332);
+      const width = clamp(event.clientX - layoutRect.left, min, max);
+      document.documentElement.style.setProperty("--resizable-left", `${width}px`);
+      onResize();
+    }
+
+    function stopSplitterDrag(event){
+      if(!state.splitterDrag) return;
+      if(event?.pointerId !== undefined && event.pointerId !== state.splitterDrag.pointerId) return;
+      try{ el.layoutSplitter.releasePointerCapture(state.splitterDrag.pointerId); }catch(_err){}
+      state.splitterDrag = null;
+      removeEventListener("pointermove", onSplitterDrag);
+      removeEventListener("pointerup", stopSplitterDrag);
+      removeEventListener("pointercancel", stopSplitterDrag);
+    }
+
     function onResize(){
+      if(el.layout.classList.contains("flockResizable") && window.innerWidth > 1200){
+        const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--resizable-left"));
+        if(Number.isFinite(current)){
+          const min = 360;
+          const max = Math.max(min, el.layout.getBoundingClientRect().width - 332);
+          const clamped = clamp(current, min, max);
+          if(Math.abs(clamped - current) > 0.5){
+            document.documentElement.style.setProperty("--resizable-left", `${clamped}px`);
+          }
+        }
+      }
       rects();
       if(state.mode !== "puzzle") return;
       state.pieces.forEach((piece) => {

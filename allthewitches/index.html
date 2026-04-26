@@ -681,7 +681,6 @@
     const IMAGE_SRC_LEVEL3 = "flock_of_witches.png";
     const STORAGE_KEY = "lenvouteuse_jigsaw_levels";
     const IMAGE_SIZE = 768;
-    const FLOCK_PLACED_SCALE = 1.01;
     const BELL_IMAGE_SIZE = 1280;
     const SNAP = 34;
     const LEVELS = [
@@ -1115,7 +1114,7 @@ const FINAL_SONG_END = 30;
     }
 
     function getPlacedPieceScale(){
-      return state.currentLevel === 2 ? state.scale * FLOCK_PLACED_SCALE : state.scale;
+      return state.scale;
     }
 
     function setLevelUi(){
@@ -2099,7 +2098,13 @@ function renderSearchPanel(){
       state.guide = 1;
       clearEmpty();
       save();
-      await playBoardImageTransition(LEVELS[1].image);
+
+      state.pieces
+        .filter((piece) => piece.placed)
+        .forEach((piece) => piece.node.classList.add("fading-out"));
+
+      await sleep(720);
+      await playBoardImageTransition(LEVELS[1].guideImage);
       buildLevel(1);
       state.pieces.forEach((piece, index) => {
         piece.node.classList.add("fading-in");
@@ -2167,7 +2172,10 @@ function renderSearchPanel(){
     function rects(){
       state.boardRect = el.board.getBoundingClientRect();
       state.trayRect = el.tray.getBoundingClientRect();
-      state.scale = state.boardRect.width / getLevelImageSize();
+      const level = getLevel();
+      const imageSize = getLevelImageSize(level);
+      const puzzleSpan = imageSize + (getTab(level) * 2);
+      state.scale = state.boardRect.width / puzzleSpan;
     }
 
     function updateBoardSize(){

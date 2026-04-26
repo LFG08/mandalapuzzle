@@ -1988,9 +1988,11 @@ function renderSearchPanel(){
       const targetLeft = state.boardRect.left + piece.targetX * state.scale;
       const targetTop = state.boardRect.top + piece.targetY * state.scale;
       const distance = Math.hypot(piece.currentX - targetLeft, piece.currentY - targetTop);
-      const axisAligned = Math.abs(piece.currentX - targetLeft) <= SNAP_AXIS_TOLERANCE
-        && Math.abs(piece.currentY - targetTop) <= SNAP_AXIS_TOLERANCE;
-      if(distance <= SNAP || axisAligned){
+      const snapDistance = Math.max(SNAP, Math.min(piece.w, piece.h) * state.scale * 0.22);
+      const axisTolerance = Math.max(SNAP_AXIS_TOLERANCE, Math.min(piece.w, piece.h) * state.scale * 0.12);
+      const axisAligned = Math.abs(piece.currentX - targetLeft) <= axisTolerance
+        && Math.abs(piece.currentY - targetTop) <= axisTolerance;
+      if(distance <= snapDistance || axisAligned){
         placeOnBoard(piece);
       }else{
         backToTray(piece);

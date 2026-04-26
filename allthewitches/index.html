@@ -37,46 +37,24 @@
     }
     button,input{font:inherit}
     .app{
-      width:min(1480px,calc(100vw - 28px));
+      width:min(1600px,calc(100vw - 20px));
       margin:0 auto;
-      padding:22px 0 34px;
-    }
-    body[data-theme="flock"] .app{
-      width:min(1620px,calc(100vw - 14px));
-      margin-left:14px;
-      margin-right:auto;
+      padding:10px 0 18px;
     }
     .layout{
       display:grid;
-      grid-template-columns:minmax(768px,820px) minmax(320px,1fr);
-      gap:24px;
+      grid-template-columns:minmax(0,1fr) 340px;
+      gap:16px;
       align-items:start;
     }
-    .layoutSplitter{
-      display:none;
-      width:12px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.08));
-      cursor:col-resize;
-      align-self:stretch;
-      touch-action:none;
-      opacity:.7;
-      transition:opacity .2s ease;
-    }
-    .layoutSplitter:hover{opacity:1}
-    .layout.flockResizable{
-      grid-template-columns:minmax(360px,var(--resizable-left,58vw)) 12px minmax(320px,1fr);
-      gap:14px;
-    }
-    .layout.flockResizable .layoutSplitter{display:block}
+    .layoutSplitter{display:none}
     .panel{
       background:linear-gradient(180deg,var(--panel),var(--panel-2));
       border:1px solid var(--line);
       border-radius:24px;
       box-shadow:0 24px 60px rgba(0,0,0,.28);
     }
-    .boardWrap{padding:18px; position:sticky; top:18px; width:fit-content; max-width:100%; display:flex; flex-direction:column; align-items:center}
+    .boardWrap{padding:12px; position:sticky; top:10px; width:100%; max-width:100%; display:flex; flex-direction:column; align-items:center; overflow:hidden}
     .board{
       position:relative;
       width:var(--board-size-current);
@@ -353,7 +331,8 @@
     .tray{
       position:relative;
       min-height:620px;
-      height:min(70vh,760px);
+      height:calc(100vh - 300px);
+      max-height:760px;
       overflow:auto;
       border-radius:18px;
       background:
@@ -591,16 +570,11 @@
       grid-template-columns:repeat(3,minmax(0,1fr));
       gap:10px;
     }
-    @media (max-width:1360px){
-      body[data-theme="flock"] .app{margin:0 auto; width:min(100vw - 18px,100%)}
+    @media (max-width:1200px){
       .layout{grid-template-columns:1fr}
       .boardWrap{position:static}
       .board{margin:0 auto}
-      .tray{height:780px}
-    }
-    @media (max-width:1200px){
-      .layout.flockResizable{grid-template-columns:1fr}
-      .layout.flockResizable .layoutSplitter{display:none}
+      .tray{height:780px;max-height:none}
     }
     @media (max-width:760px){
       .app{width:min(100vw - 18px,100%)}
@@ -624,7 +598,6 @@
           <span id="guideVal">100%</span>
         </div>
       </div>
-      <div id="layoutSplitter" class="layoutSplitter" aria-hidden="true"></div>
       <aside class="panel side">
         <div id="menuCard" class="card">
           <div class="menuHeader">
@@ -658,7 +631,7 @@
   </main>
   <div class="credits">
     <div>Keyboard tactile 9 by StavSounds -- <a href="https://freesound.org/s/766640/">https://freesound.org/s/766640/</a> -- License: Attribution 4.0</div>
-    <div id="handbellsCredit" class="handbellsCredit">Hand Bells by InspectorJ -- arquivos em <code>/sound_effects</code>.</div>
+    <div id="handbellsCredit" class="handbellsCredit">Hand Bells, Low-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339815/">https://freesound.org/s/339815/</a> -- License: Attribution 4.0 | Hand Bells, D, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339813/">https://freesound.org/s/339813/</a> -- License: Attribution 4.0 | Hand Bells, D#/Eb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339814/">https://freesound.org/s/339814/</a> -- License: Attribution 4.0 | Hand Bells, F, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339816/">https://freesound.org/s/339816/</a> -- License: Attribution 4.0 | Hand Bells, G, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339818/">https://freesound.org/s/339818/</a> -- License: Attribution 4.0 | Hand Bells, A, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339810/">https://freesound.org/s/339810/</a> -- License: Attribution 4.0 | Hand Bells, A#/Bb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339811/">https://freesound.org/s/339811/</a> -- License: Attribution 4.0</div>
     <div id="finalSongCredit" class="finalSongCredit">Música final: Camille Saint-Saëns, <em>Danse Macabre</em> (interpretação de Kevin MacLeod), Wikimedia Commons.</div>
   </div>
   <dialog id="aboutDialog" class="info">
@@ -713,7 +686,6 @@
       layout: document.getElementById("layout"),
       boardWrap: document.querySelector(".boardWrap"),
       side: document.querySelector(".side"),
-      layoutSplitter: document.getElementById("layoutSplitter"),
       board: document.getElementById("board"),
       tray: document.getElementById("tray"),
       trayTitle: document.querySelector(".trayTitle"),
@@ -757,6 +729,7 @@
       bellSoundIndex: {},
       bellSoundTimers: {},
       bellReplayTimer: null,
+      bellTransitionTimer: null,
       bellSongAudio: null,
       bellSongTimers: [],
       bellDanceTimers: [],
@@ -778,7 +751,6 @@
       finalWord: FINAL_WORD_STEPS[0],
       volume: 0.75,
       menuMin: false,
-      splitterDrag: null,
       aboutSongUnlocked: false
     };
 
@@ -915,7 +887,6 @@ const FINAL_SONG_END = 33;
       el.closeEnd?.addEventListener("click", () => el.endDialog?.close());
       el.endDialog?.addEventListener("click", (event) => { if(event.target === el.endDialog) el.endDialog.close(); });
       el.menuToggle.addEventListener("click", toggleMenu);
-      el.layoutSplitter.addEventListener("pointerdown", startSplitterDrag);
       syncMenu();
       setTimeout(primeBellAudioPools, 0);
     }
@@ -1143,7 +1114,7 @@ const FINAL_SONG_END = 33;
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
       document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "var(--board-size-flock)" : "var(--board-size)");
-      setResizableLayout(levelIndex === 2);
+      updateBoardSize();
       state.image = state.images[levelIndex];
       state.edges = createEdges(LEVELS[levelIndex].rows, LEVELS[levelIndex].cols);
       state.pieces.forEach((piece) => piece.node.remove());
@@ -1188,7 +1159,7 @@ const FINAL_SONG_END = 33;
       el.finalSongCredit.classList.remove("show");
       applyTheme("flock");
       document.documentElement.style.setProperty("--board-size-current", "var(--board-size-flock)");
-      setResizableLayout(true);
+      updateBoardSize();
       el.screenFade.classList.remove("show");
       setAboutContent("flock");
       state.aboutSongUnlocked = false;
@@ -1218,7 +1189,7 @@ const FINAL_SONG_END = 33;
       document.title = LENVOUTEUSE_TITLE;
       document.documentElement.style.setProperty("--guide-image", `url("${FINAL_BOARD_IMAGE}")`);
       document.documentElement.style.setProperty("--board-size-current", "var(--board-size)");
-      setResizableLayout(false);
+      updateBoardSize();
       document.documentElement.style.setProperty("--guide-opacity", "1");
       el.guide.value = "100";
       el.guideVal.textContent = "100%";
@@ -1351,6 +1322,13 @@ function clearBellReplayTimer(){
   }
 }
 
+function clearBellTransitionTimer(){
+  if(state.bellTransitionTimer){
+    clearTimeout(state.bellTransitionTimer);
+    state.bellTransitionTimer = null;
+  }
+}
+
 function clearBellSongTimers(){
   state.bellSongTimers.forEach((timer) => {
     clearTimeout(timer);
@@ -1436,6 +1414,7 @@ function turnOffBellReveals(){
 
 function resetBellMelody(round = 0){
   clearBellReplayTimer();
+  clearBellTransitionTimer();
   clearBellSongTimers();
   state.bellSongPlaying = false;
   state.bellFound = [];
@@ -1447,6 +1426,20 @@ function resetBellMelody(round = 0){
   });
   updateBellStatus();
   save();
+}
+
+function beginFinalBellChallenge(){
+  clearBellTransitionTimer();
+  state.bellTransitionTimer = setTimeout(() => {
+    state.bellTransitionTimer = null;
+    el.about.classList.remove("aboutGlow");
+    turnOffBellReveals();
+    state.bellFound = [];
+    state.bellStep = 0;
+    state.bellRound = 1;
+    updateBellStatus();
+    save();
+  }, 1500);
 }
 
 function queueExtendedBellMelody(){
@@ -1551,15 +1544,15 @@ function updateBellStatus(){
   updateProgressDisplay();
   if(state.bellStep >= melody.length && state.bellRound === 0){
     unlockAboutSongLink();
-    turnOffBellReveals();
+    el.complete.textContent = "Sobre esta imagem desbloqueado.";
+    el.complete.classList.add("show");
+    beginFinalBellChallenge();
+  }else if(state.bellStep >= melody.length && state.bellRound === 1){
     el.complete.textContent = "Canção final começando...";
     el.complete.classList.add("show");
     queueExtendedBellMelody();
-  }else if(state.bellStep >= melody.length){
-    el.complete.textContent = "Melodia concluída.";
-    el.complete.classList.add("show");
   }else if(state.bellRound === 1){
-    el.complete.textContent = "Canção final.";
+    el.complete.textContent = "Repita a sequência para tocar Danse Macabre.";
     el.complete.classList.add("show");
   }else{
     el.complete.textContent = "Quebra-cabeça concluído.";
@@ -2012,7 +2005,10 @@ function renderSearchPanel(){
           el.tray.appendChild(piece.node);
         }
         piece.node.style.position = "absolute";
-        if(x + piece.w > maxWidth){
+        const scaledW = piece.w * state.scale;
+        const scaledH = piece.h * state.scale;
+        setPieceScale(piece, state.scale);
+        if(x + scaledW > maxWidth){
           x = pad;
           y += rowHeight + pad;
           rowHeight = 0;
@@ -2023,10 +2019,10 @@ function renderSearchPanel(){
         piece.sourceY = y;
         piece.currentX = state.trayRect.left + x;
         piece.currentY = state.trayRect.top + y;
-        x += piece.w + pad;
-        rowHeight = Math.max(rowHeight, piece.h);
+        x += scaledW + pad;
+        rowHeight = Math.max(rowHeight, scaledH);
       });
-      el.tray.style.minHeight = `${Math.max(y + rowHeight + pad, 620)}px`;
+      el.tray.style.minHeight = `${Math.max(y + rowHeight + pad, 420)}px`;
     }
 
     function solveAll(){
@@ -2126,63 +2122,22 @@ function renderSearchPanel(){
       state.scale = state.boardRect.width / getLevelImageSize();
     }
 
-    function setResizableLayout(enabled){
-      el.layout.classList.toggle("flockResizable", enabled);
-      if(!enabled){
-        document.documentElement.style.removeProperty("--resizable-left");
-        stopSplitterDrag();
-        return;
-      }
-      if(window.innerWidth <= 1200) return;
-      const boardWrapRect = el.boardWrap.getBoundingClientRect();
-      const min = 360;
-      const max = Math.max(min, window.innerWidth - 360);
-      const width = clamp(boardWrapRect.width || window.innerWidth * 0.58, min, max);
-      document.documentElement.style.setProperty("--resizable-left", `${width}px`);
-    }
-
-    function startSplitterDrag(event){
-      if(!el.layout.classList.contains("flockResizable") || window.innerWidth <= 1200) return;
-      event.preventDefault();
-      state.splitterDrag = {pointerId:event.pointerId};
-      el.layoutSplitter.setPointerCapture(event.pointerId);
-      addEventListener("pointermove", onSplitterDrag);
-      addEventListener("pointerup", stopSplitterDrag);
-      addEventListener("pointercancel", stopSplitterDrag);
-    }
-
-    function onSplitterDrag(event){
-      if(!state.splitterDrag) return;
-      const layoutRect = el.layout.getBoundingClientRect();
-      const min = 360;
-      const max = Math.max(min, layoutRect.width - 332);
-      const width = clamp(event.clientX - layoutRect.left, min, max);
-      document.documentElement.style.setProperty("--resizable-left", `${width}px`);
-      onResize();
-    }
-
-    function stopSplitterDrag(event){
-      if(!state.splitterDrag) return;
-      if(event?.pointerId !== undefined && event.pointerId !== state.splitterDrag.pointerId) return;
-      try{ el.layoutSplitter.releasePointerCapture(state.splitterDrag.pointerId); }catch(_err){}
-      state.splitterDrag = null;
-      removeEventListener("pointermove", onSplitterDrag);
-      removeEventListener("pointerup", stopSplitterDrag);
-      removeEventListener("pointercancel", stopSplitterDrag);
+    function updateBoardSize(){
+      const levelSize = getLevelImageSize();
+      const layoutStyles = getComputedStyle(el.layout);
+      const gap = parseFloat(layoutStyles.columnGap || layoutStyles.gap || "16") || 16;
+      const sideWidth = window.innerWidth <= 1200 ? 0 : el.side.getBoundingClientRect().width;
+      const layoutWidth = el.layout.getBoundingClientRect().width;
+      const horizontalPadding = 40;
+      const verticalPadding = 90;
+      const availableWidth = Math.max(240, layoutWidth - sideWidth - (sideWidth ? gap : 0) - horizontalPadding);
+      const availableHeight = Math.max(240, window.innerHeight - verticalPadding);
+      const boardSize = Math.floor(Math.min(levelSize, availableWidth, availableHeight));
+      document.documentElement.style.setProperty("--board-size-current", `${boardSize}px`);
     }
 
     function onResize(){
-      if(el.layout.classList.contains("flockResizable") && window.innerWidth > 1200){
-        const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--resizable-left"));
-        if(Number.isFinite(current)){
-          const min = 360;
-          const max = Math.max(min, el.layout.getBoundingClientRect().width - 332);
-          const clamped = clamp(current, min, max);
-          if(Math.abs(clamped - current) > 0.5){
-            document.documentElement.style.setProperty("--resizable-left", `${clamped}px`);
-          }
-        }
-      }
+      updateBoardSize();
       rects();
       if(state.mode !== "puzzle") return;
       state.pieces.forEach((piece) => {
@@ -2193,11 +2148,12 @@ function renderSearchPanel(){
           piece.currentX = state.boardRect.left + piece.targetX * state.scale;
           piece.currentY = state.boardRect.top + piece.targetY * state.scale;
         }else{
-          setPieceScale(piece, 1);
+          setPieceScale(piece, state.scale);
           piece.currentX = state.trayRect.left + piece.sourceX;
           piece.currentY = state.trayRect.top + piece.sourceY;
         }
       });
+      layoutLoosePieces(state.pieces.filter((piece) => !piece.placed));
     }
 
     function save(){

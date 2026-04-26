@@ -1782,8 +1782,9 @@ function renderSearchPanel(){
 
     function createPieces(){
       const level = getLevel();
-      const pw = IMAGE_SIZE / level.cols;
-      const ph = IMAGE_SIZE / level.rows;
+      const levelSize = getLevelImageSize(level);
+      const pw = levelSize / level.cols;
+      const ph = levelSize / level.rows;
       const tab = getTab(level);
       for(let row = 0; row < level.rows; row++){
         for(let col = 0; col < level.cols; col++){

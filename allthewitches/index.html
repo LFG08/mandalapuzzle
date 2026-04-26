@@ -685,7 +685,7 @@
     const SNAP = 34;
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6, size:768, tabScale:0.24},
-      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC, guideMaxOpacity:1, cols:10, rows:8, size:768, tabScale:0.24},
+      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC, guideMaxOpacity:1, cols:6, rows:11, size:768, tabScale:0.24},
       {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:10, rows:10, size:1280, tabScale:0.2, maxTab:24}
     ];
     const THEMES = {
@@ -880,6 +880,7 @@ const FINAL_SONG_END = 30;
     async function init(){
       const saved = load();
       state.images = await Promise.all(LEVELS.map((level) => loadImage(level.image)));
+      syncLevelSizesWithImages();
       if(saved){
         state.progress = Array.from({length: LEVELS.length}, (_, index) => Array.isArray(saved.progress[index]) ? saved.progress[index] : []);
         state.currentLevel = clamp(saved.currentLevel, 0, LEVELS.length - 1);
@@ -922,6 +923,24 @@ const FINAL_SONG_END = 30;
       el.menuToggle.addEventListener("click", toggleMenu);
       syncMenu();
       setTimeout(primeBellAudioPools, 0);
+    }
+
+    function syncLevelSizesWithImages(){
+      LEVELS.forEach((level, index) => {
+        const image = state.images[index];
+        if(!image) return;
+        const width = image.naturalWidth || image.width;
+        const height = image.naturalHeight || image.height;
+        if(!width || !height) return;
+        const resolvedSize = Math.min(width, height);
+        if(width !== height){
+          console.warn(`[puzzle] Level "${level.name}" image is not square (${width}x${height}). Using ${resolvedSize} for board/piece sizing.`);
+        }
+        if(level.size !== resolvedSize){
+          console.warn(`[puzzle] Level "${level.name}" size (${level.size}) does not match image (${width}x${height}). Using ${resolvedSize}.`);
+          level.size = resolvedSize;
+        }
+      });
     }
 
     function loadImage(src){
@@ -1782,8 +1801,9 @@ function renderSearchPanel(){
 
     function createPieces(){
       const level = getLevel();
-      const pw = IMAGE_SIZE / level.cols;
-      const ph = IMAGE_SIZE / level.rows;
+      const levelSize = getLevelImageSize(level);
+      const pw = levelSize / level.cols;
+      const ph = levelSize / level.rows;
       const tab = getTab(level);
       for(let row = 0; row < level.rows; row++){
         for(let col = 0; col < level.cols; col++){
@@ -2189,8 +2209,11 @@ function renderSearchPanel(){
       const horizontalPadding = 40;
       const verticalPadding = 90;
       const availableWidth = Math.max(240, layoutWidth - sideWidth - (sideWidth ? gap : 0) - horizontalPadding);
+      // Extra width guard: keep the board inside .boardWrap to avoid horizontal overflow
+      // when menu/layout calculations and container width diverge on narrow screens.
+      const boardWrapWidth = Math.max(240, el.boardWrap.getBoundingClientRect().width - 8);
       const availableHeight = Math.max(240, window.innerHeight - verticalPadding);
-      const boardSize = Math.floor(Math.min(levelSize, availableWidth, availableHeight));
+      const boardSize = Math.floor(Math.min(levelSize, availableWidth, boardWrapWidth, availableHeight));
       document.documentElement.style.setProperty("--board-size-current", `${boardSize}px`);
     }
 

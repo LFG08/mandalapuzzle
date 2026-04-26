@@ -574,6 +574,26 @@ data-total="52">
   <div class="status"></div>
 
 </a>
+
+<a href="allthewitches" class="card"
+id="allthewitchesCard">
+
+  <div class="thumb">
+    <img src="allthewitches/thumb_level1.png" loading="lazy">
+  </div>
+
+  <div class="tags">#jigsawpuzzle #quebra-cabeça #???
+    <span class="tag locked-tag"
+          data-unlock-stage="allthewitchesJadugarUnlocked"
+          data-real="#caça-palavras">#???</span>
+    <span class="tag locked-tag"
+          data-unlock-stage="allthewitchesMusicalUnlocked"
+          data-real="#puzzlemusical">#???</span>
+  </div>
+
+  <div class="status"></div>
+
+</a>
 </div>
 </section>
 
@@ -758,6 +778,75 @@ return {
 found: status.found,
 total: status.total,
 levelTwoUnlocked: status.total !== null
+};
+}
+
+
+function getAllthewitchesStatus(){
+let raw = localStorage.getItem("lenvouteuse_jigsaw_levels");
+if(!raw){
+return {
+found: 0,
+total: null,
+thumb: "allthewitches/thumb_level1.png",
+finalLevelUnlocked: false
+};
+}
+
+let parsed;
+try{
+parsed = JSON.parse(raw);
+}catch{
+return {
+found: 0,
+total: null,
+thumb: "allthewitches/thumb_level1.png",
+finalLevelUnlocked: false
+};
+}
+
+let progress = Array.isArray(parsed && parsed.progress) ? parsed.progress : [];
+if(Array.isArray(parsed && parsed.placed) && progress.length === 0){
+progress = [parsed.placed, [], []];
+}
+
+let levelCounts = [0, 1, 2].map(index => {
+let ids = Array.isArray(progress[index]) ? progress[index] : [];
+return ids.length;
+});
+
+let mode = ["puzzle", "search", "bells"].includes(parsed && parsed.mode) ? parsed.mode : "puzzle";
+let currentLevel = Number.isFinite(parsed && parsed.currentLevel) ? parsed.currentLevel : 0;
+let searchFound = Array.isArray(parsed && parsed.searchFound) ? parsed.searchFound.length : 0;
+let bellRound = Number.isFinite(parsed && parsed.bellRound) ? parsed.bellRound : 0;
+let bellStep = Number.isFinite(parsed && parsed.bellStep) ? parsed.bellStep : 0;
+let bellFound = bellRound <= 0
+? Math.max(0, Math.min(8, bellStep))
+: 8 + Math.max(0, Math.min(8, bellStep));
+
+let found = levelCounts[0] + levelCounts[1] + levelCounts[2] + searchFound + bellFound;
+let finalLevelUnlocked = currentLevel >= 2 || mode === "bells";
+let total = finalLevelUnlocked ? 255 : null;
+let completed = total !== null && found >= total;
+
+let thumb = "allthewitches/thumb_level1.png";
+if(completed){
+thumb = "allthewitches/thumb_completo.png";
+}else if(mode === "search"){
+thumb = "allthewitches/thumb_level3.png";
+}else if(mode === "bells" || currentLevel >= 2){
+thumb = "allthewitches/thumb_level4.png";
+}else if(currentLevel >= 1){
+thumb = "allthewitches/thumb_level2.png";
+}
+
+return {
+found,
+total,
+thumb,
+finalLevelUnlocked,
+jadugarUnlocked: mode === "search" || mode === "bells",
+musicalUnlocked: mode === "bells"
 };
 }
 
@@ -1225,6 +1314,25 @@ updateLockedTags(card, passacagliaStatus.found, {
 passacagliaLevelTwoUnlocked: passacagliaStatus.levelTwoUnlocked
 });
 let percentage = passacagliaStatus.total > 0 ? (passacagliaStatus.found / passacagliaStatus.total) * 100 : 0;
+applyThumbBorder(card, percentage);
+return;
+}
+
+
+if(card.id === "allthewitchesCard"){
+let statusEl = card.querySelector(".status");
+let thumbEl = card.querySelector(".thumb img");
+let allthewitchesStatus = getAllthewitchesStatus();
+setCardProgressMeta(card, allthewitchesStatus.found, allthewitchesStatus.total);
+renderStatus(statusEl, allthewitchesStatus.found, allthewitchesStatus.total);
+if(thumbEl){
+thumbEl.src = allthewitchesStatus.thumb;
+}
+updateLockedTags(card, allthewitchesStatus.found, {
+allthewitchesJadugarUnlocked: allthewitchesStatus.jadugarUnlocked,
+allthewitchesMusicalUnlocked: allthewitchesStatus.musicalUnlocked
+});
+let percentage = allthewitchesStatus.total > 0 ? (allthewitchesStatus.found / allthewitchesStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
 return;
 }

@@ -633,7 +633,6 @@
             <div class="actions">
               <a href="/" class="btn" role="button">Menu Principal</a>
               <button id="shuffle" class="btn" type="button">Embaralhar Peças Soltas</button>
-              <button id="testSolve" class="btn" type="button">Auto-completar (teste)</button>
               <button id="reset" class="btn" type="button">Reiniciar</button>
               <div class="volumeControl">
                 <label class="small" for="volume">Volume</label>
@@ -716,7 +715,6 @@
       placed: document.getElementById("placed"),
       puzzleTitle: document.getElementById("puzzleTitle"),
       shuffle: document.getElementById("shuffle"),
-      testSolve: document.getElementById("testSolve"),
       reset: document.getElementById("reset"),
       volume: document.getElementById("volume"),
       volumeVal: document.getElementById("volumeVal"),
@@ -906,7 +904,6 @@ const FINAL_SONG_END = 30;
         save();
       });
       el.shuffle.addEventListener("click", handleShuffleClick);
-      el.testSolve.addEventListener("click", solveAll);
       el.reset.addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEY);
         location.reload();
@@ -1173,7 +1170,6 @@ const FINAL_SONG_END = 30;
       el.controls.classList.remove("hidden");
       el.shuffle.textContent = "Embaralhar Peças Soltas";
       el.shuffle.classList.remove("iconOnly");
-      el.testSolve.classList.remove("hidden");
       el.trayTitle.textContent = "Bandeja de Peças";
       el.magicDisplay.innerHTML = "";
       el.magicDisplay.className = "magicDisplay empty";
@@ -1225,7 +1221,6 @@ const FINAL_SONG_END = 30;
       el.controls.classList.add("hidden");
       el.shuffle.textContent = "Embaralhar Peças Soltas";
       el.shuffle.classList.remove("iconOnly");
-      el.testSolve.classList.add("hidden");
       el.trayTitle.textContent = "";
       el.magicDisplay.innerHTML = "";
       el.magicDisplay.className = "magicDisplay empty";
@@ -1270,7 +1265,6 @@ const FINAL_SONG_END = 30;
       el.controls.classList.add("hidden");
       el.shuffle.textContent = "✨";
       el.shuffle.classList.remove("iconOnly");
-      el.testSolve.classList.add("hidden");
       el.trayTitle.textContent = "";
       el.tray.innerHTML = "";
       el.magicDisplay.className = "magicDisplay";
@@ -2094,25 +2088,6 @@ function renderSearchPanel(){
       });
       el.tray.style.minHeight = `${Math.max(y + rowHeight + pad, 420)}px`;
     }
-
-    function solveAll(){
-      if(state.transitioning || state.mode !== "puzzle") return;
-      rects();
-      clearEmpty();
-      const loose = state.pieces.filter((piece) => !piece.placed);
-      if(loose.length <= 1){
-        save();
-        return;
-      }
-      const holdOut = loose[loose.length - 1];
-      loose.forEach((piece) => {
-        if(piece !== holdOut){
-          placeOnBoard(piece);
-        }
-      });
-      save();
-    }
-
 
     function sleep(ms){
       return new Promise((resolve) => setTimeout(resolve, ms));

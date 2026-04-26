@@ -2098,7 +2098,16 @@ function renderSearchPanel(){
     }
 
     function relayoutTray(excludedPiece = null){
-      const loose = state.pieces.filter((piece) => !piece.placed && piece !== excludedPiece);
+      const loose = state.pieces
+        .filter((piece) => !piece.placed && piece !== excludedPiece)
+        .sort((a, b) => {
+          const ay = Number.isFinite(a.sourceY) ? a.sourceY : 0;
+          const by = Number.isFinite(b.sourceY) ? b.sourceY : 0;
+          if(ay !== by) return ay - by;
+          const ax = Number.isFinite(a.sourceX) ? a.sourceX : 0;
+          const bx = Number.isFinite(b.sourceX) ? b.sourceX : 0;
+          return ax - bx;
+        });
       layoutLoosePieces(loose);
     }
 

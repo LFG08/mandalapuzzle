@@ -1815,8 +1815,12 @@ function renderSearchPanel(){
     }
 
     function makePiece(row, col, pw, ph, tab, edge){
-      const w = Math.round(pw + tab * 2);
-      const h = Math.round(ph + tab * 2);
+      const leftPad = edge.left === 0 ? 0 : tab;
+      const rightPad = edge.right === 0 ? 0 : tab;
+      const topPad = edge.top === 0 ? 0 : tab;
+      const bottomPad = edge.bottom === 0 ? 0 : tab;
+      const w = Math.round(pw + leftPad + rightPad);
+      const h = Math.round(ph + topPad + bottomPad);
       const node = document.createElement("button");
       node.className = "piece";
       node.type = "button";
@@ -1827,7 +1831,7 @@ function renderSearchPanel(){
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
-      drawPiece(canvas, row, col, pw, ph, tab, edge);
+      drawPiece(canvas, row, col, pw, ph, tab, edge, {leftPad, rightPad, topPad, bottomPad});
       node.appendChild(canvas);
 
       const piece = {
@@ -1839,23 +1843,28 @@ function renderSearchPanel(){
         node,
         canvas,
         edge,
+        leftPad,
+        rightPad,
+        topPad,
+        bottomPad,
         placed: false,
         sourceX: 0,
         sourceY: 0,
         currentX: 0,
         currentY: 0,
-        targetX: col * pw - tab,
-        targetY: row * ph - tab
+        targetX: col * pw - leftPad,
+        targetY: row * ph - topPad
       };
 
       node.addEventListener("pointerdown", (event) => startDrag(event, piece));
       return piece;
     }
 
-    function drawPiece(canvas, row, col, pw, ph, tab, edge){
+    function drawPiece(canvas, row, col, pw, ph, tab, edge, pads){
+      const {leftPad, rightPad, topPad, bottomPad} = pads;
       const ctx = canvas.getContext("2d");
-      const sx = tab;
-      const sy = tab;
+      const sx = leftPad;
+      const sy = topPad;
       const imageSize = getLevelImageSize();
       const sourceScaleX = state.image.naturalWidth / imageSize;
       const sourceScaleY = state.image.naturalHeight / imageSize;
@@ -1866,10 +1875,10 @@ function renderSearchPanel(){
       ctx.clip();
       ctx.drawImage(
         state.image,
-        (col * pw - tab) * sourceScaleX,
-        (row * ph - tab) * sourceScaleY,
-        (pw + tab * 2) * sourceScaleX,
-        (ph + tab * 2) * sourceScaleY,
+        (col * pw - leftPad) * sourceScaleX,
+        (row * ph - topPad) * sourceScaleY,
+        (pw + leftPad + rightPad) * sourceScaleX,
+        (ph + topPad + bottomPad) * sourceScaleY,
         0,
         0,
         canvas.width,
@@ -2196,8 +2205,7 @@ function renderSearchPanel(){
       state.trayRect = el.tray.getBoundingClientRect();
       const level = getLevel();
       const imageSize = getLevelImageSize(level);
-      const puzzleSpan = imageSize + (getTab(level) * 2);
-      state.scale = state.boardRect.width / puzzleSpan;
+      state.scale = state.boardRect.width / imageSize;
     }
 
     function updateBoardSize(){

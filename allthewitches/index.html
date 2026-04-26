@@ -2010,7 +2010,7 @@ function renderSearchPanel(){
     }
 
     function placeOnBoard(piece, options = {}){
-      const {playSound = true, relayout = true, recount = true} = options;
+      const {playSound = true, recount = true} = options;
       if(!piece.placed){
         piece.placed = true;
         piece.node.classList.add("placed");
@@ -2023,7 +2023,6 @@ function renderSearchPanel(){
       piece.currentX = state.boardRect.left + piece.targetX * state.scale;
       piece.currentY = state.boardRect.top + piece.targetY * state.scale;
       if(playSound) playPlaceSound();
-      if(relayout) layoutLoosePieces();
       if(recount) updatePlaced();
     }
 
@@ -2294,7 +2293,7 @@ function renderSearchPanel(){
       }
       state.pieces.forEach((piece) => {
         if(ids.has(piece.id)){
-          placeOnBoard(piece, {playSound:false, relayout:false, recount:false});
+          placeOnBoard(piece, {playSound:false, recount:false});
         }
       });
       shuffleLoose();

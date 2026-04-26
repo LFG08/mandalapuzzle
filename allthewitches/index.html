@@ -685,7 +685,7 @@
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6, size:768, tabScale:0.24},
       {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:IMAGE_SRC, guideMaxOpacity:1, cols:6, rows:11, size:768, tabScale:0.24},
-      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:10, rows:10, size:1280, tabScale:0.16, maxTab:20}
+      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:10, rows:10, size:1280, puzzleSize:768, tabScale:0.16, maxTab:20}
     ];
     const THEMES = {
       default: {
@@ -1123,7 +1123,7 @@ const FINAL_SONG_END = 30;
     }
 
     function getTab(level = getLevel()){
-      const imageSize = level.size || IMAGE_SIZE;
+      const imageSize = getLevelPuzzleSize(level);
       const pieceW = imageSize / level.cols;
       const pieceH = imageSize / level.rows;
       const tabScale = typeof level.tabScale === "number" ? level.tabScale : 0.24;
@@ -1135,6 +1135,14 @@ const FINAL_SONG_END = 30;
     }
 
     function getLevelImageSize(level = getLevel()){
+      return level.size || IMAGE_SIZE;
+    }
+
+    function getLevelPuzzleSize(level = getLevel()){
+      const isFlockLevel = state.currentLevel === 2 || level.name === "Flock of Witches";
+      if(isFlockLevel && typeof level.puzzleSize === "number"){
+        return level.puzzleSize;
+      }
       return level.size || IMAGE_SIZE;
     }
 
@@ -1800,7 +1808,7 @@ function renderSearchPanel(){
 
     function createPieces(){
       const level = getLevel();
-      const levelSize = getLevelImageSize(level);
+      const levelSize = getLevelPuzzleSize(level);
       const pw = levelSize / level.cols;
       const ph = levelSize / level.rows;
       const tab = getTab(level);
@@ -1864,7 +1872,7 @@ function renderSearchPanel(){
       const ctx = canvas.getContext("2d");
       const sx = leftPad;
       const sy = topPad;
-      const imageSize = getLevelImageSize();
+      const imageSize = getLevelPuzzleSize();
       const sourceScaleX = state.image.naturalWidth / imageSize;
       const sourceScaleY = state.image.naturalHeight / imageSize;
       ctx.save();
@@ -2203,12 +2211,12 @@ function renderSearchPanel(){
       state.boardRect = el.board.getBoundingClientRect();
       state.trayRect = el.tray.getBoundingClientRect();
       const level = getLevel();
-      const imageSize = getLevelImageSize(level);
+      const imageSize = state.mode === "puzzle" ? getLevelPuzzleSize(level) : getLevelImageSize(level);
       state.scale = state.boardRect.width / imageSize;
     }
 
     function updateBoardSize(){
-      const levelSize = getLevelImageSize();
+      const levelSize = state.mode === "puzzle" ? getLevelPuzzleSize() : getLevelImageSize();
       const layoutStyles = getComputedStyle(el.layout);
       const gap = parseFloat(layoutStyles.columnGap || layoutStyles.gap || "16") || 16;
       const sideWidth = window.innerWidth <= 1200 ? 0 : el.side.getBoundingClientRect().width;

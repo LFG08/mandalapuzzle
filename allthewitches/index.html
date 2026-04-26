@@ -288,6 +288,14 @@
       color:#fff4e8;
       cursor:pointer;
     }
+    .btn.aboutGlow{
+      box-shadow:0 0 0 2px rgba(255,230,168,.75), 0 0 18px rgba(255,224,142,.78);
+      animation:aboutGlowPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes aboutGlowPulse{
+      0%,100%{filter:brightness(1)}
+      50%{filter:brightness(1.18)}
+    }
     .btn:hover{filter:brightness(1.06)}
     a.btn{
       display:block;
@@ -656,7 +664,9 @@
   <dialog id="aboutDialog" class="info">
     <div class="infoInner">
       <h2>Sobre esta imagem</h2>
-      <img id="aboutImage" src="sorceress.jpg" alt="L’Envoûteuse (A Feiticeira), Georges Merle, 1883" style="width:100%;border-radius:12px;margin:0 0 12px;display:block;">
+      <a id="aboutImageLink" href="#" target="_blank" rel="noopener noreferrer" style="display:block;pointer-events:none;">
+        <img id="aboutImage" src="sorceress.jpg" alt="L’Envoûteuse (A Feiticeira), Georges Merle, 1883" style="width:100%;border-radius:12px;margin:0 0 12px;display:block;">
+      </a>
       <p id="aboutText">L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a></p>
       <button id="closeAbout" class="btn" type="button">Fechar</button>
     </div>
@@ -680,9 +690,9 @@
     const BELL_IMAGE_SIZE = 1280;
     const SNAP = 34;
     const LEVELS = [
-      {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6},
-      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:"l'envouteuse_level1.png", guideMaxOpacity:1, cols:9, rows:3},
-      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:14, rows:14}
+      {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6, size:768},
+      {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:"l'envouteuse_level1.png", guideMaxOpacity:1, cols:9, rows:3, size:768},
+      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:14, rows:14, size:1280}
     ];
     const THEMES = {
       default: {
@@ -720,6 +730,7 @@
       volumeVal: document.getElementById("volumeVal"),
       about: document.getElementById("about"),
       aboutDialog: document.getElementById("aboutDialog"),
+      aboutImageLink: document.getElementById("aboutImageLink"),
       aboutImage: document.getElementById("aboutImage"),
       aboutText: document.getElementById("aboutText"),
       closeAbout: document.getElementById("closeAbout"),
@@ -767,7 +778,8 @@
       finalWord: FINAL_WORD_STEPS[0],
       volume: 0.75,
       menuMin: false,
-      splitterDrag: null
+      splitterDrag: null,
+      aboutSongUnlocked: false
     };
 
 const SEARCH_REFERENCE_IMAGE = "jadugar.png";
@@ -834,20 +846,13 @@ const BELL_TARGETS = [
   {id:"B", label:"B", x:374, y:426, radius:65, audio:"../sound_effects/339811__inspectorj__hand-bells-Bb-single.wav"}
 ];
 const BELL_FIRST_MELODY = [
-  {id:"A", staccato:false},
+  {id:"C", staccato:false},
+  {id:"D", staccato:false},
   {id:"Eb", staccato:false},
+  {id:"G", staccato:false},
+  {id:"H", staccato:false},
   {id:"A", staccato:false},
-  {id:"A", staccato:true},
-  {id:"Eb", staccato:false},
-  {id:"Eb", staccato:true},
-  {id:"A", staccato:true},
-  {id:"A", staccato:true},
-  {id:"A", staccato:true},
-  {id:"Eb", staccato:true},
-  {id:"A", staccato:true},
-  {id:"A", staccato:true},
-  {id:"A", staccato:true},
-  {id:"Eb", staccato:true}
+  {id:"B", staccato:false}
 ];
 const BELL_MELODIES = [BELL_FIRST_MELODY, BELL_FIRST_MELODY];
 const STACCATO_DURATION = 1000;
@@ -912,6 +917,7 @@ const FINAL_SONG_END = 33;
       el.menuToggle.addEventListener("click", toggleMenu);
       el.layoutSplitter.addEventListener("pointerdown", startSplitterDrag);
       syncMenu();
+      setTimeout(primeBellAudioPools, 0);
     }
 
     function loadImage(src){
@@ -938,20 +944,35 @@ const FINAL_SONG_END = 33;
       sound.play().catch(() => {});
     }
 
-    function playBellSound(targetId, staccato = false, strong = false, staccatoDuration = STACCATO_DURATION){
+    function ensureBellSoundPool(targetId){
       const target = BELL_TARGETS.find((item) => item.id === targetId);
-      if(target) revealHandbellsCredit();
-      if(state.volume <= 0 || !target || !target.audio) return;
+      if(!target || !target.audio) return [];
       let sounds = state.bellSounds[targetId];
       if(!sounds){
         sounds = Array.from({length: BELL_AUDIO_VOICES}, () => {
           const sound = new Audio(target.audio);
           sound.preload = "auto";
+          sound.load();
           return sound;
         });
         state.bellSounds[targetId] = sounds;
         state.bellSoundIndex[targetId] = 0;
       }
+      return sounds;
+    }
+
+    function primeBellAudioPools(){
+      BELL_TARGETS.forEach((target) => {
+        ensureBellSoundPool(target.id);
+      });
+    }
+
+    function playBellSound(targetId, staccato = false, strong = false, staccatoDuration = STACCATO_DURATION){
+      const target = BELL_TARGETS.find((item) => item.id === targetId);
+      if(target) revealHandbellsCredit();
+      if(state.volume <= 0 || !target || !target.audio) return;
+      const sounds = ensureBellSoundPool(targetId);
+      if(!sounds.length) return;
       const index = state.bellSoundIndex[targetId] % sounds.length;
       const sound = sounds[index];
       const timerId = `${targetId}-${index}`;
@@ -1073,7 +1094,12 @@ const FINAL_SONG_END = 33;
     }
 
     function getTab(level = getLevel()){
-      return Math.round(Math.min(IMAGE_SIZE / level.cols, IMAGE_SIZE / level.rows) * 0.24);
+      const imageSize = level.size || IMAGE_SIZE;
+      return Math.round(Math.min(imageSize / level.cols, imageSize / level.rows) * 0.24);
+    }
+
+    function getLevelImageSize(level = getLevel()){
+      return level.size || IMAGE_SIZE;
     }
 
     function getPlacedPieceScale(){
@@ -1111,6 +1137,9 @@ const FINAL_SONG_END = 33;
       el.screenFade.classList.remove("show");
       clearTrayTopBanner();
       setAboutContent(levelIndex === 2 ? "flock" : "sorceress");
+      if(levelIndex !== 2){
+        el.about.classList.remove("aboutGlow");
+      }
       state.currentLevel = levelIndex;
       applyTheme(levelIndex === 2 ? "flock" : "default");
       document.documentElement.style.setProperty("--board-size-current", levelIndex === 2 ? "var(--board-size-flock)" : "var(--board-size)");
@@ -1162,6 +1191,11 @@ const FINAL_SONG_END = 33;
       setResizableLayout(true);
       el.screenFade.classList.remove("show");
       setAboutContent("flock");
+      state.aboutSongUnlocked = false;
+      el.about.classList.remove("aboutGlow");
+      el.aboutImageLink.href = "#";
+      el.aboutImageLink.style.pointerEvents = "none";
+      primeBellAudioPools();
       renderBellTargets();
       updateBellStatus();
       save();
@@ -1200,6 +1234,7 @@ const FINAL_SONG_END = 33;
       applyTheme("default");
       el.screenFade.classList.remove("show");
       setAboutContent("sorceress");
+      el.about.classList.remove("aboutGlow");
       rects();
       renderSearchTargets();
       renderSearchPanel();
@@ -1275,7 +1310,16 @@ function renderBellTargets(){
     spot.style.width = `${(target.radius * 2 / BELL_IMAGE_SIZE) * 100}%`;
     spot.style.height = `${(target.radius * 2 / BELL_IMAGE_SIZE) * 100}%`;
     spot.setAttribute("aria-label", `Bell ${target.label}`);
-    spot.addEventListener("click", () => toggleBellTarget(target.id));
+    spot.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      toggleBellTarget(target.id);
+    });
+    spot.addEventListener("keydown", (event) => {
+      if(event.key === "Enter" || event.key === " "){
+        event.preventDefault();
+        toggleBellTarget(target.id);
+      }
+    });
     bellLayer.appendChild(spot);
   });
 }
@@ -1357,12 +1401,37 @@ function setAboutContent(mode){
   if(mode === "flock"){
     el.aboutImage.src = "flock.jpg";
     el.aboutImage.alt = "Lightning Struck a Flock of Witches, William Holbrook Beard, ca. 1859–1896";
+    if(state.aboutSongUnlocked){
+      el.aboutImageLink.href = "https://youtu.be/ytpqcJ1IfoA?si=wz41FFHPtnW_4dgE";
+      el.aboutImageLink.style.pointerEvents = "auto";
+    }else{
+      el.aboutImageLink.href = "#";
+      el.aboutImageLink.style.pointerEvents = "none";
+    }
     el.aboutText.innerHTML = `William Holbrook Beard, <em>Lightning Struck a Flock of Witches</em>, ca. 1859–1896, cortesia do <a href="https://americanart.si.edu/artwork/lightning-struck-flock-witches-114182">Smithsonian American Art Museum</a>.`;
     return;
   }
+  el.aboutImageLink.href = "#";
+  el.aboutImageLink.style.pointerEvents = "none";
   el.aboutImage.src = "sorceress.jpg";
   el.aboutImage.alt = "L’Envoûteuse (A Feiticeira), Georges Merle, 1883";
   el.aboutText.innerHTML = `L’Envoûteuse (A Feiticeira) Georges Merle - 1883, Courtesia do <a href="https://www.artsbma.org/collection/lenvouteuse-the-sorceress/">Birmingham Museum of Art</a>`;
+}
+
+function unlockAboutSongLink(){
+  if(state.aboutSongUnlocked) return;
+  state.aboutSongUnlocked = true;
+  el.about.classList.add("aboutGlow");
+  el.aboutImageLink.href = "https://youtu.be/ytpqcJ1IfoA?si=wz41FFHPtnW_4dgE";
+  el.aboutImageLink.style.pointerEvents = "auto";
+}
+
+function turnOffBellReveals(){
+  el.searchLayer.querySelectorAll(".bellReveal").forEach((reveal) => {
+    reveal.classList.remove("show");
+    reveal.classList.remove("lit");
+    reveal.classList.remove("blink");
+  });
 }
 
 function resetBellMelody(round = 0){
@@ -1481,6 +1550,8 @@ function updateBellStatus(){
   const melody = getBellMelody();
   updateProgressDisplay();
   if(state.bellStep >= melody.length && state.bellRound === 0){
+    unlockAboutSongLink();
+    turnOffBellReveals();
     el.complete.textContent = "Canção final começando...";
     el.complete.classList.add("show");
     queueExtendedBellMelody();
@@ -1679,8 +1750,9 @@ function renderSearchPanel(){
 
     function createPieces(){
       const level = getLevel();
-      const pw = IMAGE_SIZE / level.cols;
-      const ph = IMAGE_SIZE / level.rows;
+      const imageSize = getLevelImageSize(level);
+      const pw = imageSize / level.cols;
+      const ph = imageSize / level.rows;
       const tab = getTab(level);
       const createdPieces = [];
       for(let row = 0; row < level.rows; row++){
@@ -1737,8 +1809,9 @@ function renderSearchPanel(){
       const ctx = canvas.getContext("2d");
       const sx = tab;
       const sy = tab;
-      const sourceScaleX = state.image.naturalWidth / IMAGE_SIZE;
-      const sourceScaleY = state.image.naturalHeight / IMAGE_SIZE;
+      const imageSize = getLevelImageSize();
+      const sourceScaleX = state.image.naturalWidth / imageSize;
+      const sourceScaleY = state.image.naturalHeight / imageSize;
       ctx.save();
       ctx.beginPath();
       tracePiece(ctx, sx, sy, pw, ph, tab, edge);
@@ -1878,7 +1951,8 @@ function renderSearchPanel(){
       piece.node.style.height = `${piece.h * scale}px`;
     }
 
-    function placeOnBoard(piece){
+    function placeOnBoard(piece, options = {}){
+      const {playSound = true, relayout = true, recount = true} = options;
       if(!piece.placed){
         piece.placed = true;
         piece.node.classList.add("placed");
@@ -1890,9 +1964,9 @@ function renderSearchPanel(){
       piece.node.style.top = `${piece.targetY * state.scale}px`;
       piece.currentX = state.boardRect.left + piece.targetX * state.scale;
       piece.currentY = state.boardRect.top + piece.targetY * state.scale;
-      playPlaceSound();
-      layoutLoosePieces();
-      updatePlaced();
+      if(playSound) playPlaceSound();
+      if(relayout) layoutLoosePieces();
+      if(recount) updatePlaced();
     }
 
     function backToTray(piece){
@@ -2049,7 +2123,7 @@ function renderSearchPanel(){
     function rects(){
       state.boardRect = el.board.getBoundingClientRect();
       state.trayRect = el.tray.getBoundingClientRect();
-      state.scale = state.boardRect.width / IMAGE_SIZE;
+      state.scale = state.boardRect.width / getLevelImageSize();
     }
 
     function setResizableLayout(enabled){
@@ -2192,15 +2266,11 @@ function renderSearchPanel(){
       }
       state.pieces.forEach((piece) => {
         if(ids.has(piece.id)){
-          placeOnBoard(piece);
+          placeOnBoard(piece, {playSound:false, relayout:false, recount:false});
         }
       });
       shuffleLoose();
-      state.pieces.forEach((piece) => {
-        if(piece.placed){
-          placeOnBoard(piece);
-        }
-      });
+      updatePlaced();
       if(ids.size === getLevelTotal() && state.currentLevel === LEVELS.length - 1){
         showEmpty();
       }

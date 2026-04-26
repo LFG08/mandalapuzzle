@@ -1970,6 +1970,9 @@ function renderSearchPanel(){
         document.body.appendChild(piece.node);
         piece.node.style.position = "fixed";
         placeAt(piece, rect.left, rect.top);
+        if(source === el.tray){
+          relayoutTray(piece);
+        }
       }
       addEventListener("pointermove", moveDrag);
       addEventListener("pointerup", endDrag, {once:true});
@@ -2039,28 +2042,7 @@ function renderSearchPanel(){
       piece.node.classList.remove("placed");
       setPieceScale(piece, state.scale);
       piece.node.style.position = "absolute";
-      const trayLeft = state.trayRect?.left ?? 0;
-      const trayTop = state.trayRect?.top ?? 0;
-      const trayRight = state.trayRect?.right ?? 0;
-      const trayBottom = state.trayRect?.bottom ?? 0;
-      const localLeft = piece.currentX - trayLeft + el.tray.scrollLeft;
-      const localTop = piece.currentY - trayTop + el.tray.scrollTop;
-      const scaledW = piece.w * state.scale;
-      const scaledH = piece.h * state.scale;
-      const maxLeft = Math.max(0, el.tray.scrollWidth - scaledW);
-      const maxTop = Math.max(0, el.tray.scrollHeight - scaledH);
-      const droppedInsideTray = piece.currentX + scaledW * 0.5 >= trayLeft
-        && piece.currentX + scaledW * 0.5 <= trayRight
-        && piece.currentY + scaledH * 0.5 >= trayTop
-        && piece.currentY + scaledH * 0.5 <= trayBottom;
-      if(droppedInsideTray){
-        piece.sourceX = Math.max(0, Math.min(maxLeft, localLeft));
-        piece.sourceY = Math.max(0, Math.min(maxTop, localTop));
-      }
-      piece.node.style.left = `${piece.sourceX ?? 0}px`;
-      piece.node.style.top = `${piece.sourceY ?? 0}px`;
-      piece.currentX = trayLeft + (piece.sourceX ?? 0);
-      piece.currentY = trayTop + (piece.sourceY ?? 0);
+      relayoutTray();
       updatePlaced();
     }
 
@@ -2113,6 +2095,11 @@ function renderSearchPanel(){
         rowHeight = Math.max(rowHeight, scaledH);
       });
       el.tray.style.minHeight = `${Math.max(y + rowHeight + pad, 420)}px`;
+    }
+
+    function relayoutTray(excludedPiece = null){
+      const loose = state.pieces.filter((piece) => !piece.placed && piece !== excludedPiece);
+      layoutLoosePieces(loose);
     }
 
     function sleep(ms){

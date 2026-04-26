@@ -23,6 +23,7 @@
       --board-size:768px;
       --board-size-flock:860px;
       --board-size-current:var(--board-size);
+      --menu-width:680px;
     }
     *{box-sizing:border-box}
     body{
@@ -43,7 +44,7 @@
     }
     .layout{
       display:grid;
-      grid-template-columns:minmax(0,1fr) 340px;
+      grid-template-columns:minmax(0,1fr) var(--menu-width);
       gap:16px;
       align-items:start;
     }
@@ -65,6 +66,22 @@
       background:linear-gradient(rgba(255,247,235,.08),rgba(255,247,235,.08));
       box-shadow:inset 0 0 0 1px rgba(255,240,220,.12);
     }
+    .board.levelTransitionGlow{
+      animation:boardTransitionGlow .9s ease-in-out 1;
+    }
+    .boardLevelFade{
+      position:absolute;
+      inset:0;
+      opacity:0;
+      pointer-events:none;
+      z-index:6;
+      background-size:100% 100%;
+      background-repeat:no-repeat;
+      background-position:center;
+      transition:opacity 1s ease;
+      filter:brightness(1.08) saturate(1.08);
+    }
+    .boardLevelFade.show{opacity:1}
     .boardWrap,.side,.panel,.btn,.tray,.magicSlot{
       transition:background 1s ease,border-color 1s ease,box-shadow 1s ease,color 1s ease;
     }
@@ -554,6 +571,11 @@
       45%{opacity:.2;filter:brightness(.7)}
       100%{opacity:1;filter:brightness(1.18) drop-shadow(0 0 20px rgba(190,228,255,.55))}
     }
+    @keyframes boardTransitionGlow{
+      0%{filter:brightness(1)}
+      40%{filter:brightness(1.22) drop-shadow(0 0 26px rgba(255,236,190,.42))}
+      100%{filter:brightness(1)}
+    }
         .credits{margin:16px 4px 0;color:var(--muted);font-size:.82rem;line-height:1.5}
     .credits .handbellsCredit,
     .credits .finalSongCredit{display:none}
@@ -665,7 +687,7 @@
     const LEVELS = [
       {name:"L'envouteuse Level 1", image:IMAGE_SRC, guideImage:IMAGE_SRC, guideMaxOpacity:0.3, cols:11, rows:6, size:768},
       {name:"L'envouteuse Level 2", image:IMAGE_SRC_LEVEL2, guideImage:"l'envouteuse_level1.png", guideMaxOpacity:1, cols:9, rows:3, size:768},
-      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:14, rows:14, size:1280}
+      {name:"Flock of Witches", image:IMAGE_SRC_LEVEL3, guideImage:IMAGE_SRC_LEVEL3, guideMaxOpacity:0.35, cols:10, rows:10, size:1280}
     ];
     const THEMES = {
       default: {
@@ -826,7 +848,23 @@ const BELL_FIRST_MELODY = [
   {id:"A", staccato:false},
   {id:"B", staccato:false}
 ];
-const BELL_MELODIES = [BELL_FIRST_MELODY, BELL_FIRST_MELODY];
+const BELL_SECOND_MELODY = [
+  {id:"A", staccato:false},
+  {id:"Eb", staccato:false},
+  {id:"A", staccato:false},
+  {id:"A", staccato:false},
+  {id:"Eb", staccato:false},
+  {id:"Eb", staccato:false},
+  {id:"A", staccato:false},
+  {id:"A", staccato:false},
+  {id:"A", staccato:false},
+  {id:"Eb", staccato:false},
+  {id:"A", staccato:false},
+  {id:"A", staccato:false},
+  {id:"A", staccato:false},
+  {id:"Eb", staccato:false}
+];
+const BELL_MELODIES = [BELL_FIRST_MELODY, BELL_SECOND_MELODY];
 const STACCATO_DURATION = 1000;
 const STACCATO_FADE_DURATION = 90;
 const BELL_AUDIO_VOICES = 24;
@@ -850,10 +888,6 @@ const FINAL_SONG_END = 33;
         state.bellFound = Array.isArray(saved.bellFound) ? saved.bellFound : [];
         state.bellRound = typeof saved.bellRound === "number" ? clamp(saved.bellRound, 0, BELL_MELODIES.length - 1) : 0;
         state.bellStep = typeof saved.bellStep === "number" ? clamp(saved.bellStep, 0, getBellMelody().length) : 0;
-        if(state.bellRound === 1 && state.bellStep < getBellMelody().length){
-          state.bellRound = 0;
-          state.bellStep = 0;
-        }
         state.bellFound = [...new Set(getBellMelody().slice(0, state.bellStep).map((step) => step.id))];
         state.mode = ["search", "bells"].includes(saved.mode) ? saved.mode : "puzzle";
         state.volume = typeof saved.volume === "number" ? clamp(saved.volume, 0, 1) : (saved.sound === false ? 0 : 0.75);
@@ -1047,7 +1081,14 @@ const FINAL_SONG_END = 33;
         }
         return sum + (Array.isArray(ids) ? ids.length : 0);
       }, 0);
-      return levelProgress + state.searchFound.length + state.bellStep;
+      return levelProgress + state.searchFound.length + getBellProgressCount();
+    }
+
+    function getBellProgressCount(){
+      if(state.bellRound <= 0){
+        return clamp(state.bellStep, 0, BELL_FIRST_MELODY.length);
+      }
+      return BELL_FIRST_MELODY.length + clamp(state.bellStep, 0, BELL_SECOND_MELODY.length);
     }
 
     function updateProgressDisplay(){
@@ -1061,7 +1102,7 @@ const FINAL_SONG_END = 33;
 
     function getGrandTotal(){
       const puzzleTotal = LEVELS.reduce((sum, level) => sum + (level.cols * level.rows), 0);
-      return puzzleTotal + MAGIC_TARGETS.length + BELL_FIRST_MELODY.length;
+      return puzzleTotal + MAGIC_TARGETS.length + BELL_FIRST_MELODY.length + BELL_SECOND_MELODY.length;
     }
 
     function getTab(level = getLevel()){
@@ -1301,7 +1342,7 @@ function toggleBellTarget(targetId){
   const expected = melody[state.bellStep];
   if(!expected || targetId !== expected.id){
     playBellSound(targetId, false);
-    resetBellMelody();
+    resetBellMelody(state.bellRound);
     return;
   }
 
@@ -1439,15 +1480,7 @@ function beginFinalBellChallenge(){
     state.bellRound = 1;
     updateBellStatus();
     save();
-  }, 1500);
-}
-
-function queueExtendedBellMelody(){
-  clearBellReplayTimer();
-  state.bellReplayTimer = setTimeout(() => {
-    state.bellReplayTimer = null;
-    playFinalBellSong();
-  }, BELL_REPLAY_DELAY);
+  }, 2000);
 }
 
 function revealBellTarget(targetId){
@@ -1489,7 +1522,7 @@ function playFinalBellSong(){
   clearBellSongTimers();
   state.bellSongPlaying = true;
   state.bellRound = 1;
-  state.bellStep = BELL_FIRST_MELODY.length;
+  state.bellStep = BELL_SECOND_MELODY.length;
   el.searchLayer.querySelectorAll(".bellReveal").forEach((reveal) => reveal.classList.add("lit"));
   updateProgressDisplay();
   el.complete.textContent = "Canção final.";
@@ -1500,7 +1533,7 @@ function playFinalBellSong(){
     if(finished) return;
     finished = true;
     state.bellSongPlaying = false;
-    state.bellStep = BELL_FIRST_MELODY.length;
+    state.bellStep = BELL_SECOND_MELODY.length;
     if(state.bellSongAudio){
       state.bellSongAudio.pause();
       state.bellSongAudio = null;
@@ -1548,11 +1581,11 @@ function updateBellStatus(){
     el.complete.classList.add("show");
     beginFinalBellChallenge();
   }else if(state.bellStep >= melody.length && state.bellRound === 1){
-    el.complete.textContent = "Canção final começando...";
+    el.complete.textContent = "Sequência correta! Danse Macabre começando...";
     el.complete.classList.add("show");
-    queueExtendedBellMelody();
+    playFinalBellSong();
   }else if(state.bellRound === 1){
-    el.complete.textContent = "Repita a sequência para tocar Danse Macabre.";
+    el.complete.textContent = "Toque: A, Eb, A, A, Eb, Eb, A, A, A, Eb, A, A, A, Eb.";
     el.complete.classList.add("show");
   }else{
     el.complete.textContent = "Quebra-cabeça concluído.";
@@ -2048,13 +2081,25 @@ function renderSearchPanel(){
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    async function playBoardImageTransition(nextImage){
+      const fade = document.createElement("div");
+      fade.className = "boardLevelFade";
+      fade.style.backgroundImage = `url("${nextImage}")`;
+      el.board.appendChild(fade);
+      el.board.classList.add("levelTransitionGlow");
+      await sleep(260);
+      fade.classList.add("show");
+      await sleep(980);
+      fade.remove();
+      el.board.classList.remove("levelTransitionGlow");
+    }
+
     async function transitionLevelOneToTwo(){
       state.transitioning = true;
       state.guide = 1;
       clearEmpty();
       save();
-      state.pieces.forEach((piece) => piece.node.classList.add("fading-out"));
-      await sleep(1000);
+      await playBoardImageTransition(LEVELS[1].image);
       buildLevel(1);
       state.pieces.forEach((piece, index) => {
         piece.node.classList.add("fading-in");
@@ -2063,6 +2108,13 @@ function renderSearchPanel(){
       });
       await sleep(1700);
       state.transitioning = false;
+    }
+
+    async function transitionFlockToBellStage(){
+      state.transitioning = true;
+      save();
+      await playBoardImageTransition(IMAGE_SRC_LEVEL3);
+      buildBellStage();
     }
 
     function updatePlaced(){
@@ -2092,11 +2144,7 @@ function renderSearchPanel(){
           el.complete.classList.add("show");
           clearEmpty();
           if(!state.transitioning){
-            state.transitioning = true;
-            save();
-            setTimeout(() => {
-              buildBellStage();
-            }, 700);
+            transitionFlockToBellStage();
           }
         }
       }

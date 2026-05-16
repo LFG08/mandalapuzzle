@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>bruxadafloresta</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preload" as="image" href="bruxadafloresta.webp"><!-- UPDATED: preload the main mandala image so large source files start loading earlier -->
+<link rel="preload" as="image" href="gabarito_overlay_roxo.webp"><!-- UPDATED: preload the default answer overlay because it is used on first load -->
+<script>
+try{
+if(sessionStorage.getItem("baba_center_next_level") === "true"){
+document.documentElement.classList.add("from-jigsaw-transition");
+}
+}catch(_error){}
+</script>
+
+<style>
+@property --level-fade-radius{
+syntax:"<percentage>";
+inherits:false;
+initial-value:-28%;
+}
+
+:root{
+--mandala-display-width:3072px;
+--mandala-display-height:3072px;
+--mandala-render-width:var(--mandala-display-width);
+--mandala-render-height:var(--mandala-display-height);
+--mobile-menu-fixed-mobile-scale:0.82;
+--mobile-menu-ui-scale:1;
+--mobile-menu-base-width:250px;
+}
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:var(--mandala-display-width); /* UPDATED: single source of truth for displayed puzzle size */
+height:var(--mandala-display-height); /* UPDATED: single source of truth for displayed puzzle size */
+contain:layout paint;
+transition:transform 0.25s ease;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-width); /* UPDATED: render the main mandala at full display size for fine detail */
+height:var(--mandala-display-height); /* UPDATED: render the main mandala at full display size for fine detail */
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-width); /* UPDATED: keep overlay size tied to the displayed puzzle size */
+height:var(--mandala-display-height); /* UPDATED: keep overlay size tied to the displayed puzzle size */
+pointer-events:none;
+}
+
+#regionHints{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-width);
+height:var(--mandala-display-height);
+pointer-events:none;
+z-index:3;
+}
+
+.hint-region{
+position:absolute;
+border:6px solid rgba(255, 230, 120, 0);
+box-shadow:0 0 0 rgba(255, 230, 120, 0);
+opacity:0;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(255, 230, 120, 0.95);
+box-shadow:0 0 26px rgba(255, 230, 120, 0.95), inset 0 0 18px rgba(255, 230, 120, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(0.996);}
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-width); /* UPDATED: each clipped answer matches the displayed puzzle size */
+height:var(--mandala-display-height); /* UPDATED: each clipped answer matches the displayed puzzle size */
+
+background-image:url("gabarito_overlay_roxo.webp");
+background-size:var(--mandala-display-width) var(--mandala-display-height); /* UPDATED: keep every full-size overlay aligned with the mandala */
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(0, 17, 27);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+#levelRevealOverlay{
+position:fixed;
+inset:0;
+z-index:100000;
+pointer-events:none;
+display:none;
+background:#000;
+--level-fade-radius:-28%;
+-webkit-mask-image:radial-gradient(circle at center, transparent 0%, transparent var(--level-fade-radius), #000 calc(var(--level-fade-radius) + 24%));
+mask-image:radial-gradient(circle at center, transparent 0%, transparent var(--level-fade-radius), #000 calc(var(--level-fade-radius) + 24%));
+}
+
+.from-jigsaw-transition #levelRevealOverlay{
+display:block;
+animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
+}
+
+@keyframes centerReveal{
+0%{--level-fade-radius:-28%}
+28%{--level-fade-radius:28%}
+66%{--level-fade-radius:95%}
+100%{--level-fade-radius:150%}
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+  position:fixed;
+  top:120px;
+  left:30px;   /* ← anchor it here */
+  width:calc(var(--mobile-menu-base-width) * var(--mobile-menu-ui-scale));
+
+  max-height:70vh;
+
+  background:rgba(0,0,0,0.800);
+  border:1px solid white;
+  color:white;
+
+  font-family:Times New Roman, Times, serif;
+  font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+
+
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+  box-sizing:border-box;
+}
+
+#wordMenu.mobile-pinned{
+  left:auto;
+  right:auto;
+  top:auto;
+  bottom:auto;
+}
+
+#menuHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  touch-action:none;
+}
+/* LEFT SIDE */
+.title {
+  flex-shrink:inherit;
+
+  white-space: nowrap;
+
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  margin-left:calc(8px * var(--mobile-menu-ui-scale));
+  margin-top:calc(8px * var(--mobile-menu-ui-scale));
+  margin-bottom:calc(8px * var(--mobile-menu-ui-scale));
+  display:flex;
+  align-items:center;
+  gap:calc(6px * var(--mobile-menu-ui-scale));
+}
+
+/* COUNTER */
+#counter {
+  white-space: nowrap;
+}
+
+/* ================= INFO ================= */
+
+.info-btn,
+.menu-btn,
+#toggleMenu{
+  
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  
+  width:calc(14px * var(--mobile-menu-ui-scale));
+  height:calc(14px * var(--mobile-menu-ui-scale));
+  border-radius:50%;
+  border:none;
+  font-size:calc(11px * var(--mobile-menu-ui-scale));
+  cursor:pointer;
+  background:#ccc;
+  line-height:calc(14px * var(--mobile-menu-ui-scale));
+  padding:0;
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+}
+  .menu-btn{
+  font-size:calc(8px * var(--mobile-menu-ui-scale));
+  }
+
+.info-wrapper{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.info-wrapper .info-btn{
+  touch-action:manipulation;
+}
+
+.tooltip{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+
+  min-width:180px;
+  max-width:min(320px, 80vw);
+
+  padding:8px 10px;
+  border-radius:6px;
+
+  background:rgba(0,0,0,0.92);
+  color:white;
+  font-size:12px;
+  line-height:1.35;
+
+  white-space:normal;
+  overflow-wrap:break-word;
+  word-break:break-word;
+
+  box-sizing:border-box;
+  z-index:9999;
+
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .18s ease, visibility .18s ease;
+}
+
+.tooltip.help-tooltip{
+  width:max-content;
+  max-width:min(320px, 80vw);
+}
+
+/* desktop */
+.info-wrapper:hover .tooltip,
+.info-wrapper:focus-within .tooltip{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+/* mobile/touch */
+.info-wrapper.active .tooltip{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+  
+.tooltip a,
+.highlight {
+  text-decoration: none;
+}
+
+.highlight {
+  color: #0097c5;
+  text-decoration: none
+}
+
+.highlight:hover{
+  text-decoration: none;
+}
+
+#wordList{
+flex:1;
+overflow-y:auto;
+
+list-style:none;
+margin:0;
+padding:8px;
+line-height:1.4;
+}
+
+#wordList li{
+padding:4px 0;
+}
+
+#wordList li.hidden-word{
+cursor:text;
+}
+
+#wordList li[data-editing="true"]{
+background:rgba(255,255,255,0.12);
+outline:1px dashed rgba(255,255,255,0.4);
+}
+
+#wordList a[href] {
+  color: rgb(0, 134, 151);
+  text-decoration: underline;
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+/* hidden words - when found */
+.hidden-word.found{
+color:#f5e6d3;
+text-decoration: line-through;
+}
+
+.hidden-word.hint-revealed{
+color:#f5e6d3;
+text-decoration:none;
+opacity:1;
+}
+
+.hidden-word.found.hint-revealed{
+text-decoration:line-through;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#wordTooltip{
+position:fixed;
+background:rgba(0,0,0,0.85);
+color:#f5e6d3;
+padding:6px 10px;
+font-size:12px;
+font-family:Georgia, serif;
+border:1px solid #f5e6d3;
+pointer-events:none;
+opacity:0;
+transition:opacity 0.15s;
+z-index:999;
+}
+
+#hintCounter{
+position:fixed;
+right:18px;
+bottom:18px;
+z-index:25;
+background:rgba(0,0,0,0.82);
+border:1px solid #f5e6d3;
+color:#f5e6d3;
+font-family:Times New Roman, Times, serif;
+font-size:16px;
+padding:8px 12px;
+box-sizing:border-box;
+}
+
+#hintCounterTooltip{
+position:absolute;
+right:0;
+bottom:calc(100% + 8px);
+width:240px;
+background:rgba(0,0,0,0.92);
+border:1px solid #f5e6d3;
+color:#f5e6d3;
+font-size:12px;
+line-height:1.35;
+padding:8px 10px;
+box-sizing:border-box;
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+transition:opacity .18s ease, visibility .18s ease;
+}
+
+#hintCounter:hover #hintCounterTooltip,
+#hintCounter:focus-within #hintCounterTooltip{
+opacity:1;
+visibility:visible;
+}
+
+#overlaySelector,
+#clearButton,
+#toggleClickMode,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:8px;
+font-family:Times New Roman, Times, serif;
+cursor:pointer;
+
+}
+
+#mobileMenuOptions{
+display:none;
+border-top:1px solid white;
+padding:calc(8px * var(--mobile-menu-ui-scale));
+gap:calc(6px * var(--mobile-menu-ui-scale));
+flex-direction:column;
+font-size:inherit;
+font-family:inherit;
+}
+
+#mobileMenuOptions label{
+display:flex;
+flex-direction:column;
+gap:calc(4px * var(--mobile-menu-ui-scale));
+font-size:inherit;
+}
+
+#mobileMenuOptions input,
+#mobileMenuOptions select{
+width:100%;
+font-size:inherit;
+font-family:inherit;
+}
+
+
+@media (max-width: 900px) and (any-pointer: coarse){
+  :root{
+    --mobile-menu-ui-scale:2;
+    --mobile-menu-base-width:250px;
+  }
+
+  #wordMenu{
+    width:fit-content;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+
+  #menuHeader{
+    gap:1px;
+    padding-right:1px;
+  }
+
+  .title{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+    margin-left:2px;
+    margin-right:1px;
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+
+  #counter{
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+    white-space:nowrap;
+  }
+
+  .info-btn,
+  .menu-btn,
+  #toggleMenu{
+    width:14px;
+    height:14px;
+    min-width:14px;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    
+    line-height:1;
+    margin-right:1px;
+    overflow:hidden;
+  }
+  
+  #wordMenu.pinned-bottom-collapsed{
+    left:8px !important;
+    right:auto !important;
+    bottom:auto !important;
+    top:2312px !important;
+    max-height:none;
+  }
+
+  #wordMenu.pinned-top-left{
+    top:8px !important;
+    left:8px !important;
+    right:auto !important;
+    bottom:auto !important;
+  }
+
+  #wordMenu.pinned-top-right{
+    top:8px !important;
+    left:2874px !important;
+    right:auto !important;
+    bottom:auto !important;
+  }
+
+  #mobileMenuOptions{
+    display:flex;
+  }
+
+  #mobileMenuOptions label{
+    font-size: inherit
+  }
+
+  .tooltip.help-tooltip{
+    width:230px;
+  }
+
+
+  #overlaySelector,
+  #clearButton,
+  #toggleClickMode,
+  #rotateMandala{
+    padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+}
+
+</style>
+
+</head>
+
+<body>
+<div id="levelRevealOverlay"></div>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class="title">bruxadafloresta</span>
+
+<div class="title">
+<span id="counter"></span>
+
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+
+    <span class="tooltip">
+      Seres e símbolos do mar na mitologia grega... e uns animais marinhos aleatórios 🐟.
+    </span>
+  </span>
+  <span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite.
+      Para dicas, clique com o botão direito do mouse no menu.
+      1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!
+    </span>
+  </span>
+  <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleMenu">–</button>
+</div>
+</div>
+
+<!-- ===== Lista Palavras ===== -->
+
+<ul id="wordList">
+
+<li id="menu-mystical-being" class="hidden-word" data-hidden="mystical being" data-def="mystical being"></li>
+<li id="menu-caramujo" class="hidden-word" data-hidden="caramujo" data-def="caramujo"></li>
+<li id="menu-chapeu-de-bruxa" class="hidden-word" data-hidden="chapéu de bruxa" data-def="chapéu de bruxa"></li>
+<li id="menu-mulher" class="hidden-word" data-hidden="mulher" data-def="mulher"></li>
+<li id="menu-coruja" class="hidden-word" data-hidden="coruja" data-def="coruja"></li>
+<li id="menu-Magia" class="hidden-word" data-hidden="Magia" data-def="Magia"></li>
+<li id="menu-Pocao-01" class="hidden-word" data-hidden="Poção_01" data-def="Poção_01"></li>
+<li id="menu-besouro" class="hidden-word" data-hidden="besouro" data-def="besouro"></li>
+<li id="menu-Floresta" class="hidden-word" data-hidden="Floresta" data-def="Floresta"></li>
+<li id="menu-Sapo-01" class="hidden-word" data-hidden="Sapo_01" data-def="Sapo_01"></li>
+<li id="menu-Deusa" class="hidden-word" data-hidden="Deusa" data-def="Deusa"></li>
+<li id="menu-Vasoura" class="hidden-word" data-hidden="Vasoura" data-def="Vasoura"></li>
+<li id="menu-Sapo-02" class="hidden-word" data-hidden="Sapo_02" data-def="Sapo_02"></li>
+<li id="menu-Bruxa" class="hidden-word" data-hidden="Bruxa" data-def="Bruxa"></li>
+<li id="menu-Rosto" class="hidden-word" data-hidden="Rosto" data-def="Rosto"></li>
+<li id="menu-Sapo-Palavra" class="hidden-word" data-hidden="Sapo_Palavra" data-def="Sapo_Palavra"></li>
+<li id="menu-Joaninha" class="hidden-word" data-hidden="Joaninha" data-def="Joaninha"></li>
+<li id="menu-Pocao-02" class="hidden-word" data-hidden="Poção_02" data-def="Poção_02"></li>
+<li id="menu-Baba-Yaga" class="hidden-word" data-hidden="Baba Yaga" data-def="Baba Yaga"></li>
+<li id="menu-Aranha" class="hidden-word" data-hidden="Aranha" data-def="Aranha"></li>
+<li id="menu-Solanacea" class="hidden-word" data-hidden="Solanacea" data-def="Solanacea"></li>
+<li id="menu-Caldeirao" class="hidden-word" data-hidden="Caldeirão" data-def="Caldeirão"></li>
+<li id="menu-Lagartixa" class="hidden-word" data-hidden="Lagartixa" data-def="Lagartixa"></li>
+<li id="menu-Salem" class="hidden-word" data-hidden="Salém" data-def="Salém"></li>
+<li id="menu-Cobra" class="hidden-word" data-hidden="Cobra" data-def="Cobra"></li>
+<li id="menu-Corvo" class="hidden-word" data-hidden="Corvo" data-def="Corvo"></li>
+<li id="menu-Circe" class="hidden-word" data-hidden="Circe" data-def="Circe"></li>
+<li id="menu-Medeia" class="hidden-word" data-hidden="Medeia" data-def="Medeia"></li>
+<li id="menu-Vela-do-Diabo" class="hidden-word" data-hidden="Vela do Diabo" data-def="Vela do Diabo"></li>
+<li id="menu-Pa" class="hidden-word" data-hidden="Pã" data-def="Pã"></li>
+<li id="menu-Mnadragora" class="hidden-word" data-hidden="Mnadrágora" data-def="Mnadrágora"></li>
+<li id="menu-Grimorio" class="hidden-word" data-hidden="Grimório" data-def="Grimório"></li>
+<li id="menu-Ancia" class="hidden-word" data-hidden="Anciã" data-def="Anciã"></li>
+<li id="menu-Gato-Preto" class="hidden-word" data-hidden="Gato Preto" data-def="Gato Preto"></li>
+<li id="menu-Pocao-03" class="hidden-word" data-hidden="Poção_03" data-def="Poção_03"></li>
+<li id="menu-Aradia" class="hidden-word" data-hidden="Aradia" data-def="Aradia"></li>
+<li id="menu-Minhoca" class="hidden-word" data-hidden="Minhoca" data-def="Minhoca"></li>
+<li id="menu-Pocao-04" class="hidden-word" data-hidden="Poção_04" data-def="Poção_04"></li>
+</ul>
+
+<div id="wordTooltip"></div>
+
+<div id="hintCounter" tabindex="0">
+  <span id="hintCounterValue">Dicas: 10</span>
+  <span id="hintCounterTooltip">somente 10 dicas disponíveis. encontre as poções para adquirir mais dicas</span>
+</div>
+
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+
+<select id="overlaySelector">
+<option value="gabarito_overlay_roxo.webp">Roxo</option>
+<option value="gabarito_overlay_verde.webp">Verde</option>
+<option value="gabarito_overlay_laranja.webp">Laranja</option>
+</select>
+
+<div id="mobileMenuOptions">
+  <label for="mobileMenuPin">
+    Fixação menu (mobile)
+    <select id="mobileMenuPin">
+      <option value="free">Livre (arrastar)</option>
+      <option value="bottom-collapsed">Recolhido inferior</option>
+      <option value="top-left">Superior esquerdo</option>
+      <option value="top-right">Superior direito</option>
+    </select>
+  </label>
+</div>
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container">
+
+<img src="bruxadafloresta.webp" usemap="#image-map" width="3072" height="3072" decoding="async" fetchpriority="high"><!-- UPDATED: explicit dimensions for the real full-resolution mandala -->
+
+<div id="answersOverlay"></div>
+<div id="regionHints">
+  <div id="regionHint-1" class="hint-region" style="left:0;top:0;width:3072px;height:1024px;"></div>
+  <div id="regionHint-2" class="hint-region" style="left:0;top:1024px;width:3072px;height:1024px;"></div>
+  <div id="regionHint-3" class="hint-region" style="left:0;top:2048px;width:3072px;height:1024px;"></div>
+</div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
+
+<map name="image-map">
+    <area id="area-mystical-being" alt="mystical being" title="mystical being" href="" coords="2738,2959,2719,2994,2757,3021,2781,3064,2836,3059,2809,2991,2792,2972,2768,2964" shape="poly" onclick="toggleAnswer(this,'mystical being'); return false;">
+
+    <area id="area-caramujo" alt="caramujo" title="caramujo" href="" coords="2282,3070,2296,3048,2353,3045,2355,3073" shape="poly" onclick="toggleAnswer(this,'caramujo'); return false;">
+
+    <area id="area-chapeu-de-bruxa" alt="chapéu de bruxa" title="chapéu de bruxa" href="" coords="920,3035,974,3021,966,3073,917,3073" shape="poly" onclick="toggleAnswer(this,'chapéu de bruxa'); return false;">
+
+    <area id="area-mulher" alt="mulher" title="mulher" href="" coords="461,2598,458,2560,472,2528,510,2500,545,2503,526,2465,518,2419,553,2408,583,2416,608,2435,608,2471,608,2509,594,2528,570,2525,581,2547,570,2574,537,2593,505,2617" shape="poly" onclick="toggleAnswer(this,'mulher'); return false;">
+
+    <area id="area-coruja" alt="coruja" title="coruja" href="" coords="1454,2530,1471,2517,1498,2555,1471,2579" shape="poly" onclick="toggleAnswer(this,'coruja'); return false;">
+
+    <area id="area-Magia" alt="Magia" title="Magia" href="" coords="2127,2514,2160,2552,2214,2490,2190,2481" shape="poly" onclick="toggleAnswer(this,'Magia'); return false;">
+
+    <area id="area-Pocao-01" alt="Poção_01" title="Poção_01" href="" coords="811,2246,844,2197,876,2219,841,2254" shape="poly" onclick="toggleAnswer(this,'Poção_01'); return false;">
+
+    <area id="area-besouro" alt="besouro" title="besouro" href="" coords="992,2029,1033,1991,1066,1999,1085,2027,1063,2062,1025,2075,1001,2059" shape="poly" onclick="toggleAnswer(this,'besouro'); return false;">
+
+    <area id="area-Floresta" alt="Floresta" title="Floresta" href="" coords="1400,2024,1381,2062,1409,2081,1479,2097,1517,2097,1536,2084,1523,2056" shape="poly" onclick="toggleAnswer(this,'Floresta'); return false;">
+
+    <area id="area-Sapo-01" alt="Sapo_01" title="Sapo_01" href="" coords="1180,1853,1180,1877,1196,1896,1223,1899,1229,1874,1202,1847" shape="poly" onclick="toggleAnswer(this,'Sapo_01'); return false;">
+
+    <area id="area-Deusa" alt="Deusa" title="Deusa" href="" coords="1707,1945,1677,1961,1658,1980,1650,2002,1677,2010,1704,1997,1734,1975,1731,1945" shape="poly" onclick="toggleAnswer(this,'Deusa'); return false;">
+
+    <area id="area-Vasoura" alt="Vasoura" title="Vasoura" href="" coords="1229,1654,1199,1676,1210,1698,1224,1730,1248,1758,1267,1792,1294,1765,1264,1730,1251,1692" shape="poly" onclick="toggleAnswer(this,'Vasoura'); return false;">
+
+    <area id="area-Sapo-02" alt="Sapo_02" title="Sapo_02" href="" coords="1840,1809,1823,1812,1815,1828,1818,1847,1840,1853,1853,1831" shape="poly" onclick="toggleAnswer(this,'Sapo_02'); return false;">
+
+    <area id="area-Bruxa" alt="Bruxa" title="Bruxa" href="" coords="1126,1617,1102,1609,1102,1571,1121,1562,1123,1524,1126,1486,1164,1495,1175,1524,1172,1573,1164,1606" shape="poly" onclick="toggleAnswer(this,'Bruxa'); return false;">
+
+    <area id="area-Rosto" alt="Rosto" title="Rosto" href="" coords="1465,1170,1416,1186,1416,1221,1438,1257,1487,1284,1520,1259,1530,1208,1514,1175" shape="poly" onclick="toggleAnswer(this,'Rosto'); return false;">
+
+    <area id="area-Sapo-Palavra" alt="Sapo_Palavra" title="Sapo_Palavra" href="" coords="1894,1321,1880,1340,1894,1381,1910,1419,1935,1446,1962,1430,1965,1384,1948,1348,1924,1332" shape="poly" onclick="toggleAnswer(this,'Sapo_Palavra'); return false;">
+
+    <area id="area-Joaninha" alt="Joaninha" title="Joaninha" href="" coords="1971,1523,1946,1520,1946,1547,1976,1555,1984,1533" shape="poly" onclick="toggleAnswer(this,'Joaninha'); return false;">
+
+    <area id="area-Pocao-02" alt="Poção_02" title="Poção_02" href="" coords="2127,1532,2155,1516,2190,1522,2184,1551,2155,1562,2136,1554" shape="poly" onclick="toggleAnswer(this,'Poção_02'); return false;">
+
+    <area id="area-Baba-Yaga" alt="Baba Yaga" title="Baba Yaga" href="" coords="2165,1864,2195,1839,2231,1837,2247,1864,2222,1885,2182,1877" shape="poly" onclick="toggleAnswer(this,'Baba Yaga'); return false;">
+
+    <area id="area-Aranha" alt="Aranha" title="Aranha" href="" coords="3069,2042,3009,2053,2999,2113,3015,2170,3069,2183" shape="poly" onclick="toggleAnswer(this,'Aranha'); return false;">
+
+    <area id="area-Solanacea" alt="Solanacea" title="Solanacea" href="" coords="2545,1311,2524,1346,2543,1376,2586,1373,2624,1371,2610,1333,2581,1314" shape="poly" onclick="toggleAnswer(this,'Solanacea'); return false;">
+
+    <area id="area-Caldeirao" alt="Caldeirão" title="Caldeirão" href="" coords="1034,1813,969,1813,979,1861,1028,1861" shape="poly" onclick="toggleAnswer(this,'Caldeirão'); return false;">
+
+    <area id="area-Lagartixa" alt="Lagartixa" title="Lagartixa" href="" coords="714,1647,689,1669,684,1709,714,1712,743,1677,741,1655" shape="poly" onclick="toggleAnswer(this,'Lagartixa'); return false;">
+
+    <area id="area-Salem" alt="Salém" title="Salém" href="" coords="689,1460,667,1462,667,1492,684,1514,700,1492" shape="poly" onclick="toggleAnswer(this,'Salém'); return false;">
+
+    <area id="area-Cobra" alt="Cobra" title="Cobra" href="" coords="594,1270,570,1284,578,1316,602,1346,643,1349,692,1327,719,1289,676,1248,627,1289" shape="poly" onclick="toggleAnswer(this,'Cobra'); return false;">
+
+    <area id="area-Corvo" alt="Corvo" title="Corvo" href="" coords="-3,1283,21,1329,73,1321,92,1286,87,1226,54,1180,8,1112" shape="poly" onclick="toggleAnswer(this,'Corvo'); return false;">
+
+    <area id="area-Circe" alt="Circe" title="Circe" href="" coords="472,993,439,1017,456,1050,494,1042,526,1020,510,996" shape="poly" onclick="toggleAnswer(this,'Circe'); return false;">
+
+    <area id="area-Medeia" alt="Medeia" title="Medeia" href="" coords="192,624,179,649,182,692,209,700,220,670,217,646" shape="poly" onclick="toggleAnswer(this,'Medeia'); return false;">
+
+    <area id="area-Vela-do-Diabo" alt="Vela do Diabo" title="Vela do Diabo" href="" coords="230,6,225,44,228,90,241,128,260,155,293,158,312,117,304,79,274,30" shape="poly" onclick="toggleAnswer(this,'Vela do Diabo'); return false;">
+
+    <area id="area-Pa" alt="Pã" title="Pã" href="" coords="2195,55,2163,71,2146,99,2146,137,2179,142,2228,128,2225,88" shape="poly" onclick="toggleAnswer(this,'Pã'); return false;">
+
+    <area id="area-Mnadragora" alt="Mnadrágora" title="Mnadrágora" href="" coords="952,494,947,473,969,435,993,418,1001,462,988,497" shape="poly" onclick="toggleAnswer(this,'Mnadrágora'); return false;">
+
+    <area id="area-Grimorio" alt="Grimório" title="Grimório" href="" coords="1487,445,1454,451,1460,494,1463,549,1495,554,1514,530,1503,483" shape="poly" onclick="toggleAnswer(this,'Grimório'); return false;">
+
+    <area id="area-Ancia" alt="Anciã" title="Anciã" href="" coords="1978,109,1935,63,1946,33,1975,6,2011,1,2043,22,2046,63,2030,98" shape="poly" onclick="toggleAnswer(this,'Anciã'); return false;">
+
+    <area id="area-Gato-Preto" alt="Gato Preto" title="Gato Preto" href="" coords="1661,936,1625,950,1636,971,1690,980,1704,950" shape="poly" onclick="toggleAnswer(this,'Gato Preto'); return false;">
+
+    <area id="area-Pocao-03" alt="Poção_03" title="Poção_03" href="" coords="1946,733,1921,752,1940,782,1984,771,1978,747" shape="poly" onclick="toggleAnswer(this,'Poção_03'); return false;">
+
+    <area id="area-Aradia" alt="Aradia" title="Aradia" href="" coords="2214,866,2239,898,2315,917,2325,868,2250,844" shape="poly" onclick="toggleAnswer(this,'Aradia'); return false;">
+
+    <area id="area-Minhoca" alt="Minhoca" title="Minhoca" href="" coords="2733,914,2722,971,2752,977,2773,971,2781,930,2765,911" shape="poly" onclick="toggleAnswer(this,'Minhoca'); return false;">
+
+    <area id="area-Pocao-04" alt="Poção_04" title="Poção_04" href="" coords="2418,624,2399,654,2415,684,2450,654,2450,619" shape="poly" onclick="toggleAnswer(this,'Poção_04'); return false;">
+
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+/* prevent image dragging */
+document.addEventListener("dragstart", e=>e.preventDefault());
+
+const overlayStorageKey = "bruxadafloresta_selectedOverlay";
+const guessStorageKey = "bruxadafloresta_wordGuesses";
+const hintStorageKey = "bruxadafloresta_wordHints";
+const progressStorageKey = "bruxadaflorestaPuzzleProgress";
+const defaultOverlay = "gabarito_overlay_roxo.webp";
+const mobileMenuPinKey = "bruxadafloresta_mobileMenuPin";
+const hintCounterStorageKey = "bruxadafloresta_availableHints";
+const hintAwardsStorageKey = "bruxadafloresta_hintAwards";
+const initialAvailableHints = 10;
+const hintBonusByWord = {
+"Poção_01": 1,
+"Poção_02": 1,
+"Poção_03": 1,
+"Poção_04": 1,
+"Caldeirão": 3
+};
+let isBootstrapping = true;
+let availableHints = initialAvailableHints;
+let awardedHintWords = {};
+
+const regionDefinitions = [
+{ id: 1, minX: 0, maxX: 3072, minY: 0, maxY: 1023 },
+{ id: 2, minX: 0, maxX: 3072, minY: 1024, maxY: 2047 },
+{ id: 3, minX: 0, maxX: 3072, minY: 2048, maxY: 3072 }
+];
+
+/* load */
+window.addEventListener("load", function(){
+
+/* ===== hidden words: show ???? ===== */
+document.querySelectorAll(".hidden-word").forEach(li => {
+
+let word = li.dataset.hidden;
+li.textContent = "?".repeat(word.length);
+li.spellcheck = false;
+
+});
+
+loadGuesses();
+loadHints();
+loadHintCounter();
+updateCounter();
+
+/* restore overlay OR set default */
+let savedOverlay = localStorage.getItem(overlayStorageKey);
+let validOverlays = Array.from(overlaySelector.options).map(option => option.value);
+
+if(savedOverlay && validOverlays.includes(savedOverlay)){
+  currentOverlay = savedOverlay;
+  overlaySelector.value = savedOverlay;
+}else{
+  // FIRST TIME → force option 1
+  currentOverlay = defaultOverlay;
+  overlaySelector.value = defaultOverlay;
+}
+
+/* apply overlay immediately */
+overlaySelector.dispatchEvent(new Event("change"));
+
+/* load answers AFTER overlay is ready */
+loadProgress();
+initMobileMenuOptions();
+applyMenuBounds();
+isBootstrapping = false;
+updateCounter();
+});
+
+
+/* ===== toggle mode ===== */
+
+let allowToggleOff=true;
+
+toggleClickMode.onclick=function(){
+
+allowToggleOff=!allowToggleOff;
+
+this.textContent=allowToggleOff
+? "Desmarcar: ON"
+: "Desmarcar: OFF";
+};
+
+//* OVERLAY */
+
+overlaySelector.onchange = function(){
+
+currentOverlay = this.value;
+
+Object.values(answerClips).forEach(clip=>{
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+});
+
+localStorage.setItem(overlayStorageKey, currentOverlay);
+};
+
+/* ===== menu items ===== */
+
+const menuItems={};
+
+document.querySelectorAll("#wordList li").forEach(li=>{
+menuItems[li.id]=li;
+});
+
+/* ===== menu definitions ===== */
+
+const tooltip = document.getElementById("wordTooltip");
+
+function getHiddenLength(text){
+return Array.from(text || "").length;
+}
+
+function trimGuess(text, maxLength){
+return Array.from((text || "").replace(/\r?\n/g, "")).slice(0, maxLength).join("");
+}
+
+function getMaskedWord(li){
+return "?".repeat(getHiddenLength(li.dataset.hidden));
+}
+
+function renderMenuWord(li){
+
+if(!li.classList.contains("hidden-word")) return;
+
+let hintLevel = Number(li.dataset.hintLevel || 0);
+li.classList.toggle("hint-revealed", hintLevel >= 2 && !li.classList.contains("found"));
+
+if(li.classList.contains("found")){
+  li.textContent = li.dataset.hidden;
+  return;
+}
+
+if(hintLevel >= 2){
+  li.textContent = li.dataset.hidden;
+  return;
+}
+
+let guess = li.dataset.guess || "";
+li.textContent = guess || getMaskedWord(li);
+}
+
+function saveGuesses(){
+
+let guesses = {};
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+if(li.dataset.guess){
+  guesses[li.id] = li.dataset.guess;
+}
+});
+
+localStorage.setItem(guessStorageKey, JSON.stringify(guesses));
+}
+
+function loadGuesses(){
+
+let guesses = readStoredObject(guessStorageKey);
+if(!guesses) return;
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+
+let savedGuess = guesses[li.id];
+if(!savedGuess) return;
+
+li.dataset.guess = trimGuess(savedGuess, getHiddenLength(li.dataset.hidden));
+renderMenuWord(li);
+
+});
+}
+
+function saveHints(){
+
+let hints = {};
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+let hintLevel = Number(li.dataset.hintLevel || 0);
+if(hintLevel > 0){
+  hints[li.id] = hintLevel;
+}
+});
+
+localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+
+let hints = readStoredObject(hintStorageKey);
+if(!hints) return;
+
+document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+
+let savedHint = Number(hints[li.id] || 0);
+if(savedHint <= 0) return;
+
+li.dataset.hintLevel = String(Math.min(savedHint, 2));
+renderMenuWord(li);
+
+});
+}
+
+function findMenuItemByWord(word){
+return Array.from(document.querySelectorAll("#wordList li")).find(li => li.dataset.hidden === word) || null;
+}
+
+function readStoredObject(storageKey){
+
+let saved = localStorage.getItem(storageKey);
+if(!saved) return null;
+
+try{
+let parsed = JSON.parse(saved);
+return parsed && typeof parsed === "object" ? parsed : null;
+}catch{
+return null;
+}
+}
+
+function loadHintCounter(){
+let savedHintsRaw = localStorage.getItem(hintCounterStorageKey);
+let savedHints = Number(savedHintsRaw);
+availableHints = savedHintsRaw !== null && Number.isFinite(savedHints)
+? Math.max(0, savedHints)
+: initialAvailableHints;
+
+let savedAwards = readStoredObject(hintAwardsStorageKey);
+awardedHintWords = savedAwards || {};
+
+updateHintCounter();
+}
+
+function saveHintCounter(){
+localStorage.setItem(hintCounterStorageKey, String(availableHints));
+localStorage.setItem(hintAwardsStorageKey, JSON.stringify(awardedHintWords));
+}
+
+function updateHintCounter(){
+let value = document.getElementById("hintCounterValue");
+let tooltip = document.getElementById("hintCounterTooltip");
+if(value){
+  value.textContent = "Dicas: " + availableHints;
+}
+if(tooltip){
+  tooltip.textContent = "somente " + availableHints + " dicas disponíveis. encontre as poções para adquirir mais dicas";
+}
+}
+
+function spendHint(){
+if(availableHints <= 0){
+  alert("Você não possui dicas disponíveis. Encontre as poções para adquirir mais dicas.");
+  return false;
+}
+
+availableHints -= 1;
+saveHintCounter();
+updateHintCounter();
+return true;
+}
+
+function awardHintsForWord(word){
+let bonus = hintBonusByWord[word] || 0;
+if(!bonus || awardedHintWords[word]) return;
+
+awardedHintWords[word] = true;
+availableHints += bonus;
+saveHintCounter();
+updateHintCounter();
+}
+
+function clamp(value, min, max){
+return Math.min(Math.max(value, min), max);
+}
+
+function isMobileViewport(){
+return window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
+}
+
+function applyMobileMenuPin(pinMode){
+let menu = wordMenu;
+menu.classList.remove("mobile-pinned", "pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right");
+
+if(!isMobileViewport() || pinMode === "free"){
+  localStorage.setItem(mobileMenuPinKey, "free");
+  return;
+}
+
+menu.classList.add("mobile-pinned");
+
+if(pinMode === "bottom-collapsed"){
+  menu.classList.add("collapsed", "pinned-bottom-collapsed");
+}else if(pinMode === "top-left"){
+  menu.classList.remove("collapsed");
+  menu.classList.add("pinned-top-left");
+}else if(pinMode === "top-right"){
+  menu.classList.remove("collapsed");
+  menu.classList.add("pinned-top-right");
+}
+
+localStorage.setItem(mobileMenuPinKey, pinMode);
+}
+
+function applyMenuBounds(){
+if(isMobileViewport() && wordMenu.classList.contains("mobile-pinned")) return;
+let maxLeft = Math.max(0, window.innerWidth - wordMenu.offsetWidth);
+let currentLeft = parseFloat(wordMenu.style.left || wordMenu.offsetLeft || 0);
+let currentTop = parseFloat(wordMenu.style.top || wordMenu.offsetTop || 0);
+wordMenu.style.left = clamp(currentLeft, 0, maxLeft) + "px";
+wordMenu.style.top = Math.max(currentTop, 0) + "px";
+}
+
+function initMobileMenuOptions(){
+let pinSelect = document.getElementById("mobileMenuPin");
+if(!pinSelect) return;
+
+let savedPin = localStorage.getItem(mobileMenuPinKey) || "free";
+pinSelect.value = savedPin;
+applyMobileMenuPin(savedPin);
+
+pinSelect.addEventListener("change", () => {
+  applyMobileMenuPin(pinSelect.value);
+  applyMenuBounds();
+});
+}
+
+function findAreaByWord(word){
+return Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area => {
+let handler = area.getAttribute("onclick") || "";
+return handler.includes("'" + word + "'");
+}) || null;
+}
+
+function getAreaBounds(area){
+
+let coords = (area.coords || "").split(",").map(Number).filter(Number.isFinite);
+if(coords.length < 2) return null;
+
+let xs = [];
+let ys = [];
+
+for(let i=0;i<coords.length;i+=2){
+xs.push(coords[i]);
+ys.push(coords[i + 1]);
+}
+
+if(!xs.length || !ys.length) return null;
+
+return {
+  minX: Math.min(...xs),
+  maxX: Math.max(...xs),
+  minY: Math.min(...ys),
+  maxY: Math.max(...ys)
+};
+}
+
+function getRegionForArea(area){
+
+let bounds = getAreaBounds(area);
+if(!bounds) return null;
+
+let centerX = (bounds.minX + bounds.maxX) / 2;
+let centerY = (bounds.minY + bounds.maxY) / 2;
+
+return regionDefinitions.find(region =>
+centerX >= region.minX &&
+centerX <= region.maxX &&
+centerY >= region.minY &&
+centerY <= region.maxY
+) || regionDefinitions.find(region =>
+bounds.maxY >= region.minY &&
+bounds.minY <= region.maxY
+) || null;
+}
+
+let activeRegionHintTimeout = null;
+
+function flashRegionHint(regionId){
+
+let regionEl = document.getElementById("regionHint-" + regionId);
+if(!regionEl) return;
+
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+
+if(activeRegionHintTimeout){
+  clearTimeout(activeRegionHintTimeout);
+}
+
+regionEl.classList.add("active");
+
+activeRegionHintTimeout = setTimeout(() => {
+  regionEl.classList.remove("active");
+}, 2200);
+}
+
+function centerViewOnRegion(region){
+
+if(!region) return;
+
+let container = document.querySelector(".container");
+if(!container) return;
+
+let containerRect = container.getBoundingClientRect();
+let regionCenterX = (region.minX + region.maxX) / 2;
+let regionCenterY = (region.minY + region.maxY) / 2;
+
+let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
+
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+window.scrollTo({
+left: Math.min(Math.max(targetX, 0), maxX),
+top: Math.min(Math.max(targetY, 0), maxY),
+behavior: "smooth"
+});
+}
+
+function applyHint(item, hintLevel){
+
+let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
+item.dataset.hintLevel = String(Math.min(nextLevel, 2));
+let area = findAreaByWord(item.dataset.hidden);
+let region = area ? getRegionForArea(area) : null;
+
+if(hintLevel >= 1 && region){
+  flashRegionHint(region.id);
+}
+
+if(hintLevel >= 1 && region){
+  centerViewOnRegion(region);
+}
+
+renderMenuWord(item);
+saveHints();
+}
+
+function placeCaretAtEnd(el){
+
+let range = document.createRange();
+let selection = window.getSelection();
+
+range.selectNodeContents(el);
+range.collapse(false);
+selection.removeAllRanges();
+selection.addRange(range);
+}
+
+function finishGuessEdit(item, keepCurrentText=true){
+
+if(item.contentEditable !== "true") return;
+
+let nextGuess = keepCurrentText
+? trimGuess(item.textContent, getHiddenLength(item.dataset.hidden))
+: (item.dataset.guess || "");
+
+item.contentEditable = "false";
+item.removeAttribute("data-editing");
+
+if(nextGuess){
+  item.dataset.guess = nextGuess;
+}else{
+  delete item.dataset.guess;
+}
+
+renderMenuWord(item);
+saveGuesses();
+}
+
+function requestHint(item){
+
+if(!item.classList.contains("hidden-word")) return;
+if(item.classList.contains("found")) return;
+
+finishGuessEdit(item);
+
+let currentHint = Number(item.dataset.hintLevel || 0);
+
+if(currentHint >= 2){
+  alert("Essa palavra já recebeu todas as dicas.");
+  return;
+}
+
+let nextHint = currentHint + 1;
+let wantsHint = confirm("Deseja a " + nextHint + "° dica?");
+
+if(!wantsHint) return;
+if(!spendHint()) return;
+
+applyHint(item, nextHint);
+}
+
+document.querySelectorAll("#wordList li").forEach(item => {
+
+item.addEventListener("mouseenter", e => {
+
+let text = item.dataset.def;
+if(!text) return;
+
+tooltip.textContent = text;
+tooltip.style.opacity = "1";
+
+});
+
+item.addEventListener("mousemove", e => {
+
+tooltip.style.left = (e.clientX + 10) + "px";
+tooltip.style.top = (e.clientY + 10) + "px";
+
+});
+
+item.addEventListener("mouseleave", () => {
+
+tooltip.style.opacity = "0";
+
+});
+
+item.addEventListener("click", e => {
+
+if(e.button !== 0) return;
+if(!item.classList.contains("hidden-word")) return;
+if(item.classList.contains("found")) return;
+if(Number(item.dataset.hintLevel || 0) >= 2) return;
+
+item.contentEditable = "true";
+item.dataset.editing = "true";
+item.textContent = item.dataset.guess || "";
+placeCaretAtEnd(item);
+});
+
+item.addEventListener("input", () => {
+
+if(item.contentEditable !== "true") return;
+
+let trimmed = trimGuess(item.textContent, getHiddenLength(item.dataset.hidden));
+
+if(item.textContent !== trimmed){
+  item.textContent = trimmed;
+  placeCaretAtEnd(item);
+}
+});
+
+item.addEventListener("keydown", e => {
+
+if(item.contentEditable !== "true") return;
+
+if(e.key === "Enter"){
+  e.preventDefault();
+  finishGuessEdit(item);
+}
+
+if(e.key === "Escape"){
+  e.preventDefault();
+  finishGuessEdit(item, false);
+}
+});
+
+item.addEventListener("blur", () => {
+finishGuessEdit(item);
+});
+
+item.addEventListener("contextmenu", e => {
+
+e.preventDefault();
+requestHint(item);
+});
+
+let touchHintTimer = null;
+const touchHintDelay = 550;
+
+item.addEventListener("touchstart", e => {
+if(!e.touches[0]) return;
+if(!item.classList.contains("hidden-word")) return;
+if(item.classList.contains("found")) return;
+if(item.contentEditable === "true") return;
+
+touchHintTimer = setTimeout(() => {
+  requestHint(item);
+  touchHintTimer = null;
+}, touchHintDelay);
+}, { passive: true });
+
+item.addEventListener("touchend", () => {
+if(touchHintTimer){
+  clearTimeout(touchHintTimer);
+  touchHintTimer = null;
+}
+});
+
+item.addEventListener("touchcancel", () => {
+if(touchHintTimer){
+  clearTimeout(touchHintTimer);
+  touchHintTimer = null;
+}
+});
+
+});
+
+/* ===== answer highlights ===== */
+
+const answerClips={};
+
+function toggleAnswer(area,word){
+
+if(!area.coords) return;
+
+if(!answerClips[word]){
+
+let coords=area.coords.split(",");
+let points=[];
+
+for(let i=0;i<coords.length;i+=2){
+points.push(coords[i]+"px "+coords[i+1]+"px");
+}
+
+let clip = document.createElement("div");
+clip.className = "answerClip";
+clip.style.clipPath = "polygon(" + points.join(",") + ")";
+clip.style.backgroundImage = "url(" + currentOverlay + ")";
+
+const answersOverlay = document.getElementById("answersOverlay");
+
+answersOverlay.appendChild(clip);
+
+answerClips[word]=clip;
+}
+
+let menuWord = findMenuItemByWord(word) || menuItems["menu-"+word];
+if(!menuWord) return;
+let isVisible = answerClips[word].classList.contains("visible");
+
+if(!isVisible){
+
+  answerClips[word].classList.add("visible");
+  menuWord.classList.add("found");
+  menuWord.classList.remove("hint-revealed");
+  awardHintsForWord(word);
+
+  if(menuWord.classList.contains("hidden-word")){
+  finishGuessEdit(menuWord, false);
+  menuWord.textContent = menuWord.dataset.hidden;
+ }
+}
+
+else if(allowToggleOff){
+
+  answerClips[word].classList.remove("visible");
+  menuWord.classList.remove("found");
+
+  if(menuWord.classList.contains("hidden-word")){
+    renderMenuWord(menuWord);
+  };
+}
+
+updateCounter();
+saveProgress();
+}
+
+/*counter*/
+const totalWords = document.querySelectorAll("#wordList li").length;
+
+function updateCounter(){
+
+let found = document.querySelectorAll("#wordList li.found").length;
+
+document.getElementById("counter").textContent =
+found + " / " + totalWords;
+
+  /* PUZZLE COMPLETE MESSAGE */
+
+if(found === totalWords && totalWords > 0){
+if(isBootstrapping) return;
+
+setTimeout(function(){
+alert("fim! 🎉🎉");
+},200);
+}
+}
+
+/* SAVE PROGRESS */
+
+function loadProgress(){
+
+let words = readStoredObject(progressStorageKey);
+if(!Array.isArray(words)) return;
+
+words.forEach(word => {
+
+let area = findAreaByWord(word) || document.getElementById("area-" + word);
+
+if(area){
+
+// ONLY toggle if its not already visible
+if(!answerClips[word] ||
+   !answerClips[word].classList.contains("visible")){
+
+toggleAnswer(area, word);
+}
+}
+});
+}
+
+/* ===== reset ===== */
+
+function clearAll(){
+
+/* remove highlights */
+for(let word in answerClips){
+answerClips[word].classList.remove("visible");
+
+}
+
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+
+/* reset menu */
+document.querySelectorAll("#wordList li").forEach(li => {
+
+  li.classList.remove("found");
+  li.classList.remove("hint-revealed");
+  finishGuessEdit(li, false);
+  delete li.dataset.guess;
+  delete li.dataset.hintLevel;
+
+  /* 👇 THIS IS THE FIX */
+  if(li.classList.contains("hidden-word")){
+    renderMenuWord(li);
+  }
+
+});
+
+localStorage.removeItem(progressStorageKey);
+localStorage.removeItem(guessStorageKey);
+localStorage.removeItem(hintStorageKey);
+localStorage.removeItem(hintCounterStorageKey);
+localStorage.removeItem(hintAwardsStorageKey);
+availableHints = initialAvailableHints;
+awardedHintWords = {};
+updateHintCounter();
+updateCounter();
+}
+
+function confirmReset(){
+
+if(confirm("Reset?")){
+clearAll();
+localStorage.removeItem(progressStorageKey);
+}
+
+  }
+
+/* ===== menu drag ===== */
+
+let menu = wordMenu;
+let header = menuHeader;
+
+let offsetX = 0;
+let offsetY = 0;
+let dragging = false;
+
+function startMenuDrag(clientX, clientY){
+if(isMobileViewport() && wordMenu.classList.contains("mobile-pinned")) return;
+dragging = true;
+offsetX = clientX - menu.offsetLeft;
+offsetY = clientY - menu.offsetTop;
+}
+
+header.addEventListener("mousedown", e => {
+if(e.target.closest("button, a, .info-wrapper")) return;
+startMenuDrag(e.clientX, e.clientY);
+});
+header.addEventListener("touchstart", e => {
+if(!e.touches[0]) return;
+if(e.target.closest("button, a, .info-wrapper")) return;
+startMenuDrag(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+
+document.addEventListener("mousemove", e => {
+if(!dragging) return;
+menu.style.left = (e.clientX - offsetX) + "px";
+menu.style.top = (e.clientY - offsetY) + "px";
+applyMenuBounds();
+});
+
+document.addEventListener("touchmove", e => {
+if(!dragging || !e.touches[0]) return;
+menu.style.left = (e.touches[0].clientX - offsetX) + "px";
+menu.style.top = (e.touches[0].clientY - offsetY) + "px";
+applyMenuBounds();
+}, { passive: true });
+
+document.addEventListener("mouseup", () => dragging = false);
+document.addEventListener("touchend", () => dragging = false);
+
+/* ===== mobile tooltip toggle ===== */
+
+const infoWrappers = Array.from(document.querySelectorAll(".info-wrapper"));
+
+function closeInfoTooltips(exceptWrapper = null){
+infoWrappers.forEach(wrapper => {
+if(wrapper !== exceptWrapper){
+wrapper.classList.remove("active");
+}
+});
+}
+
+infoWrappers.forEach(wrapper => {
+const btn = wrapper.querySelector(".info-btn");
+if(!btn) return;
+
+function toggleWrapperTooltip(event){
+event.stopPropagation();
+
+const willOpen = !wrapper.classList.contains("active");
+closeInfoTooltips();
+
+if(willOpen){
+wrapper.classList.add("active");
+}
+}
+
+btn.addEventListener("click", toggleWrapperTooltip);
+btn.addEventListener("touchend", e => {
+e.preventDefault();
+toggleWrapperTooltip(e);
+}, { passive: false });
+});
+
+document.addEventListener("click", e => {
+if(e.target.closest(".info-wrapper")) return;
+closeInfoTooltips();
+});
+
+document.addEventListener("touchstart", e => {
+if(e.target.closest(".info-wrapper")) return;
+closeInfoTooltips();
+}, { passive: true });
+
+document.addEventListener("keydown", e => {
+if(e.key === "Escape"){
+closeInfoTooltips();
+}
+});
+
+/* ===== collapse menu ===== */
+
+toggleMenu.onclick=()=>{
+wordMenu.classList.toggle("collapsed");
+applyMenuBounds();
+};
+
+/* ===== rotate mandala ===== */
+
+let rotation=0;
+
+rotateMandala.onclick=function(){
+
+rotation=(rotation+90)%360;
+
+document.querySelector(".container")
+.style.transform="rotate("+rotation+"deg)";
+
+this.textContent="Rotate ("+rotation+"°)";
+
+};
+
+/* ===== drag scroll ===== */
+
+let isDragging=false,startX,startY,scrollLeft,scrollTop;
+
+document.addEventListener("mousedown",e=>{
+
+if(e.target.closest("#wordMenu")) return;
+
+isDragging=true;
+document.body.classList.add("dragging");
+
+startX=e.clientX;
+startY=e.clientY;
+
+scrollLeft=window.scrollX;
+scrollTop=window.scrollY;
+
+});
+
+document.addEventListener("mousemove",e=>{
+
+if(!isDragging) return;
+
+window.scrollTo(
+scrollLeft-(e.clientX-startX),
+scrollTop-(e.clientY-startY)
+);
+
+});
+
+document.addEventListener("mouseup",()=>{
+isDragging=false;
+document.body.classList.remove("dragging");
+});
+
+window.addEventListener("resize",()=>{
+let pinSelect = document.getElementById("mobileMenuPin");
+if(pinSelect){
+  applyMobileMenuPin(pinSelect.value);
+}
+applyMenuBounds();
+});
+
+/* ===== savePuzzleProgress ===== */
+
+function saveProgress(){
+if(isBootstrapping) return;
+
+localStorage.setItem(
+progressStorageKey,
+JSON.stringify(Object.keys(answerClips)
+.filter(w => answerClips[w].classList.contains("visible")))
+);
+
+}
+
+</script>
+
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>
+imageMapResize();
+
+window.addEventListener("load", () => {
+try{
+if(sessionStorage.getItem("baba_center_next_level") !== "true") return;
+sessionStorage.removeItem("baba_center_next_level");
+}catch(_error){
+return;
+}
+
+setTimeout(() => {
+let container = document.querySelector(".container");
+if(!container) return;
+
+let rect = container.getBoundingClientRect();
+let targetX = window.scrollX + rect.left + rect.width / 2 - window.innerWidth / 2;
+let targetY = window.scrollY + rect.top + rect.height / 2 - window.innerHeight / 2;
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+window.scrollTo({
+left: Math.min(Math.max(targetX, 0), maxX),
+top: Math.min(Math.max(targetY, 0), maxY),
+behavior: "auto"
+});
+}, 80);
+
+setTimeout(() => {
+document.documentElement.classList.remove("from-jigsaw-transition");
+}, 3900);
+});
+</script>
+
+</body>
+</html>

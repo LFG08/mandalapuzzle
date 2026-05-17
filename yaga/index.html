@@ -183,6 +183,10 @@
       font-family:"Palatino Linotype",Georgia,serif;
     }
     .line + .line{margin-top:12px}
+    .card.minimized .menuBody{display:none}
+    .menuHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .menuHeader .title{margin-bottom:0}
+    .menuHeader .btn{width:auto;white-space:nowrap}
     .value{display:inline-block; margin-top:4px; color:#fff6ea}
     .actions{
       display:grid;
@@ -378,20 +382,25 @@
         </div>
       </div>
       <aside class="panel side">
-        <div class="card">
-          <h1 id="puzzleTitle" class="title">Baba Witch Jigsaw</h1>
-          <div class="line">
-            <span class="small">Progress</span><br>
-            <strong id="placed" class="value">0 / ?</strong>
+        <div id="menuCard" class="card">
+          <div class="menuHeader">
+            <h1 id="puzzleTitle" class="title">Baba Witch Jigsaw</h1>
+            <button id="menuToggle" class="btn" type="button">Minimizar</button>
           </div>
-          <div class="actions">
-            <button id="shuffle" class="btn" type="button">Shuffle Loose Pieces</button>
-            <button id="testSolve" class="btn" type="button">Test Auto Place</button>
-            <button id="reset" class="btn" type="button">Reset Puzzle</button>
-            <button id="about" class="btn" type="button">Sobre esta imagem</button>
+          <div id="menuBody" class="menuBody">
+            <div class="line">
+              <span class="small">Progresso</span><br>
+              <strong id="placed" class="value">0 / ?</strong>
+            </div>
+            <div class="actions">
+              <a href="/" class="btn" role="button">Menu Principal</a>
+              <button id="shuffle" class="btn" type="button">Embaralhar Peças Soltas</button>
+              <button id="reset" class="btn" type="button">Reiniciar</button>
+              <button id="about" class="btn" type="button">Sobre esta imagem</button>
+            </div>
           </div>
         </div>
-        <h2 class="trayTitle">Piece Tray</h2>
+        <h2 class="trayTitle">Bandeja de Peças</h2>
         <div id="tray" class="tray"></div>
       </aside>
     </section>
@@ -515,8 +524,9 @@
       guideVal: document.getElementById("guideVal"),
       placed: document.getElementById("placed"),
       puzzleTitle: document.getElementById("puzzleTitle"),
+      menuCard: document.getElementById("menuCard"),
+      menuToggle: document.getElementById("menuToggle"),
       shuffle: document.getElementById("shuffle"),
-      testSolve: document.getElementById("testSolve"),
       reset: document.getElementById("reset"),
       about: document.getElementById("about"),
       aboutModal: document.getElementById("aboutModal"),
@@ -551,7 +561,8 @@
       transitionSoundInstances: [],
       nextLevelTimer: null,
       transitioning: false,
-      guide: 1
+      guide: 1,
+      menuMin: false
     };
 
     el.guide.addEventListener("input", () => {
@@ -559,7 +570,7 @@
       save();
     });
     el.shuffle.addEventListener("click", shuffleLoose);
-    el.testSolve.addEventListener("click", solveAll);
+    el.menuToggle.addEventListener("click", toggleMenu);
     el.reset.addEventListener("click", resetPuzzle);
     el.about.addEventListener("click", showAboutImage);
     el.aboutClose.addEventListener("click", hideAboutImage);
@@ -582,7 +593,9 @@
         state.memorySequence = saved.memorySequence;
         state.memoryRound = saved.memoryRound;
         state.memoryComplete = saved.memoryComplete;
+        state.menuMin = saved.menuMin;
       }
+      syncMenu();
       if(!requirePassword()){
         showPasswordRequired();
         return;
@@ -629,7 +642,6 @@
       el.complete.classList.add("show");
       el.tray.innerHTML = '<div class="empty">Palavra Mágica required.</div>';
       el.shuffle.disabled = true;
-      el.testSolve.disabled = true;
       el.about.disabled = true;
     }
 
@@ -673,6 +685,17 @@
       root.style.setProperty("--modal-backdrop", theme.modalBackdrop);
     }
 
+    function toggleMenu(){
+      state.menuMin = !state.menuMin;
+      syncMenu();
+      save();
+    }
+
+    function syncMenu(){
+      el.menuCard.classList.toggle("minimized", state.menuMin);
+      el.menuToggle.textContent = state.menuMin ? "Expandir" : "Minimizar";
+    }
+
     function showAboutImage(){
       const about = ABOUT_IMAGES[state.currentLevel] || ABOUT_IMAGES[0];
       el.aboutContent.innerHTML = `
@@ -713,7 +736,6 @@
       if(!preserveTransition) clearNextLevelTimer();
       state.mode = "puzzle";
       el.shuffle.disabled = false;
-      el.testSolve.disabled = false;
       el.about.disabled = false;
       state.currentLevel = levelIndex;
       applyTheme(levelIndex);
@@ -1136,7 +1158,6 @@
       el.board.querySelectorAll(".finalBoardImage,.finalFullOverlay,.finalOverlayReveal,.finalOverlaySpot").forEach((node) => node.remove());
       el.complete.classList.remove("show");
       el.shuffle.disabled = true;
-      el.testSolve.disabled = true;
       el.about.disabled = false;
       el.puzzleTitle.textContent = "Baba Witch Jigsaw";
       updateMemoryStatus();
@@ -1395,7 +1416,8 @@
           finalFound: state.finalFound,
           memorySequence: state.memorySequence,
           memoryRound: state.memoryRound,
-          memoryComplete: state.memoryComplete
+          memoryComplete: state.memoryComplete,
+          menuMin: state.menuMin
         }));
       }catch(_error){}
     }
@@ -1414,7 +1436,8 @@
           finalFound: Array.isArray(parsed.finalFound) ? parsed.finalFound : [],
           memorySequence: Array.isArray(parsed.memorySequence) ? parsed.memorySequence : [],
           memoryRound: typeof parsed.memoryRound === "number" ? Math.max(1, Math.min(MEMORY_END_ROUND, parsed.memoryRound)) : 1,
-          memoryComplete: parsed.memoryComplete === true
+          memoryComplete: parsed.memoryComplete === true,
+          menuMin: parsed.menuMin === true
         };
       }catch(_error){
         return null;

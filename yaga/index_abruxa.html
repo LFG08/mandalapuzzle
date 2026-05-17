@@ -171,7 +171,7 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
   flex-direction:column;
   z-index:20;
   box-sizing:border-box;
-  overflow:hidden;
+  overflow:visible;
 }
 
 #wordMenu.mobile-pinned{
@@ -212,6 +212,11 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
 /* COUNTER */
 #counter {
   white-space: nowrap;
+}
+
+.menu-actions{
+  overflow:visible;
+  flex-shrink:0;
 }
 
 /* ================= INFO ================= */
@@ -738,7 +743,7 @@ cursor:pointer;
 <div id="menuHeader">
 <span class="title">Uma Bruxa</span>
 
-<div class="title">
+<div class="title menu-actions">
 <span id="counter"></span>
 
 <span class="info-wrapper">

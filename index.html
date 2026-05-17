@@ -799,6 +799,11 @@ levelTwoUnlocked: status.total !== null
 }
 
 
+function setYagaCardHref(card, lastLevelUnlocked){
+if(!card) return;
+card.href = lastLevelUnlocked ? "yaga/index_abruxa.html" : "yaga";
+}
+
 function getYagaBaseStatus(finalMeta){
 let raw = localStorage.getItem("baba_witch_jigsaw_levels");
 let parsed = null;
@@ -1413,6 +1418,7 @@ if(card.id === "yagaCard"){
 let statusEl = card.querySelector(".status");
 let thumbEl = card.querySelector(".thumb img");
 let initial = getYagaBaseStatus(null);
+setYagaCardHref(card, initial.lastLevelUnlocked);
 setCardProgressMeta(card, initial.found, initial.total);
 renderStatus(statusEl, initial.found, initial.total);
 if(thumbEl){
@@ -1426,6 +1432,7 @@ applyThumbBorder(card, initialPercentage);
 
 getYagaFinalLevelMeta().then(meta => {
 let updated = getYagaBaseStatus(meta);
+setYagaCardHref(card, updated.lastLevelUnlocked);
 setCardProgressMeta(card, updated.found, updated.total);
 renderStatus(statusEl, updated.found, updated.total);
 if(thumbEl){

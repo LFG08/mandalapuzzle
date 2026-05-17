@@ -456,34 +456,31 @@
       `Hand Bells, A#/Bb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339811/" target="_blank" rel="noopener">https://freesound.org/s/339811/</a> -- License: Attribution 4.0`
     ];
     const FINAL_TARGETS = [
-      {id:"grimorio", label:"Grimório", x:371, y:125, radius:18},
-      {id:"aradia", label:"Aradia", x:567, y:220, radius:18},
-      {id:"baba-yaga", label:"Baba Yaga", x:552, y:465, radius:14},
-      {id:"caldeirao", label:"Caldeirão", x:251, y:459, radius:12},
-      {id:"deusa", label:"Deusa", x:423, y:494, radius:14},
-      {id:"circe", label:"Circe", x:121, y:255, radius:15},
-      {id:"bruxa", label:"Bruxa", x:284, y:389, radius:20},
-      {id:"ancia", label:"Anciã", x:499, y:12, radius:18},
-      {id:"gato-preto", label:"Gato Preto", x:416, y:239, radius:14},
-      {id:"floresta", label:"Floresta", x:366, y:518, radius:23},
-      {id:"corvo", label:"Corvo", x:12, y:312, radius:31},
-      {id:"aranha", label:"Aranha", x:758, y:528, radius:22},
-      {id:"besouro", label:"Besouro", x:259, y:509, radius:16}
+      {id:"1", label:"1", x:9, y:12, radius:43},
+      {id:"2", label:"2", x:18, y:754, radius:35},
+      {id:"3", label:"3", x:749, y:750, radius:32},
+      {id:"4", label:"4", x:747, y:20, radius:30},
+      {id:"5", label:"5", x:245, y:50, radius:14},
+      {id:"6", label:"6", x:743, y:313, radius:14},
+      {id:"7", label:"7", x:384, y:743, radius:17},
+      {id:"8", label:"8", x:28, y:455, radius:16},
+      {id:"9", label:"9", x:383, y:23, radius:16},
+      {id:"10", label:"10", x:522, y:719, radius:15}
     ];
     const MEMORY_STEPS = [
-      {note:"G", targetId:"grimorio"},
-      {note:"A", targetId:"aradia"},
-      {note:"Bb", targetId:"baba-yaga"},
-      {note:"C", targetId:"caldeirao"},
-      {note:"D", targetId:"deusa"},
-      {note:"C", targetId:"circe"},
-      {note:"Bb", targetId:"bruxa"},
-      {note:"A", targetId:"ancia"},
-      {note:"G", targetId:"gato-preto"},
-      {note:"F", targetId:"floresta"},
-      {note:"G", targetId:"corvo"},
-      {note:"A", targetId:"aranha"},
-      {note:"Bb", targetId:"besouro"}
+      {note:"G", targetId:"1"},
+      {note:"A", targetId:"2"},
+      {note:"Bb", targetId:"3"},
+      {note:"C", targetId:"4"},
+      {note:"D", targetId:"5"},
+      {note:"C", targetId:"6"},
+      {note:"Bb", targetId:"7"},
+      {note:"A", targetId:"8"},
+      {note:"G", targetId:"9"},
+      {note:"F", targetId:"10"},
+      {note:"G", targetId:"1"},
+      {note:"A", targetId:"2"},
+      {note:"Bb", targetId:"3"}
     ];
     const MEMORY_END_ROUND = MEMORY_STEPS.length;
     const MEMORY_NOTE_SOUND_SRCS = {
@@ -1213,10 +1210,10 @@
       if(state.memoryShowing || state.memoryComplete) return;
       const expected = state.memorySequence[state.memoryInputIndex];
       if(targetId !== expected){
-        flashMemoryTarget(targetId, 260);
+        flashMemoryTarget(targetId, 260, false);
         state.memoryInputIndex = 0;
         state.memoryShowing = true;
-        updateMemoryStatus("Try again");
+        updateMemoryStatus("Watch again");
         state.memoryTimers.push(setTimeout(playMemoryRound, 900));
         return;
       }
@@ -1241,10 +1238,12 @@
       save();
     }
 
-    function flashMemoryTarget(targetId, duration){
+    function flashMemoryTarget(targetId, duration, playNote = true){
       const reveal = el.board.querySelector(`.finalOverlayReveal[data-target="${targetId}"]`);
       if(!reveal) return;
-      playMemoryTargetNote(targetId);
+      if(playNote){
+        playMemoryTargetNote(targetId);
+      }
       reveal.classList.add("flash");
       state.memoryTimers.push(setTimeout(() => {
         reveal.classList.remove("flash");

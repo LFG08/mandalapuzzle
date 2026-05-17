@@ -439,12 +439,22 @@
       {id:"10", x:522, y:719, radius:15}
     ];
     const MEMORY_END_ROUND = 13;
+    const MEMORY_NOTE_SEQUENCE = ["A", "Eb", "A", "A", "Eb", "Eb", "A", "A", "A", "Eb", "A", "A", "A"];
+    const MEMORY_NOTE_SOUND_SRCS = {
+      A: "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
+      Eb: "/sound_effects/339814__inspectorj__hand-bells-Eb-single.wav"
+    };
     const placementSound = new Audio(PIECE_PLACE_SOUND_SRC);
     const transitionSounds = TRANSITION_SOUND_SRCS.map((src) => {
       const sound = new Audio(src);
       sound.preload = "auto";
       return sound;
     });
+    const memoryNoteSounds = Object.fromEntries(Object.entries(MEMORY_NOTE_SOUND_SRCS).map(([note, src]) => {
+      const sound = new Audio(src);
+      sound.preload = "auto";
+      return [note, sound];
+    }));
     placementSound.preload = "auto";
 
     const el = {
@@ -996,7 +1006,6 @@
         }else if(state.currentLevel === LEVELS.length - 1 && !state.transitioning){
           state.transitioning = true;
           setTimeout(() => {
-            playTransitionScale();
             buildFinalStage();
           }, 700);
         }
@@ -1141,7 +1150,7 @@
       updateMemoryStatus("Watch");
       const sequence = state.memorySequence.slice(0, state.memoryRound);
       sequence.forEach((targetId, index) => {
-        state.memoryTimers.push(setTimeout(() => flashMemoryTarget(targetId, 520), index * 760));
+        state.memoryTimers.push(setTimeout(() => flashMemoryTarget(targetId, 520, index), index * 760));
       });
       state.memoryTimers.push(setTimeout(() => {
         state.memoryShowing = false;
@@ -1151,9 +1160,9 @@
 
     function handleMemoryClick(targetId){
       if(state.memoryShowing || state.memoryComplete) return;
-      flashMemoryTarget(targetId, 260);
       const expected = state.memorySequence[state.memoryInputIndex];
       if(targetId !== expected){
+        flashMemoryTarget(targetId, 260);
         state.memoryInputIndex = 0;
         state.memoryShowing = true;
         updateMemoryStatus("Try again");
@@ -1161,6 +1170,7 @@
         return;
       }
 
+      flashMemoryTarget(targetId, 260, state.memoryInputIndex);
       state.memoryInputIndex += 1;
       if(state.memoryInputIndex < state.memoryRound){
         updateMemoryStatus("Repeat");
@@ -1180,13 +1190,23 @@
       save();
     }
 
-    function flashMemoryTarget(targetId, duration){
+    function flashMemoryTarget(targetId, duration, noteIndex = null){
       const reveal = el.board.querySelector(`.finalOverlayReveal[data-target="${targetId}"]`);
       if(!reveal) return;
+      if(noteIndex !== null) playMemoryNote(noteIndex);
       reveal.classList.add("flash");
       state.memoryTimers.push(setTimeout(() => {
         reveal.classList.remove("flash");
       }, duration));
+    }
+
+    function playMemoryNote(noteIndex){
+      const note = MEMORY_NOTE_SEQUENCE[noteIndex];
+      const sound = memoryNoteSounds[note];
+      if(!sound) return;
+      const soundInstance = sound.cloneNode();
+      soundInstance.volume = 0.46;
+      soundInstance.play().catch(() => {});
     }
 
     function updateMemoryStatus(label = "Memory"){
@@ -1216,7 +1236,6 @@
 
     function startNextLevelTransition(){
       clearNextLevelTimer();
-      playTransitionScale();
       state.nextLevelTimer = setTimeout(() => {
         el.nextLevelOverlay.classList.add("show");
         state.nextLevelTimer = setTimeout(() => {

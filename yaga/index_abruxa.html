@@ -775,6 +775,7 @@ const hintCounterStorageKey = "bruxadafloresta_availableHints";
 const hintAwardsStorageKey = "bruxadafloresta_hintAwards";
 const ambianceStorageKey = "bruxadafloresta_ambianceEnabled";
 const ambianceWarningStorageKey = "bruxadafloresta_ambienceWarningSeen";
+const ambianceLoopSrc = "/sound_effects/Ambiance_Atmosphere_Interior_Wood_Rain_Thunders_Fire_Loop_Stereo.ogg";
 const handbellSoundSrcs = [
 "/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
 "/sound_effects/339813__inspectorj__hand-bells-D-single.wav",
@@ -784,6 +785,19 @@ const handbellSoundSrcs = [
 "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
 "/sound_effects/339811__inspectorj__hand-bells-Bb-single.wav"
 ];
+const answerSoundSrcs = {
+"Corvo": "/sound_effects/Raven&Crow.wav",
+"Mnadrágora": "/sound_effects/Scream.mp3",
+"Poção_01": "/sound_effects/BubblesShortBassyBursts.wav",
+"Poção_02": "/sound_effects/BubblesShortBassyBursts.wav",
+"Poção_03": "/sound_effects/BubblesShortBassyBursts.wav",
+"Poção_04": "/sound_effects/BubblesShortBassyBursts.wav",
+"coruja": "/sound_effects/OwlHoot(clean).wav.wav",
+"Sapo_01": "/sound_effects/MonofroschmitHall.wav",
+"Sapo_02": "/sound_effects/MonofroschmitHall.wav",
+"Sapo_Palavra": "/sound_effects/MonofroschmitHall.wav",
+"Rosto": "/sound_effects/Witchlaugh.wav"
+};
 const initialAvailableHints = 10;
 const hintBonusByWord = {
 "Poção_01": 1,
@@ -796,11 +810,20 @@ let isBootstrapping = true;
 let availableHints = initialAvailableHints;
 let awardedHintWords = {};
 let ambianceEnabled = localStorage.getItem(ambianceStorageKey) !== "false";
+const ambianceSound = new Audio(ambianceLoopSrc);
+ambianceSound.loop = true;
+ambianceSound.preload = "auto";
+ambianceSound.volume = 0.36;
 const handbellSounds = handbellSoundSrcs.map(src => {
 const sound = new Audio(src);
 sound.preload = "auto";
 return sound;
 });
+const answerSounds = Object.fromEntries(Object.entries(answerSoundSrcs).map(([word, src]) => {
+const sound = new Audio(src);
+sound.preload = "auto";
+return [word, sound];
+}));
 const menuHoverTips = {
 "mystical being": "Figura sobrenatural escondida perto da borda inferior.",
 "caramujo": "Pequena concha rasteira no limite da imagem.",
@@ -853,6 +876,8 @@ window.addEventListener("load", function(){
 
 showAmbienceWarningOnce();
 updateAmbianceButton();
+syncAmbiancePlayback();
+installAmbianceUnlock();
 sortWordMenu();
 applyMenuHoverTips();
 hideAreaHoverTitles();
@@ -903,6 +928,7 @@ ambianceToggle.onclick=function(){
 ambianceEnabled = !ambianceEnabled;
 localStorage.setItem(ambianceStorageKey, String(ambianceEnabled));
 updateAmbianceButton();
+syncAmbiancePlayback();
 };
 
 function showAmbienceWarningOnce(){
@@ -916,11 +942,45 @@ ambianceToggle.textContent = ambianceEnabled ? "Ambiance: ON" : "Ambiance: OFF";
 ambianceToggle.setAttribute("aria-pressed", String(ambianceEnabled));
 }
 
-function playRandomHandbell(){
-if(ambianceEnabled || !handbellSounds.length) return;
-const sound = handbellSounds[Math.floor(Math.random() * handbellSounds.length)].cloneNode();
+function syncAmbiancePlayback(){
+if(ambianceEnabled){
+  ambianceSound.play().catch(() => {});
+}else{
+  ambianceSound.pause();
+  ambianceSound.currentTime = 0;
+}
+}
+
+function installAmbianceUnlock(){
+const unlock = () => {
+  syncAmbiancePlayback();
+  document.removeEventListener("pointerdown", unlock);
+  document.removeEventListener("keydown", unlock);
+};
+document.addEventListener("pointerdown", unlock);
+document.addEventListener("keydown", unlock);
+}
+
+function playAudioClone(baseSound){
+const sound = baseSound.cloneNode();
 sound.volume = 0.46;
 sound.play().catch(() => {});
+}
+
+function playRandomHandbell(){
+if(ambianceEnabled || !handbellSounds.length) return;
+playAudioClone(handbellSounds[Math.floor(Math.random() * handbellSounds.length)]);
+}
+
+function playAnswerSound(word){
+const customSound = answerSounds[word];
+if(customSound){
+  if(ambianceEnabled){
+    playAudioClone(customSound);
+  }
+  return;
+}
+playRandomHandbell();
 }
 
 
@@ -1520,7 +1580,7 @@ if(!isVisible){
   menuWord.classList.remove("hint-revealed");
   awardHintsForWord(word);
   if(!isBootstrapping){
-    playRandomHandbell();
+    playAnswerSound(word);
   }
 
   if(menuWord.classList.contains("hidden-word")){

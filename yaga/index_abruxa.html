@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>A Bruxa da Floresta</title>
+<title>A Bruxa</title>
 <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preload" as="image" href="bruxadafloresta.webp"><!-- UPDATED: preload the main mandala image so large source files start loading earlier -->
@@ -559,7 +559,8 @@ margin-top:8px;
 color:#f8d69a;
 }
 
-#creditsClose{
+#creditsClose,
+#ambienceWarningClose{
 margin-top:16px;
 width:100%;
 border:1px solid #f5e6d3;
@@ -683,7 +684,7 @@ cursor:pointer;
 <div id="wordMenu">
 
 <div id="menuHeader">
-<span class="title">A Bruxa da Floresta</span>
+<span class="title">A Bruxa</span>
 
 <div class="title">
 <span id="counter"></span>
@@ -719,18 +720,18 @@ cursor:pointer;
 <li id="menu-mulher" class="hidden-word" data-hidden="mulher" data-def="mulher"></li>
 <li id="menu-coruja" class="hidden-word" data-hidden="coruja" data-def="coruja"></li>
 <li id="menu-Magia" class="hidden-word" data-hidden="Magia" data-def="Magia"></li>
-<li id="menu-Pocao-01" class="hidden-word" data-hidden="Poção_01" data-def="Poção_01"></li>
+<li id="menu-Pocao-01" class="hidden-word" data-hidden="Poção da Sorte" data-def="Poção da Sorte"></li>
 <li id="menu-besouro" class="hidden-word" data-hidden="besouro" data-def="besouro"></li>
 <li id="menu-Floresta" class="hidden-word" data-hidden="Floresta" data-def="Floresta"></li>
-<li id="menu-Sapo-01" class="hidden-word" data-hidden="Sapo_01" data-def="Sapo_01"></li>
+<li id="menu-Sapo-01" class="hidden-word" data-hidden="Rã" data-def="Rã"></li>
 <li id="menu-Deusa" class="hidden-word" data-hidden="Deusa" data-def="Deusa"></li>
 <li id="menu-Vasoura" class="hidden-word" data-hidden="Vassoura" data-def="Vassoura"></li>
-<li id="menu-Sapo-02" class="hidden-word" data-hidden="Sapo_02" data-def="Sapo_02"></li>
+<li id="menu-Sapo-02" class="hidden-word" data-hidden="Sapo-cururu" data-def="Sapo-cururu"></li>
 <li id="menu-Bruxa" class="hidden-word" data-hidden="Bruxa" data-def="Bruxa"></li>
 <li id="menu-Rosto" class="hidden-word" data-hidden="Rosto" data-def="Rosto"></li>
 <li id="menu-Sapo-Palavra" class="hidden-word" data-hidden="Sapo_Palavra" data-def="Sapo_Palavra"></li>
 <li id="menu-Joaninha" class="hidden-word" data-hidden="Joaninha" data-def="Joaninha"></li>
-<li id="menu-Pocao-02" class="hidden-word" data-hidden="Poção_02" data-def="Poção_02"></li>
+<li id="menu-Pocao-02" class="hidden-word" data-hidden="Poção da Vida" data-def="Poção da Vida"></li>
 <li id="menu-Baba-Yaga" class="hidden-word" data-hidden="Baba Yaga" data-def="Baba Yaga"></li>
 <li id="menu-Aranha" class="hidden-word" data-hidden="Aranha" data-def="Aranha"></li>
 <li id="menu-Solanacea" class="hidden-word" data-hidden="Solanacea" data-def="Solanacea"></li>
@@ -743,14 +744,14 @@ cursor:pointer;
 <li id="menu-Medeia" class="hidden-word" data-hidden="Medeia" data-def="Medeia"></li>
 <li id="menu-Vela-do-Diabo" class="hidden-word" data-hidden="Vela do Diabo" data-def="Vela do Diabo"></li>
 <li id="menu-Pa" class="hidden-word" data-hidden="Pã" data-def="Pã"></li>
-<li id="menu-Mnadragora" class="hidden-word" data-hidden="Mnadrágora" data-def="Mnadrágora"></li>
+<li id="menu-Mnadragora" class="hidden-word" data-hidden="Mandrágora" data-def="Mandrágora"></li>
 <li id="menu-Grimorio" class="hidden-word" data-hidden="Grimório" data-def="Grimório"></li>
 <li id="menu-Ancia" class="hidden-word" data-hidden="Anciã" data-def="Anciã"></li>
 <li id="menu-Gato-Preto" class="hidden-word" data-hidden="Gato Preto" data-def="Gato Preto"></li>
-<li id="menu-Pocao-03" class="hidden-word" data-hidden="Poção_03" data-def="Poção_03"></li>
+<li id="menu-Pocao-03" class="hidden-word" data-hidden="Poção da Verdade" data-def="Poção da Verdade"></li>
 <li id="menu-Aradia" class="hidden-word" data-hidden="Aradia" data-def="Aradia"></li>
 <li id="menu-Minhoca" class="hidden-word" data-hidden="Minhoca" data-def="Minhoca"></li>
-<li id="menu-Pocao-04" class="hidden-word" data-hidden="Poção_04" data-def="Poção_04"></li>
+<li id="menu-Pocao-04" class="hidden-word" data-hidden="Poção da Sabedoria" data-def="Poção da Sabedoria"></li>
 <li id="menu-Varinha" class="hidden-word" data-hidden="Varinha" data-def="Varinha"></li>
 <li id="menu-Cuca" class="hidden-word" data-hidden="Cuca" data-def="Cuca"></li>
 </ul>
@@ -758,8 +759,8 @@ cursor:pointer;
 <div id="wordTooltip"></div>
 
 <div id="hintCounter" tabindex="0">
-  <span id="hintCounterValue">Dicas: 10</span>
-  <span id="hintCounterTooltip">somente 10 dicas disponíveis. encontre as poções para adquirir mais dicas</span>
+  <span id="hintCounterValue">Dicas: 5</span>
+  <span id="hintCounterTooltip">somente 5 dicas disponíveis. encontre as poções para adquirir mais dicas</span>
 </div>
 
 <button id="clearButton" onclick="confirmReset()">Reset</button>
@@ -799,7 +800,7 @@ cursor:pointer;
 <div id="creditsModal" class="creditsModal" role="dialog" aria-modal="true" aria-labelledby="creditsTitle">
   <div class="creditsCard">
     <h2 id="creditsTitle">Créditos dos efeitos sonoros</h2>
-    <p>Efeitos sonoros usados em <em>A Bruxa da Floresta</em>:</p>
+    <p>Efeitos sonoros usados em <em>A Bruxa</em>:</p>
     <ul>
       <li>Ambiance_Atmosphere_Interior_Wood_Rain_Thunders_Fire_Loop_Stereo.ogg by Nox_Sound -- <a href="https://freesound.org/s/553887/" target="_blank" rel="noopener">https://freesound.org/s/553887/</a> -- License: Creative Commons 0</li>
       <li>Hand Bells, Low-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">https://freesound.org/s/339815/</a> -- License: Attribution 4.0</li>
@@ -823,6 +824,13 @@ cursor:pointer;
       <li>Witch laugh.wav by Sulainar -- <a href="https://freesound.org/s/471613/" target="_blank" rel="noopener">https://freesound.org/s/471613/</a> -- License: Creative Commons 0</li>
     </ul>
     <button id="creditsClose" type="button">Fechar</button>
+  </div>
+</div>
+
+<div id="ambienceWarningModal" class="creditsModal" role="dialog" aria-modal="true" aria-describedby="ambienceWarningText">
+  <div class="creditsCard">
+    <p id="ambienceWarningText">Ambience ligado - Sons específicos podem incomodar em alguns casos. Para uma experiência mais tranquila, sugere-se que desligue o Ambiance</p>
+    <button id="ambienceWarningClose" type="button">Fechar</button>
   </div>
 </div>
 
@@ -854,19 +862,19 @@ cursor:pointer;
 
     <area id="area-Magia" alt="Magia" href="" coords="2127,2514,2160,2552,2214,2490,2190,2481" shape="poly" onclick="toggleAnswer(this,'Magia'); return false;">
 
-    <area id="area-Pocao-01" alt="Poção da Sorte" href="" coords="811,2246,844,2197,876,2219,841,2254" shape="poly" onclick="toggleAnswer(this,'Poção_01'); return false;">
+    <area id="area-Pocao-01" alt="Poção da Sorte" href="" coords="811,2246,844,2197,876,2219,841,2254" shape="poly" onclick="toggleAnswer(this,'Poção da Sorte'); return false;">
 
     <area id="area-besouro" alt="besouro" href="" coords="992,2029,1033,1991,1066,1999,1085,2027,1063,2062,1025,2075,1001,2059" shape="poly" onclick="toggleAnswer(this,'besouro'); return false;">
 
     <area id="area-Floresta" alt="Floresta" href="" coords="1400,2024,1381,2062,1409,2081,1479,2097,1517,2097,1536,2084,1523,2056" shape="poly" onclick="toggleAnswer(this,'Floresta'); return false;">
 
-    <area id="area-Sapo-01" alt="Sapo_01" href="" coords="1180,1853,1180,1877,1196,1896,1223,1899,1229,1874,1202,1847" shape="poly" onclick="toggleAnswer(this,'Sapo_01'); return false;">
+    <area id="area-Sapo-01" alt="Rã" href="" coords="1180,1853,1180,1877,1196,1896,1223,1899,1229,1874,1202,1847" shape="poly" onclick="toggleAnswer(this,'Rã'); return false;">
 
     <area id="area-Deusa" alt="Deusa" href="" coords="1707,1945,1677,1961,1658,1980,1650,2002,1677,2010,1704,1997,1734,1975,1731,1945" shape="poly" onclick="toggleAnswer(this,'Deusa'); return false;">
 
     <area id="area-Vassoura" alt="Vassoura" href="" coords="1229,1654,1199,1676,1210,1698,1224,1730,1248,1758,1267,1792,1294,1765,1264,1730,1251,1692" shape="poly" onclick="toggleAnswer(this,'Vassoura'); return false;">
 
-    <area id="area-Sapo-02" alt="Sapo_02" href="" coords="1840,1809,1823,1812,1815,1828,1818,1847,1840,1853,1853,1831" shape="poly" onclick="toggleAnswer(this,'Sapo_02'); return false;">
+    <area id="area-Sapo-02" alt="Sapo-cururu" href="" coords="1840,1809,1823,1812,1815,1828,1818,1847,1840,1853,1853,1831" shape="poly" onclick="toggleAnswer(this,'Sapo-cururu'); return false;">
 
     <area id="area-Bruxa" alt="Bruxa" href="" coords="1126,1617,1102,1609,1102,1571,1121,1562,1123,1524,1126,1486,1164,1495,1175,1524,1172,1573,1164,1606" shape="poly" onclick="toggleAnswer(this,'Bruxa'); return false;">
 
@@ -876,7 +884,7 @@ cursor:pointer;
 
     <area id="area-Joaninha" alt="Joaninha" href="" coords="1971,1523,1946,1520,1946,1547,1976,1555,1984,1533" shape="poly" onclick="toggleAnswer(this,'Joaninha'); return false;">
 
-    <area id="area-Pocao-02" alt="Poção da Vida" href="" coords="2127,1532,2155,1516,2190,1522,2184,1551,2155,1562,2136,1554" shape="poly" onclick="toggleAnswer(this,'Poção_02'); return false;">
+    <area id="area-Pocao-02" alt="Poção da Vida" href="" coords="2127,1532,2155,1516,2190,1522,2184,1551,2155,1562,2136,1554" shape="poly" onclick="toggleAnswer(this,'Poção da Vida'); return false;">
 
     <area id="area-Baba-Yaga" alt="Baba Yaga" href="" coords="2165,1864,2195,1839,2231,1837,2247,1864,2222,1885,2182,1877" shape="poly" onclick="toggleAnswer(this,'Baba Yaga'); return false;">
 
@@ -902,7 +910,7 @@ cursor:pointer;
 
     <area id="area-Pa" alt="Pã" href="" coords="2195,55,2163,71,2146,99,2146,137,2179,142,2228,128,2225,88" shape="poly" onclick="toggleAnswer(this,'Pã'); return false;">
 
-    <area id="area-Mandrágora" alt="Mandrágora" href="" coords="952,494,947,473,969,435,993,418,1001,462,988,497" shape="poly" onclick="toggleAnswer(this,'Mnadrágora'); return false;">
+    <area id="area-Mandrágora" alt="Mandrágora" href="" coords="952,494,947,473,969,435,993,418,1001,462,988,497" shape="poly" onclick="toggleAnswer(this,'Mandrágora'); return false;">
 
     <area id="area-Grimorio" alt="Grimório" href="" coords="1487,445,1454,451,1460,494,1463,549,1495,554,1514,530,1503,483" shape="poly" onclick="toggleAnswer(this,'Grimório'); return false;">
 
@@ -910,13 +918,13 @@ cursor:pointer;
 
     <area id="area-Gato-Preto" alt="Gato Preto" href="" coords="1661,936,1625,950,1636,971,1690,980,1704,950" shape="poly" onclick="toggleAnswer(this,'Gato Preto'); return false;">
 
-    <area id="area-Pocao-03" alt="Poção_03" href="" coords="1946,733,1921,752,1940,782,1984,771,1978,747" shape="poly" onclick="toggleAnswer(this,'Poção_03'); return false;">
+    <area id="area-Pocao-03" alt="Poção da Verdade" href="" coords="1946,733,1921,752,1940,782,1984,771,1978,747" shape="poly" onclick="toggleAnswer(this,'Poção da Verdade'); return false;">
 
     <area id="area-Aradia" alt="Aradia" href="" coords="2214,866,2239,898,2315,917,2325,868,2250,844" shape="poly" onclick="toggleAnswer(this,'Aradia'); return false;">
 
     <area id="area-Minhoca" alt="Minhoca" href="" coords="2733,914,2722,971,2752,977,2773,971,2781,930,2765,911" shape="poly" onclick="toggleAnswer(this,'Minhoca'); return false;">
 
-    <area id="area-Pocao-04" alt="Poção_04" href="" coords="2418,624,2399,654,2415,684,2450,654,2450,619" shape="poly" onclick="toggleAnswer(this,'Poção_04'); return false;">
+    <area id="area-Pocao-04" alt="Poção da Sabedoria" href="" coords="2418,624,2399,654,2415,684,2450,654,2450,619" shape="poly" onclick="toggleAnswer(this,'Poção da Sabedoria'); return false;">
 
     <area id="area-Varinha" alt="Varinha" href="" coords="214,2539,198,2571,141,2541,160,2512" shape="poly" onclick="toggleAnswer(this,'Varinha'); return false;">
 
@@ -934,6 +942,8 @@ document.addEventListener("dragstart", e=>e.preventDefault());
 const creditsButton = document.getElementById("creditsButton");
 const creditsModal = document.getElementById("creditsModal");
 const creditsClose = document.getElementById("creditsClose");
+const ambienceWarningModal = document.getElementById("ambienceWarningModal");
+const ambienceWarningClose = document.getElementById("ambienceWarningClose");
 
 function showCredits(){
 creditsModal.classList.add("show");
@@ -943,13 +953,27 @@ function hideCredits(){
 creditsModal.classList.remove("show");
 }
 
+function showAmbienceWarning(){
+ambienceWarningModal.classList.add("show");
+}
+
+function hideAmbienceWarning(){
+ambienceWarningModal.classList.remove("show");
+}
+
 creditsButton.addEventListener("click", showCredits);
 creditsClose.addEventListener("click", hideCredits);
 creditsModal.addEventListener("click", event => {
 if(event.target === creditsModal) hideCredits();
 });
+ambienceWarningClose.addEventListener("click", hideAmbienceWarning);
+ambienceWarningModal.addEventListener("click", event => {
+if(event.target === ambienceWarningModal) hideAmbienceWarning();
+});
 document.addEventListener("keydown", event => {
-if(event.key === "Escape") hideCredits();
+if(event.key !== "Escape") return;
+hideCredits();
+hideAmbienceWarning();
 });
 
 const overlayStorageKey = "bruxadafloresta_selectedOverlay";
@@ -968,13 +992,13 @@ const extraSoundEffectsBaseSrc = "/sound_effects/";
 const defaultAmbianceVolume = 0.68;
 const answerSoundSettings = {
 "Anciã": { maxDuration: 3 },
-"Mnadrágora": { volume: 0.18 },
+"Mandrágora": { volume: 0.18 },
 "Pã": { trimEnd: 0.5 },
 "Caldeirão": { maxDuration: 2 },
-"Poção_01": { maxDuration: 2 },
-"Poção_02": { maxDuration: 2 },
-"Poção_03": { maxDuration: 2 },
-"Poção_04": { maxDuration: 2 },
+"Poção da Sorte": { maxDuration: 2 },
+"Poção da Vida": { maxDuration: 2 },
+"Poção da Verdade": { maxDuration: 2 },
+"Poção da Sabedoria": { maxDuration: 2 },
 "Rosto": { maxDuration: 3 }
 };
 const defaultAnswerSoundVolume = 0.46;
@@ -1001,27 +1025,27 @@ const answerSoundSrcs = {
 "Joaninha": leavesSoundSrc,
 "Lagartixa": leavesSoundSrc,
 "Minhoca": leavesSoundSrc,
-"Mnadrágora": "/sound_effects/Scream.mp3",
+"Mandrágora": "/sound_effects/Scream.mp3",
 "mulher": mulherSoundSrc,
 "Pã": panFluteSoundSrc,
 "Caldeirão": potionSoundSrc,
-"Poção_01": potionSoundSrc,
-"Poção_02": potionSoundSrc,
-"Poção_03": potionSoundSrc,
-"Poção_04": potionSoundSrc,
+"Poção da Sorte": potionSoundSrc,
+"Poção da Vida": potionSoundSrc,
+"Poção da Verdade": potionSoundSrc,
+"Poção da Sabedoria": potionSoundSrc,
 "coruja": "/sound_effects/OwlHoot(clean).wav.wav",
-"Sapo_01": "/sound_effects/MonofroschmitHall.wav",
-"Sapo_02": "/sound_effects/MonofroschmitHall.wav",
+"Rã": "/sound_effects/MonofroschmitHall.wav",
+"Sapo-cururu": "/sound_effects/MonofroschmitHall.wav",
 "Sapo_Palavra": "/sound_effects/MonofroschmitHall.wav",
 "Vassoura": broomSoundSrc,
 "Rosto": "/sound_effects/Witchlaugh.wav"
 };
-const initialAvailableHints = 10;
+const initialAvailableHints = 5;
 const hintBonusByWord = {
-"Poção_01": 1,
-"Poção_02": 1,
-"Poção_03": 1,
-"Poção_04": 1,
+"Poção da Sorte": 1,
+"Poção da Vida": 1,
+"Poção da Verdade": 1,
+"Poção da Sabedoria": 1,
 "Caldeirão": 3
 };
 let isBootstrapping = true;
@@ -1055,11 +1079,11 @@ const menuHoverTips = {
 "Poção da Sorte": "F - Receita mágica",
 "besouro": "F - Inseto de casco duro",
 "Floresta": "P - Conjunto de árvores",
-"Sapo_01": "F - Pequeno anfíbio",
+"Rã": "F - Pequeno anfíbio",
 "Deusa": "P - Presença feminina ligada ao sagrado.",
 "Vassoura": "F - Meio de transporte favorito entre bruxas",
-"Sapo_02": "F - Outro pequeno anfíbio",
-"Bruxa": "Figura mágica de perfil humano.",
+"Sapo-cururu": "F - Outro pequeno anfíbio",
+"Bruxa": "P - Mulher sábia",
 "Rosto": "F - possui uma risada fabulosa",
 "Sapo_Palavra": "P - Ingrediente favorito das bruxas",
 "Joaninha": "F - Inseto pequeno e estiloso",
@@ -1080,10 +1104,10 @@ const menuHoverTips = {
 "Grimório": "P - Livro de receitas, rituais e saberes secretos.",
 "Anciã": "F - Figura feminina mais velha e sábia.",
 "Gato Preto": "F  - O mais famoso familiar das bruxas",
-"Poção_03": "F - Frasco mágico",
+"Poção da Verdade": "F - Frasco mágico",
 "Aradia": "P - O evangelho das bruxas",
 "Minhoca": "F - s",
-"Poção_04": "F - Outro frasco mágico",
+"Poção da Sabedoria": "F - Outro frasco mágico",
 "Varinha": "P - Instrumento mágico",
 "Cuca": "P - Bruxa Brasileira"
 };
@@ -1097,8 +1121,6 @@ const regionDefinitions = [
 /* load */
 window.addEventListener("load", function(){
 
-initAmbianceControls();
-syncAmbiancePlayback();
 sortWordMenu();
 applyMenuHoverTips();
 hideAreaHoverTitles();
@@ -1139,6 +1161,8 @@ initMobileMenuOptions();
 applyMenuBounds();
 isBootstrapping = false;
 updateCounter();
+initAmbianceControls();
+scheduleAmbienceWarningOnce();
 });
 
 
@@ -1159,10 +1183,12 @@ ambianceSound.volume = ambianceVolume;
 updateAmbianceVolumeControl();
 };
 
-function showAmbienceWarningOnce(){
+function scheduleAmbienceWarningOnce(){
+if(!ambianceEnabled) return;
 if(localStorage.getItem(ambianceWarningStorageKey) === "true") return;
-alert("Deixe o  Ambience ativado por sua própria conta e risco. Não me responsabilizo por danos a tímpanos ou emergências cardíacas");
+
 localStorage.setItem(ambianceWarningStorageKey, "true");
+setTimeout(showAmbienceWarning, 1000);
 }
 
 function updateAmbianceButton(){
@@ -1192,7 +1218,6 @@ function initAmbianceControls(){
 if(ambianceControlsInitialized) return;
 ambianceControlsInitialized = true;
 installAmbianceUnlock();
-showAmbienceWarningOnce();
 updateAmbianceButton();
 updateAmbianceVolumeControl();
 syncAmbiancePlayback();
@@ -1227,8 +1252,6 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 }
-
-initAmbianceControls();
 
 function playAudioClone(baseSound, options = {}){
 const sound = baseSound.cloneNode();

@@ -490,23 +490,50 @@ font-family:inherit;
 #soundCreditsFootnote{
 width:min(var(--mandala-display-width), calc(100vw - 32px));
 margin:24px auto 36px;
-padding:18px 22px;
+padding:12px 16px;
 border:1px solid #f5e6d3;
 border-radius:18px;
 background:rgba(0,0,0,0.82);
 color:#f5e6d3;
 font-family:Times New Roman, Times, serif;
-font-size:16px;
-line-height:1.35;
+font-size:13px;
+line-height:1.28;
 box-sizing:border-box;
 }
 
+#soundCreditsFootnote.collapsed .soundCreditsBody{
+display:none;
+}
+
+.soundCreditsHeader{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+}
+
 #soundCreditsFootnote h2{
-margin:0 0 12px;
+margin:0;
+font-size:15px;
+font-weight:normal;
+}
+
+#soundCreditsToggle{
+flex:0 0 auto;
+width:22px;
+height:22px;
+border:1px solid #f5e6d3;
+background:rgba(0,0,0,0.5);
+color:#f5e6d3;
+font-family:Times New Roman, Times, serif;
+font-size:16px;
+line-height:18px;
+padding:0;
+cursor:pointer;
 }
 
 #soundCreditsFootnote p{
-margin:0 0 12px;
+margin:10px 0;
 }
 
 #soundCreditsFootnote ul{
@@ -715,19 +742,12 @@ cursor:pointer;
 <span id="counter"></span>
 
 <span class="info-wrapper">
-    <button class="info-btn">i</button>
-
-    <span class="tooltip">
-      Seres e símbolos do mar na mitologia grega... e uns animais marinhos aleatórios 🐟.
-    </span>
-  </span>
-  <span class="info-wrapper">
     <button class="info-btn">?</button>
 
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as palavras e elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite.
       Para dicas, clique com o botão direito do mouse no menu.
-      1° Dica: Região onde o elemento se encontra; 2° Dica: Revela qual o nome do elemento escondido no menu. Boa Sorte!
+      1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
     </span>
   </span>
   <a class="menu-btn" href="/" >☰</a>
@@ -840,10 +860,14 @@ cursor:pointer;
 
 </div>
 
-<footer id="soundCreditsFootnote" aria-label="Créditos dos efeitos sonoros">
-    <h2>Créditos dos efeitos sonoros</h2>
-    <p>Efeitos sonoros usados em <em>Uma Bruxa</em>:</p>
-    <ul>
+<footer id="soundCreditsFootnote" class="collapsed" aria-label="Créditos dos efeitos sonoros">
+    <div class="soundCreditsHeader">
+      <h2>Créditos dos efeitos sonoros</h2>
+      <button id="soundCreditsToggle" type="button" aria-expanded="false" aria-controls="soundCreditsBody">–</button>
+    </div>
+    <div id="soundCreditsBody" class="soundCreditsBody">
+      <p>Efeitos sonoros usados em <em>Uma Bruxa</em>:</p>
+      <ul>
       <li>Ambiance_Atmosphere_Interior_Wood_Rain_Thunders_Fire_Loop_Stereo.ogg by Nox_Sound -- <a href="https://freesound.org/s/553887/" target="_blank" rel="noopener">https://freesound.org/s/553887/</a> -- License: Creative Commons 0</li>
       <li>Hand Bells, Low-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">https://freesound.org/s/339815/</a> -- License: Attribution 4.0</li>
       <li>Hand Bells, D, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">https://freesound.org/s/339813/</a> -- License: Attribution 4.0</li>
@@ -864,7 +888,8 @@ cursor:pointer;
       <li>OwlHoot(clean).wav by musicmasta1 -- <a href="https://freesound.org/s/251937/" target="_blank" rel="noopener">https://freesound.org/s/251937/</a> -- License: Attribution NonCommercial 3.0</li>
       <li>Monofrosch mit Hall by mbezzola -- <a href="https://freesound.org/s/275551/" target="_blank" rel="noopener">https://freesound.org/s/275551/</a> -- License: Creative Commons 0</li>
       <li>Witch laugh.wav by Sulainar -- <a href="https://freesound.org/s/471613/" target="_blank" rel="noopener">https://freesound.org/s/471613/</a> -- License: Creative Commons 0</li>
-    </ul>
+      </ul>
+    </div>
 </footer>
 
 <!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
@@ -1374,14 +1399,14 @@ function renderMenuWord(li){
 if(!li.classList.contains("hidden-word")) return;
 
 let hintLevel = Number(li.dataset.hintLevel || 0);
-li.classList.toggle("hint-revealed", hintLevel >= 2 && !li.classList.contains("found"));
+li.classList.toggle("hint-revealed", hintLevel >= 1 && !li.classList.contains("found"));
 
 if(li.classList.contains("found")){
   li.textContent = formatMenuWord(li.dataset.hidden);
   return;
 }
 
-if(hintLevel >= 2){
+if(hintLevel >= 1){
   li.textContent = formatMenuWord(li.dataset.hidden);
   return;
 }
@@ -1696,11 +1721,11 @@ item.dataset.hintLevel = String(Math.min(nextLevel, 2));
 let area = findAreaByWord(item.dataset.hidden);
 let region = area ? getRegionForArea(area) : null;
 
-if(hintLevel >= 1 && region){
+if(hintLevel >= 2 && region){
   flashRegionHint(region.id);
 }
 
-if(hintLevel >= 1 && region){
+if(hintLevel >= 2 && region){
   centerViewOnRegion(region);
 }
 
@@ -1974,6 +1999,17 @@ toggleAnswer(area, word);
 }
 }
 });
+}
+
+
+const soundCreditsFootnote = document.getElementById("soundCreditsFootnote");
+const soundCreditsToggle = document.getElementById("soundCreditsToggle");
+
+if(soundCreditsFootnote && soundCreditsToggle){
+  soundCreditsToggle.addEventListener("click", () => {
+    let collapsed = soundCreditsFootnote.classList.toggle("collapsed");
+    soundCreditsToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  });
 }
 
 /* ===== reset ===== */

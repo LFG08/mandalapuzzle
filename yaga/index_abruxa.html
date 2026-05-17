@@ -171,6 +171,7 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
   flex-direction:column;
   z-index:20;
   box-sizing:border-box;
+  overflow:hidden;
 }
 
 #wordMenu.mobile-pinned{
@@ -186,6 +187,9 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
   justify-content:space-between;
   gap:6px;
   touch-action:none;
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
 }
 /* LEFT SIDE */
 .title {
@@ -200,6 +204,9 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
   display:flex;
   align-items:center;
   gap:calc(6px * var(--mobile-menu-ui-scale));
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 /* COUNTER */
@@ -308,7 +315,9 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
 
 #wordList{
 flex:1;
+min-height:0;
 overflow-y:auto;
+overflow-x:hidden;
 
 list-style:none;
 margin:0;
@@ -318,6 +327,8 @@ line-height:1.4;
 
 #wordList li{
 padding:4px 0;
+overflow-wrap:anywhere;
+word-break:break-word;
 }
 
 #wordList li.hidden-word{
@@ -427,6 +438,8 @@ color:white;
 padding:8px;
 font-family:Times New Roman, Times, serif;
 cursor:pointer;
+width:100%;
+box-sizing:border-box;
 
 }
 
@@ -435,6 +448,7 @@ display:flex;
 align-items:center;
 gap:8px;
 cursor:default;
+min-width:0;
 }
 
 .ambianceVolumeControl label,
@@ -540,8 +554,8 @@ font-family:inherit;
 
   #wordMenu.pinned-top-right{
     top:8px !important;
-    left:2874px !important;
-    right:auto !important;
+    left:auto !important;
+    right:8px !important;
     bottom:auto !important;
   }
 
@@ -653,6 +667,8 @@ font-family:inherit;
 <li id="menu-Aradia" class="hidden-word" data-hidden="Aradia" data-def="Aradia"></li>
 <li id="menu-Minhoca" class="hidden-word" data-hidden="Minhoca" data-def="Minhoca"></li>
 <li id="menu-Pocao-04" class="hidden-word" data-hidden="Poção_04" data-def="Poção_04"></li>
+<li id="menu-Varinha" class="hidden-word" data-hidden="Varinha" data-def="Varinha"></li>
+<li id="menu-Cuca" class="hidden-word" data-hidden="Cuca" data-def="Cuca"></li>
 </ul>
 
 <div id="wordTooltip"></div>
@@ -785,6 +801,10 @@ font-family:inherit;
     <area id="area-Minhoca" alt="Minhoca" href="" coords="2733,914,2722,971,2752,977,2773,971,2781,930,2765,911" shape="poly" onclick="toggleAnswer(this,'Minhoca'); return false;">
 
     <area id="area-Pocao-04" alt="Poção_04" href="" coords="2418,624,2399,654,2415,684,2450,654,2450,619" shape="poly" onclick="toggleAnswer(this,'Poção_04'); return false;">
+
+    <area id="area-Varinha" alt="Varinha" href="" coords="214,2539,198,2571,141,2541,160,2512" shape="poly" onclick="toggleAnswer(this,'Varinha'); return false;">
+
+    <area id="area-Cuca" alt="Cuca" href="" coords="2146,2730,2163,2757,2214,2746,2195,2705" shape="poly" onclick="toggleAnswer(this,'Cuca'); return false;">
 
 </map>
 
@@ -926,7 +946,9 @@ const menuHoverTips = {
 "Poção_03": "F - Frasco mágico",
 "Aradia": "P - O evangelho das bruxas",
 "Minhoca": "F - s",
-"Poção_04": "F - Outro frasco mágico"
+"Poção_04": "F - Outro frasco mágico",
+"Varinha": "P - Instrumento mágico",
+"Cuca": "P - Bruxa Brasileira"
 };
 
 const regionDefinitions = [
@@ -1108,7 +1130,7 @@ sound.play().catch(() => {});
 }
 
 function playRandomHandbell(){
-if(ambianceEnabled || !handbellSounds.length) return;
+if(!handbellSounds.length) return;
 playAudioClone(handbellSounds[Math.floor(Math.random() * handbellSounds.length)]);
 }
 
@@ -1120,7 +1142,9 @@ if(!ambianceEnabled){
 const customSound = answerSounds[word];
 if(customSound){
   playAudioClone(customSound, answerSoundSettings[word]);
+  return;
 }
+playRandomHandbell();
 }
 
 

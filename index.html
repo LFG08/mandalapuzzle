@@ -1,1386 +1,1400 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-
-<title>vários nadas</title>
-<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-
-body{
-margin:0;
-font-family: Georgia, serif;
-background:#3b1200;
-color:#f5e6d3;
-
-}
-
-/* HEADER IMAGE */
-
-.header{
-width:100%;
-height:220px; /* adjust height */
-background-image:url("mandala_header.jpg");
-opacity:0.8;
-  
-background-size:cover;
-background-position:center;
-
-position:relative; /* IMPORTANT */
-overflow:hidden;
-}
-
-.header::after{
-content:"";
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-
-background:radial-gradient(circle at center,
-rgba(32, 12, 6, 0.60) 0%,
-rgba(56, 22, 10, 0.50) 46%,
-rgba(73, 31, 13, 0.20) 100%); /* darker center behind title, lighter edges */
-
-z-index:1; /* stays below text */
-}
-
-/* TITLE */
-
-.title{
-text-align:center;
-margin-top:-150px;
-margin-bottom:48px;
-position:relative;
-z-index:2; /* above overlay */
-}
-
-.title h1{
-font-size:48px;
-margin:10px 0;
-}
-
-.subtitle{
-font-size:20px;
-opacity:0.9;
-}
-
-.menu-filter{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:10px;
-flex-wrap:wrap;
-margin:0 auto 18px auto;
-position:relative;
-z-index:2;
-margin-top:75px;   /* moves it lower below the subtitle */
-}
-
-.menu-filter select{
-font-family:inherit;
-font-size:15px;
-padding:8px 12px;
-border-radius:999px;
-border:1px solid rgba(255,255,255,0.25);
-background:#2a0d02;
-color:#f5e6d3;
-cursor:pointer;
-box-shadow:0 4px 12px rgba(0,0,0,0.35);
-}
-
-/* GRID */
-
-.grid{
-display:grid;
-grid-template-columns:repeat(2, minmax(0, 1fr));
-gap:10px;
-padding:20px 10px 40px 10px;
-border:1px solid rgba(255,255,255,0.22);
-box-sizing:border-box;
-background:rgba(0,0,0,0.08);
-}
-
-.menu-sections{
-display:grid;
-grid-template-columns:repeat(3, minmax(0, 1fr));
-gap:20px;
-padding:0 40px;
-align-items:start;
-}
-
-.menu-section{
-padding:0 0 8px 0;
-text-align:center;
-}
-
-.menu-section-title{
-margin:0 0 10px 0;
-display:block;
-width:100%;
-box-sizing:border-box;
-padding:8px 18px;
-font-size:20px;
-font-weight:normal;
-opacity:0.95;
-text-align:center;
-border:1px solid rgba(255,255,255,0.25);
-background:#2a0d02;
-color:#f5e6d3;
-border-radius:999px;
-box-shadow:0 4px 12px rgba(0,0,0,0.35);
-}
-
-/* ===== CARD ===== */
-
-.card{
-text-align:center;
-padding:10px;
-background:#4a1a05;
-transition:0.3s;
-cursor:pointer;
-display:block;
-text-decoration:none;
-color:inherit;
-}
-
-.card:hover{
-transform:scale(1.03);
-background:#5c2208;
-}
-
-/* ===== THUMB (CIRCLE) ===== */
-
-.thumb{
-width:220px;
-height:220px;
-border-radius:50%;
-overflow:hidden;
-margin:0 auto 10px auto;
-
-/* optional styling */
-box-shadow:0 0 15px rgba(0,0,0,0.6);
-border:2px solid rgba(255,255,255,0.2);
-}
-
-.thumb.progress-complete{
-border:1px hidden #ff7b00;
-box-shadow:
-0 0 12px rgba(255, 215, 0, 0.6),
-0 0 24px rgba(255, 240, 150, 0.45);
-animation:goldShine 2.2s linear infinite;
-}
-
-@keyframes goldShine{
-0%{ filter:brightness(1); }
-50%{ filter:brightness(1.2); }
-100%{ filter:brightness(1); }
-}
-
-.thumb img{
-width:100%;
-height:100%;
-object-fit:cover;
-display:block;
-}
-
-#celticThumb{
-opacity:0;
-transition:opacity 0.15s ease;
-}
-
-#celticThumb.ready{
-opacity:1;
-}
-
-.thumb:hover{
-box-shadow:0 0 25px rgba(255,200,100,0.4);
-}
-
-/* ===== TEXT ===== */
-
-.tags{
-font-size:12px;
-margin-top:4px;
-opacity:0.7;
-overflow-wrap:anywhere;
-}
-
-
-.locked-tag{
-  opacity:.7;
-  transition:opacity .35s ease, transform .35s ease;
-}
-
-.locked-tag.unlocked{
-  opacity:1;
-  transform:scale(1.05);
-}
-  
-.status{
-font-size:12px;
-margin-top:6px;
-opacity:0.8;
-color:#f5e6d3;
-}
-
-.bottom-actions{
-position:fixed;
-left:50%;
-bottom:16px;
-transform:translateX(-50%);
-display:flex;
-gap:10px;
-z-index:20;
-}
-
-.bottom-actions button{
-font-family:inherit;
-font-size:14px;
-padding:8px 14px;
-border:1px solid rgba(255,255,255,0.25);
-background:#2a0d02;
-color:#f5e6d3;
-border-radius:999px;
-cursor:pointer;
-box-shadow:0 4px 12px rgba(0,0,0,0.35);
-}
-
-.bottom-actions button:hover{
-background:#5c2208;
-}
-
-.report-problem-link{
-position:fixed;
-right:16px;
-bottom:16px;
-font-family:inherit;
-font-size:14px;
-padding:8px 14px;
-border:1px solid rgba(255,255,255,0.25);
-background:#2a0d02;
-color:#f5e6d3;
-border-radius:999px;
-cursor:pointer;
-box-shadow:0 4px 12px rgba(0,0,0,0.35);
-text-decoration:none;
-z-index:20;
-}
-
-.report-problem-link:hover{
-background:#5c2208;
-}
-@media (max-width: 1300px){
-  .menu-sections{
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* ===== MOBILE ===== */
-@media (max-width: 900px){
-  .header{
-    height:180px;
-  }
-
-  .title{
-    margin-top:-130px;
-    margin-bottom:28px;
-    padding:0 10px;
-  }
-
-  .title h1{
-    font-size:36px;
-  }
-
-  .subtitle{
-    font-size:18px;
-  }
-
-  .menu-filter{
-    margin-top:60px;
-    padding:0 10px;
-  }
-
-  /* Collapse sections into one mobile-friendly grid */
-  .menu-sections{
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:12px;
-    padding:0 12px 96px 12px;
-    align-items:stretch;
-  }
-
-  .menu-section{
-    display:contents;
-  }
-
-  .menu-section-title{
-    display:none;
-  }
-
-  .menu-section .grid{
-    display:contents;
-    border:0;
-    background:transparent;
-    padding:0;
-    gap:0;
-  }
-
-  .card{
-    min-width:0;
-    padding:10px 6px;
-  }
-
-  .thumb{
-    width:min(42vw, 170px);
-    height:min(42vw, 170px);
-  }
-
-  .tags{
-    font-size:11px;
-  }
-
-  .bottom-actions{
-    bottom: 12px;
-    width: calc(100% - 24px);
-    max-width: 420px;
-  }
-
-  .bottom-actions button{
-    flex: 1;
-    font-size: 13px;
-    padding: 10px;
-  }
-
-  .report-problem-link{
-    right:12px;
-    bottom:64px;
-    font-size:13px;
-    padding:10px 12px;
-  }
-}
-
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Baba Witch Jigsaw</title>
+  <style>
+    @property --edge-fade-radius{
+      syntax:"<percentage>";
+      inherits:false;
+      initial-value:150%;
+    }
+    :root{
+      --bg-1:#130f18;
+      --bg-2:#26354a;
+      --panel:#2a2230;
+      --panel-2:#182537;
+      --line:#c1905d;
+      --text:#fff3e6;
+      --muted:#d8c7b2;
+      --btn-1:rgba(132,76,50,.96);
+      --btn-2:rgba(82,45,36,.96);
+      --tray-grad-1:#161722;
+      --tray-grad-2:#30445e;
+      --tray-grad-3:#261824;
+      --tray-glow:rgba(255,226,187,.08);
+      --bg-glow:rgba(206,142,83,.25);
+      --card-bg-1:rgba(255,255,255,.05);
+      --card-bg-2:rgba(0,0,0,.08);
+      --modal-backdrop:rgba(8,7,10,.72);
+      --guide-opacity:.3;
+      --board-size:min(92vw,768px);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Georgia,"Times New Roman",serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top, var(--bg-glow), transparent 30%),
+        linear-gradient(180deg,var(--bg-2),var(--bg-1) 72%);
+      transition:background .65s ease,color .65s ease;
+    }
+    button,input{font:inherit}
+    .app{
+      width:min(1500px,calc(100vw - 24px));
+      margin:0 auto;
+      padding:18px 0 28px;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,860px) minmax(280px,1fr);
+      gap:22px;
+      align-items:start;
+    }
+    .panel{
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:0 24px 60px rgba(0,0,0,.28);
+    }
+    .boardWrap{padding:18px; position:sticky; top:16px}
+    .board{
+      position:relative;
+      width:var(--board-size);
+      aspect-ratio:1;
+      margin:0 auto;
+      border-radius:18px;
+      overflow:hidden;
+      background:linear-gradient(rgba(255,247,235,.08),rgba(255,247,235,.08));
+      box-shadow:inset 0 0 0 1px rgba(255,240,220,.12);
+    }
+    .board::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image:var(--guide-image);
+      background-size:100% 100%;
+      opacity:var(--guide-opacity);
+      pointer-events:none;
+      z-index:0;
+    }
+    .boardGlow{
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 16%,rgba(255,255,255,.14),transparent 34%),
+        radial-gradient(circle at 50% 120%,rgba(255,195,122,.12),transparent 28%);
+      pointer-events:none;
+      z-index:1;
+    }
+    .board.finalStage::before,
+    .board.finalStage .boardGlow{display:none}
+    .board.finalStage{cursor:pointer}
+    .finalBoardImage,
+    .finalFullOverlay,
+    .finalOverlayReveal,
+    .finalOverlaySpot{
+      position:absolute;
+      inset:0;
+    }
+    .finalBoardImage{
+      z-index:0;
+      background:center / 100% 100% no-repeat;
+    }
+    .finalOverlayReveal{
+      z-index:2;
+      opacity:0;
+      pointer-events:none;
+      background:url("a_witch_overlay.png") center / 100% 100% no-repeat;
+      transition:opacity .28s ease;
+    }
+    .finalOverlayReveal.show{opacity:1}
+    .finalFullOverlay{
+      z-index:2;
+      opacity:0;
+      pointer-events:none;
+      background:center / 100% 100% no-repeat;
+      filter:brightness(1) drop-shadow(0 0 0 rgba(248,230,198,0));
+      transition:opacity 1.25s ease, filter 1.4s ease;
+    }
+    .finalFullOverlay.show{
+      opacity:1;
+      animation:overlayShine 1.9s ease-in-out infinite alternate;
+    }
+    .finalOverlayReveal.flash{
+      opacity:1;
+      filter:brightness(1.35) drop-shadow(0 0 18px rgba(248,230,198,.72));
+    }
+    .finalOverlaySpot{
+      z-index:3;
+      border:0;
+      padding:0;
+      background:transparent;
+      cursor:pointer;
+    }
+    .finalOverlaySpot.found{pointer-events:none}
+    .boardComplete{
+      position:absolute;
+      inset:auto 18px 18px 18px;
+      z-index:5;
+      text-align:center;
+      padding:10px 12px;
+      border-radius:999px;
+      background:rgba(24,20,28,.8);
+      border:1px solid rgba(255,222,188,.22);
+      opacity:0;
+      transform:translateY(6px);
+      transition:.35s ease;
+      pointer-events:none;
+    }
+    .boardComplete.show{opacity:1;transform:translateY(0)}
+    .controls{
+      margin:14px 4px 0;
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .controls.hidden{display:none}
+    .label,.small{
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      font-size:.76rem;
+    }
+    .slider{flex:1; accent-color:#d08c53}
+    .side{
+      padding:18px;
+      min-height:780px;
+    }
+    .card{
+      padding:18px;
+      margin-bottom:18px;
+      border-radius:20px;
+      background:linear-gradient(180deg,var(--card-bg-1),var(--card-bg-2));
+      border:1px solid rgba(255,231,200,.12);
+    }
+    h1,h2,p{margin:0}
+    .title{
+      margin-bottom:12px;
+      font-size:1.4rem;
+      font-family:"Palatino Linotype",Georgia,serif;
+    }
+    .line + .line{margin-top:12px}
+    .value{display:inline-block; margin-top:4px; color:#fff6ea}
+    .actions{
+      display:grid;
+      gap:8px;
+      margin-top:16px;
+    }
+    .btn{
+      width:100%;
+      border:1px solid rgba(255,234,210,.18);
+      border-radius:999px;
+      padding:10px 12px;
+      background:linear-gradient(180deg,var(--btn-1),var(--btn-2));
+      color:#fff4e8;
+      cursor:pointer;
+    }
+    .btn:hover{filter:brightness(1.06)}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .trayTitle{margin:0 0 12px}
+    .tray{
+      position:relative;
+      min-height:620px;
+      height:calc(100vh - 210px);
+      overflow:auto;
+      border-radius:18px;
+      background:
+        radial-gradient(circle at top,var(--tray-glow),transparent 30%),
+        linear-gradient(135deg,var(--tray-grad-1),var(--tray-grad-2) 56%,var(--tray-grad-3));
+      border:1px solid rgba(255,220,186,.12);
+    }
+    .piece{
+      position:absolute;
+      border:0;
+      padding:0;
+      margin:0;
+      background:transparent;
+      cursor:grab;
+      touch-action:none;
+      user-select:none;
+      transition:transform .14s ease, filter .14s ease;
+      z-index:2;
+    }
+    .piece:hover{transform:translateY(-2px)}
+    .piece.drag{
+      position:fixed;
+      cursor:grabbing;
+      z-index:9999;
+      transition:none;
+    }
+    .piece.placed{cursor:default}
+    .piece canvas{
+      display:block;
+      filter:drop-shadow(0 14px 24px rgba(0,0,0,.28));
+    }
+    .piece.placed canvas{
+      filter:drop-shadow(0 8px 12px rgba(0,0,0,.1));
+    }
+    .empty{
+      display:grid;
+      place-items:center;
+      min-height:100%;
+      text-align:center;
+      padding:24px;
+      color:var(--muted);
+    }
+    .aboutModal{
+      position:fixed;
+      inset:0;
+      display:none;
+      place-items:center;
+      padding:20px;
+      background:var(--modal-backdrop);
+      z-index:10000;
+    }
+    .aboutModal.show{display:grid}
+    .aboutCard{
+      width:min(420px,calc(100vw - 40px));
+      padding:18px;
+      border-radius:22px;
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border:1px solid var(--line);
+      box-shadow:0 24px 70px rgba(0,0,0,.42);
+      text-align:center;
+    }
+    .aboutCard h2{
+      margin:0 0 14px;
+      font-size:1.25rem;
+      font-family:"Palatino Linotype",Georgia,serif;
+    }
+    .aboutContent a{
+      display:inline-block;
+      color:var(--text);
+    }
+    .aboutContent img{
+      display:block;
+      max-width:100%;
+      height:auto;
+      margin:0 auto;
+      border-radius:10px;
+      border:1px solid rgba(255,231,200,.22);
+      box-shadow:0 12px 34px rgba(0,0,0,.28);
+    }
+    .aboutClose{margin-top:14px}
+    .nextLevelOverlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      place-items:center;
+      padding:24px;
+      background:#000;
+      --edge-fade-radius:150%;
+      -webkit-mask-image:radial-gradient(circle at center, transparent 0%, transparent var(--edge-fade-radius), #000 calc(var(--edge-fade-radius) + 24%));
+      mask-image:radial-gradient(circle at center, transparent 0%, transparent var(--edge-fade-radius), #000 calc(var(--edge-fade-radius) + 24%));
+      z-index:9998;
+      pointer-events:none;
+    }
+    .nextLevelOverlay.show{
+      display:block;
+      animation:edgeDarken 3.8s cubic-bezier(.5,0,.16,1) forwards;
+    }
+    .nextLevelOverlay.reveal{
+      display:block;
+      animation:centerReveal 3.4s cubic-bezier(.5,0,.16,1) forwards;
+    }
+    .nextLevelOverlay.blackout{
+      display:block;
+      background:#000;
+      -webkit-mask-image:none;
+      mask-image:none;
+      animation:none;
+    }
+    @keyframes overlayShine{
+      from{filter:brightness(1) drop-shadow(0 0 0 rgba(248,230,198,0))}
+      to{filter:brightness(1.28) drop-shadow(0 0 24px rgba(248,230,198,.62))}
+    }
+    @keyframes edgeDarken{
+      0%{--edge-fade-radius:150%}
+      35%{--edge-fade-radius:95%}
+      72%{--edge-fade-radius:28%}
+      100%{--edge-fade-radius:-28%}
+    }
+    @keyframes centerReveal{
+      0%{--edge-fade-radius:-28%}
+      28%{--edge-fade-radius:28%}
+      66%{--edge-fade-radius:95%}
+      100%{--edge-fade-radius:150%}
+    }
+    @media (max-width:1200px){
+      .layout{grid-template-columns:1fr}
+      .boardWrap{position:static}
+      .tray{height:700px}
+    }
+    @media (max-width:760px){
+      .app{width:min(100vw - 14px,100%)}
+      .panel{border-radius:18px}
+      .controls{flex-wrap:wrap}
+    }
+  </style>
 </head>
-
 <body>
-
-<div class="header"></div>
-
-<div class="title">
-<h1>vários nadas</h1>
-<div class="subtitle">✨puzzles em mandalas✨</div>
-</div>
-
-<div class="menu-filter">
-  <label for="menuFilter" hidden>Filtrar mandalas</label>
-  <select id="menuFilter">
-    <option value="todos">todos</option>
-    <option value="quebra-cabeca">quebra-cabeça</option>
-    <option value="caca-palavras">caça-palavras</option>
-    <option value="caca-elementos">caça-elementos</option>
-    <option value="caca-palavras-elementos">caça-palavras-elementos</option>
-    <option value="misterio">???</option>
-  </select>
-  <label for="menuOrder" hidden>Reordenar mandalas</label>
-  <select id="menuOrder">
-    <option value="original">padrão</option>
-    <option value="crescente">crescente</option>
-    <option value="decrescente">decrescente</option>
-    <option value="nao-finalizadas">não finalizadas</option>
-    <option value="finalizadas">finalizadas</option>
-  </select>
-</div>
-
-<div class="menu-sections">
-<section class="menu-section" data-menu-section>
-<h2 class="menu-section-title">caça-palavras/elementos</h2>
-<div class="grid">
-
-<a href="goya" class="card"
-data-key="goyaPuzzleProgress"
-data-total="18">
-
-  <div class="thumb">
-    <img src="thumb_goya.png" loading="lazy">
+  <main class="app">
+    <section class="layout">
+      <div class="panel boardWrap">
+        <div id="board" class="board">
+          <div class="boardGlow"></div>
+          <div id="complete" class="boardComplete">Puzzle complete.</div>
+        </div>
+        <div class="controls">
+          <label class="label" for="guide">Board Visibility</label>
+          <input id="guide" class="slider" type="range" min="0" max="100" value="100">
+          <span id="guideVal">100%</span>
+        </div>
+      </div>
+      <aside class="panel side">
+        <div class="card">
+          <h1 id="puzzleTitle" class="title">Baba Witch Jigsaw</h1>
+          <div class="line">
+            <span class="small">Progress</span><br>
+            <strong id="placed" class="value">0 / ?</strong>
+          </div>
+          <div class="line">
+            <span class="small">Level</span><br>
+            <strong id="levelLabel" class="value">1 / 2</strong>
+          </div>
+          <div class="actions">
+            <button id="shuffle" class="btn" type="button">Shuffle Loose Pieces</button>
+            <button id="testSolve" class="btn" type="button">Test Auto Place</button>
+            <button id="reset" class="btn" type="button">Reset Puzzle</button>
+            <button id="about" class="btn" type="button">Sobre esta imagem</button>
+          </div>
+        </div>
+        <h2 class="trayTitle">Piece Tray</h2>
+        <div id="tray" class="tray"></div>
+      </aside>
+    </section>
+  </main>
+  <div id="aboutModal" class="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <div class="aboutCard">
+      <h2 id="aboutTitle">Sobre esta imagem</h2>
+      <div id="aboutContent" class="aboutContent"></div>
+      <button id="aboutClose" class="btn aboutClose" type="button">Fechar</button>
+    </div>
   </div>
-  
-  <div class="tags">#caça-palavras #caça-elementos #Bruxas #Pinturas #El Aquelarre</div>
-  <div class="status"></div>
-  
-</a>
-
-<a href="tarits" class="card"
-data-key="TARITSPuzzleProgress"
-data-total="20">
-
-  <div class="thumb">
-    <img src="thumb_TARITS.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-palavras #ThereAreRiversInTheSky #Livros</div>
-  <div class="status"></div>
-  
-</a>
-
-<a href="unrealunearth" class="card"
-data-key="unrealPuzzleProgress"
-data-total="23">
-
-  <div class="thumb">
-    <img src="thumb_hozier.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-palavras #UnrealUnearth #Hozier</div>
-  <div class="status"></div>
-
-</a>
-
-<a href="vibevegana" class="card"
-data-key="prantasPuzzleProgress"
-data-total="25">
-  
-  <div class="thumb">
-    <img src="thumb_vegana.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-palavras #VibeVegana #Verde #Plantas</div>
-  <div class="status"></div>
-  
-</a>
-
-<a href="margrego" class="card"
-data-key="marPuzzleProgress"
-data-total="26">
-  
-  <div class="thumb">
-    <img src="thumb_mar.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-palavras #caça-elementos #MarGrego #MitologiaGrega #Mar</div>
-  <div class="status"></div>
-  
-</a>
-
-<a href="losgatos" class="card"
-data-key="losgatosPuzzleProgress"
-data-total="26">
-
-  <div class="thumb">
-    <img src="thumb_losgatos.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-elementos #gatos</div>
-  <div class="status"></div>
-  
-</a>
-
-  <a href="ajna" class="card"
-data-key="ajnaPuzzleProgress"
-data-total="27">
-
-  <div class="thumb">
-    <img src="thumb_ajna.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-palavras #Yoga #Chakras #Ajna</div>
-  <div class="status"></div>
-  
-</a>
-
-<a href="bichanos" class="card"
-data-key="gatosPuzzleProgress"
-data-total="34">
-
-  <div class="thumb">
-    <img src="thumb_bichanos.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-elementos #gatos #caçatudomenospalavras</div>
-  <div class="status"></div>
-  
-</a>
-
-<a href="rotadeseda" class="card"
-data-key="silkPuzzleProgress"
-data-total="50">
-
-  <div class="thumb">
-    <img src="thumb_SILK.png" loading="lazy">
-  </div>
-  
-  <div class="tags">#caça-palavras #caça-elementos #RotaDaSeda #História #ÁsiaCentral</div>
-  <div class="status"></div>
-
-</a>
-</div>
-</section>
-
-<section class="menu-section" data-menu-section>
-<h2 class="menu-section-title">???</h2>
-<div class="grid">
-
-<a href="celtic" class="card" id="celticCard"
-data-celtic="true"
-data-total="40">
-
-  <div class="thumb">
-    <img id="celticThumb" loading="lazy">
-  </div>
-
-  <div class="tags">#caça-elementos #Celtic #Irlanda #NósDemais
-  
-  <span class="tag locked-tag"
-        data-unlock="18"
-        data-real="#caça-palavras">#???</span>
-    
-  </div>
-  <div class="status"></div>
-
-</a>
-
-<a href="fundodomar" class="card" id="polvoCard">
-  <div class="thumb">
-    <img src="fundodomar/thumb_polvo.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #fundodomar
-    <span class="tag locked-tag"
-          data-unlock-stage="levelThreeUnlocked"
-          data-real="#caça-elementos">#???</span>
-  </div>
-  <div class="status"></div>
-
-</a>
-
-<a href="passacaglia" class="card"
-id="passacagliaCard"
-data-key="passacagliaPuzzleProgress"
-data-total="52">
-
-  <div class="thumb">
-    <img src="thumb_passacaglia.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #Música #Puzzle
-    <span class="tag locked-tag"
-          data-unlock-stage="passacagliaLevelTwoUnlocked"
-          data-real="#enigma">#???</span>
-  </div>
-  
-  <div class="status"></div>
-
-</a>
-
-<a href="allthewitches" class="card"
-id="allthewitchesCard">
-
-  <div class="thumb">
-    <img src="allthewitches/thumb_level1.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #senha
-    <span class="tag locked-tag"
-          data-unlock-stage="allthewitchesJadugarUnlocked"
-          data-real="#caça-palavras">#???</span>
-    <span class="tag locked-tag"
-          data-unlock-stage="allthewitchesMusicalUnlocked"
-          data-real="#puzzlemusical">#???</span>
-  </div>
-
-  <div class="status"></div>
-
-</a>
-</div>
-</section>
-
-<section class="menu-section" data-menu-section>
-<h2 class="menu-section-title">quebra-cabeça</h2>
-<div class="grid">
-
-<a href="tyre" class="card"
-id="tyreCard"
-data-key="tyreJigsawProgress"
-data-total="97">
-
-  <div class="thumb">
-    <img src="thumb_tyre.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #Tyre</div>
-  <div class="status"></div>
-
-</a>
-  
-<a href="flower" class="card"
-id="flowerCard"
-data-key="flowerJigsawProgress"
-data-total="113">
-
-  <div class="thumb">
-    <img src="/thumb_flower.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #Flor</div>
-  <div class="status"></div>
-
-</a>
-
-<a href="pavao" class="card"
-id="pavaoCard"
-data-key="pavaoPuzzleProgress"
-data-total="100">
-
-  <div class="thumb">
-    <img src="thumb_pavao.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #Pavão</div>
-  <div class="status"></div>
-
-</a>
-
-<a href="lucifer" class="card"
-id="luciferCard"
-data-key="luciferJigsawProgress"
-data-total="138">
-
-  <div class="thumb">
-    <img src="lucifer_thumb.png" loading="lazy">
-  </div>
-
-  <div class="tags">#jigsawpuzzle #quebra-cabeça #Lucifer, 1890</div>
-  <div class="status"></div>
-
-</a>
-</div>
-</section>
-</div>
-</section>
-
-<div class="bottom-actions">
-  <button id="exportProgressButton" type="button">Exportar progresso</button>
-  <button id="importProgressButton" type="button">Importar progresso</button>
-  <input id="importProgressInput" type="file" accept="application/json" hidden>
-</div>
-
-<a
-  class="report-problem-link"
-  href="https://docs.google.com/forms/d/e/1FAIpQLSc6PRNDizGAgek9tvtiQlCt2LCjyD4RSMl0RobpZLTdSuIQwQ/viewform?usp=publish-editor"
-  target="_blank"
-  rel="noopener noreferrer"
->reportar um problema</a>
-  
-<script>
-
-function updateLockedTags(scope, foundCount, unlockFlags){
-let root = scope || document;
-root.querySelectorAll(".locked-tag").forEach(tag => {
-let unlockByStage = tag.dataset.unlockStage;
-let unlockedByStage = unlockByStage
-? Boolean(unlockFlags && unlockFlags[unlockByStage])
-: null;
-let unlockAt = Number(tag.dataset.unlock || 0);
-let isUnlocked = unlockByStage ? unlockedByStage : foundCount >= unlockAt;
-
-if(isUnlocked){
-tag.textContent = tag.dataset.real || tag.textContent;
-tag.classList.add("unlocked");
-return;
-}
-tag.textContent = "#???";
-tag.classList.remove("unlocked");
-});
-}
-
-function setCelticThumb(thumbEl, src){
-if(!thumbEl || !src) return;
-
-if(thumbEl.getAttribute("src") === src){
-thumbEl.classList.add("ready");
-return;
-}
-
-thumbEl.classList.remove("ready");
-let preloader = new Image();
-preloader.onload = () => {
-thumbEl.src = src;
-thumbEl.classList.add("ready");
-};
-preloader.onerror = () => {
-thumbEl.src = src;
-thumbEl.classList.add("ready");
-};
-preloader.src = src;
-}
-  
-function safeParseStoredArray(key){
-try{
-let parsed = JSON.parse(localStorage.getItem(key) || "[]");
-if(Array.isArray(parsed)) return parsed;
-if(parsed && Array.isArray(parsed.placed)) return parsed.placed;
-if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds;
-return [];
-}catch{
-return [];
-}
-}
-
-function getStoredProgressCount(key){
-try{
-let parsed = JSON.parse(localStorage.getItem(key) || "[]");
-if(Array.isArray(parsed)) return parsed.length;
-if(parsed && Array.isArray(parsed.placed)) return parsed.placed.length;
-if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds.length;
-if(parsed && Array.isArray(parsed.pieces)){
-return parsed.pieces.reduce((count, piece) => count + (piece && piece.placed ? 1 : 0), 0);
-}
-return 0;
-}catch{
-return 0;
-}
-}
-
-function getTwoLevelJigsawStatus(saveKey, total){
-let progress = safeParseStoredArray(saveKey);
-let found = progress.length;
-let levelTwoStarted = progress.some(id => typeof id === "string" && id.startsWith("levelTwo-"));
-
-if(!levelTwoStarted){
-let levelOnePieces = progress.filter(id => typeof id === "string" && id.startsWith("levelOne-")).length;
-levelTwoStarted = levelOnePieces >= 100;
-}
-
-return {
-found,
-total: levelTwoStarted ? total : null
-};
-}
-
-function getLuciferStatus(total){
-return getTwoLevelJigsawStatus("luciferJigsawProgress", total);
-}
-
-function getTyreStatus(total){
-return getTwoLevelJigsawStatus("tyreJigsawProgress", total);
-}
-
-function getFlowerStatus(total){
-return getTwoLevelJigsawStatus("flowerJigsawProgress", total);
-}
-
-function getPassacagliaStatus(total){
-let status = getTwoLevelJigsawStatus("passacagliaPuzzleProgress", total);
-return {
-found: status.found,
-total: status.total,
-levelTwoUnlocked: status.total !== null
-};
-}
-
-
-function getAllthewitchesStatus(){
-let raw = localStorage.getItem("lenvouteuse_jigsaw_levels");
-if(!raw){
-return {
-found: 0,
-total: null,
-thumb: "allthewitches/thumb_level1.png",
-finalLevelUnlocked: false
-};
-}
-
-let parsed;
-try{
-parsed = JSON.parse(raw);
-}catch{
-return {
-found: 0,
-total: null,
-thumb: "allthewitches/thumb_level1.png",
-finalLevelUnlocked: false
-};
-}
-
-let progress = Array.isArray(parsed && parsed.progress) ? parsed.progress : [];
-if(Array.isArray(parsed && parsed.placed) && progress.length === 0){
-progress = [parsed.placed, [], []];
-}
-
-let levelCounts = [0, 1, 2].map(index => {
-let ids = Array.isArray(progress[index]) ? progress[index] : [];
-return ids.length;
-});
-
-let mode = ["puzzle", "search", "bells"].includes(parsed && parsed.mode) ? parsed.mode : "puzzle";
-let currentLevel = Number.isFinite(parsed && parsed.currentLevel) ? parsed.currentLevel : 0;
-let searchFound = Array.isArray(parsed && parsed.searchFound) ? parsed.searchFound.length : 0;
-let bellRound = Number.isFinite(parsed && parsed.bellRound) ? parsed.bellRound : 0;
-let bellStep = Number.isFinite(parsed && parsed.bellStep) ? parsed.bellStep : 0;
-let bellFound = bellRound <= 0
-? Math.max(0, Math.min(8, bellStep))
-: 8 + Math.max(0, Math.min(8, bellStep));
-
-let found = levelCounts[0] + levelCounts[1] + levelCounts[2] + searchFound + bellFound;
-let finalLevelUnlocked = currentLevel >= 2 || mode === "bells";
-let total = finalLevelUnlocked ? 255 : null;
-let completed = total !== null && found >= total;
-
-let thumb = "allthewitches/thumb_level1.png";
-if(completed){
-thumb = "allthewitches/thumb_completo.png";
-}else if(mode === "search"){
-thumb = "allthewitches/thumb_level3.png";
-}else if(mode === "bells" || currentLevel >= 2){
-thumb = "allthewitches/thumb_level4.png";
-}else if(currentLevel >= 1){
-thumb = "allthewitches/thumb_level2.png";
-}
-
-return {
-found,
-total,
-thumb,
-finalLevelUnlocked,
-jadugarUnlocked: mode === "search" || mode === "bells",
-musicalUnlocked: mode === "bells"
-};
-}
-
-function getStoredObjectFromKeys(keys){
-for(let i = 0; i < keys.length; i++){
-try{
-let raw = localStorage.getItem(keys[i]);
-if(!raw) continue;
-let parsed = JSON.parse(raw);
-if(parsed && typeof parsed === "object"){
-return parsed;
-}
-}catch{
-/* ignore invalid save shape */
-}
-}
-return null;
-}
-
-async function getFundodomarCounterMeta(){
-try{
-let response = await fetch("fundodomar/level3.html", { cache: "no-store" });
-if(!response.ok) throw new Error("Falha ao carregar fundodomar/level3.html");
-let html = await response.text();
-let matches = html.match(/<li\s+id="menu-[^"]+"/g) || [];
-return {
-levelThreeTotal: matches.length
-};
-}catch{
-return null;
-}
-}
-
-function getFundodomarStatus(meta){
-let journey = getStoredObjectFromKeys(["PolvoJourneyV3", "PolvoJourneyV2"]);
-let placedByLevel = journey && journey.placedIdsByLevel && typeof journey.placedIdsByLevel === "object"
-? journey.placedIdsByLevel
-: {};
-
-let levelOneFound = Array.isArray(placedByLevel.levelOne) ? placedByLevel.levelOne.length : 0;
-let levelTwoFound = Array.isArray(placedByLevel.levelTwo) ? placedByLevel.levelTwo.length : 0;
-let levelThreeFound = safeParseStoredArray("polvo3PuzzleProgress").length;
-
-let unlocked = new Set(["levelOne"]);
-if(Array.isArray(journey && journey.unlockedStages)){
-journey.unlockedStages.forEach(stage => {
-if(typeof stage === "string") unlocked.add(stage);
-});
-}
-if(Number(journey && journey.currentLevelIndex) >= 1){
-unlocked.add("levelTwo");
-}
-if(journey && (journey.stage === "hidden" || journey.stage === "levelThree")){
-unlocked.add("levelThree");
-}
-
-let found = levelOneFound + levelTwoFound + levelThreeFound;
-let hasLastLevelUnlocked = unlocked.has("levelThree");
-let levelThreeTotal = meta && Number.isFinite(meta.levelThreeTotal) ? meta.levelThreeTotal : 0;
-
-if(!hasLastLevelUnlocked){
-return {
-found,
-total: null,
-levelThreeUnlocked: false
-};
-}
-
-let total = 100 + levelTwoFound + levelThreeTotal;
-return {
-found,
-total,
-levelThreeUnlocked: true
-};
-}
-
-async function getCelticCounterMeta(){
-try{
-let response = await fetch("celtic/index.html", { cache: "no-store" });
-if(!response.ok) throw new Error("Falha ao carregar celtic/index.html");
-let html = await response.text();
-
-let levelsStart = html.indexOf('const levels = [');
-let nivel1Start = html.indexOf('key: "nivel1"', levelsStart);
-let nivel2Start = html.indexOf('key: "nivel2"', nivel1Start);
-let levelsEnd = html.indexOf('\n]\n;', nivel2Start);
-
-if(levelsStart === -1 || nivel1Start === -1 || nivel2Start === -1 || levelsEnd === -1){
-throw new Error("Estrutura dos niveis nao encontrada");
-}
-
-let nivel1Block = html.slice(nivel1Start, nivel2Start);
-let nivel2Block = html.slice(nivel2Start, levelsEnd);
-let itemRegex = /\{\s*id:\s*"([^"]+)"[\s\S]*?\}/g;
-
-let groupById = {};
-let match;
-while((match = itemRegex.exec(nivel1Block)) !== null){
-let itemBlock = match[0];
-let id = match[1];
-let groupMatch = itemBlock.match(/group:\s*"([^"]+)"/);
-groupById[id] = groupMatch ? groupMatch[1] : id;
-}
-
-let level1Total = new Set(Object.values(groupById)).size;
-let level1Ids = Object.keys(groupById);
-let level2Ids = [];
-let level2Regex = /\{\s*id:\s*"([^"]+)"/g;
-let level2Match;
-while((level2Match = level2Regex.exec(nivel2Block)) !== null){
-level2Ids.push(level2Match[1]);
-}
-let level2Total = level2Ids.length;
-
-return {
-groupById,
-level1Ids,
-level2Ids,
-combinedTotal: level1Total + level2Total
-};
-}catch{
-return null;
-}
-}
-
-function getCelticStatus(meta, totalFallback){
-let lastLevel = localStorage.getItem("CELTIC_last_level") || "nivel1";
-let nivel1Progress = safeParseStoredArray("CELTIC_nivel1_progress");
-let nivel2Progress = safeParseStoredArray("CELTIC_nivel2_progress");
-
-let uniqueNivel1Found = nivel1Progress.length;
-let combinedTotal = totalFallback;
-
-if(meta && meta.groupById){
-if(Array.isArray(meta.level1Ids)){
-let validLevel1Ids = new Set(meta.level1Ids);
-nivel1Progress = nivel1Progress.filter(id => validLevel1Ids.has(id));
-}
-let mapped = nivel1Progress.map(id => meta.groupById[id] || id);
-uniqueNivel1Found = new Set(mapped).size;
-combinedTotal = meta.combinedTotal;
-
-if(Array.isArray(meta.level2Ids)){
-let validLevel2Ids = new Set(meta.level2Ids);
-nivel2Progress = nivel2Progress.filter(id => validLevel2Ids.has(id));
-}
-}
-
-if(lastLevel === "nivel2"){
-let found = uniqueNivel1Found + nivel2Progress.length;
-return {
-thumb: "thumbceltic2.png",
-counter: found + " / " + combinedTotal,
-found,
-total: combinedTotal
-};
-}
-
-return {
-thumb: "thumbceltic1.png",
-counter: uniqueNivel1Found + " / " + combinedTotal,
-found: uniqueNivel1Found,
-total: combinedTotal
-};
-}
-
-
-function renderStatus(statusEl, found, total){
-if(!statusEl) return;
-
-statusEl.style.color = "#f5e6d3";
-statusEl.style.opacity = "0.8";
-
-if(total !== null && found === total && total > 0){
-statusEl.textContent = "✔ completo";
-statusEl.style.color = "#f1c501";
-statusEl.style.opacity = "1";
-return;
-}
-
-statusEl.textContent = found + " / " + (total === null ? "?" : total);
-
-if(found === 0 && (total === 0 || total === null)){
-statusEl.style.opacity = "0.7";
-}
-}
-
-function getCardTagSet(card){
-let tagsEl = card.querySelector(".tags");
-if(!tagsEl) return new Set();
-let tagMatches = tagsEl.textContent.match(/#[\p{L}\p{N}\-?]+/gu) || [];
-return new Set(tagMatches.map(tag => tag.toLowerCase()));
-}
-
-function cardMatchesFilter(card, filterValue){
-if(!filterValue || filterValue === "todos") return true;
-let tags = getCardTagSet(card);
-let hasWords = tags.has("#caça-palavras");
-let hasElements = tags.has("#caça-elementos");
-
-if(filterValue === "quebra-cabeca"){
-return tags.has("#quebra-cabeça");
-}
-if(filterValue === "caca-palavras"){
-return hasWords;
-}
-if(filterValue === "caca-elementos"){
-return hasElements;
-}
-if(filterValue === "caca-palavras-elementos"){
-return hasWords && hasElements;
-}
-if(filterValue === "misterio"){
-return tags.has("#???");
-}
-return true;
-}
-
-function applyMenuFilter(){
-let filterSelect = document.getElementById("menuFilter");
-let selected = filterSelect ? filterSelect.value : "todos";
-
-document.querySelectorAll(".card").forEach(card => {
-card.style.display = cardMatchesFilter(card, selected) ? "block" : "none";
-});
-
-document.querySelectorAll("[data-menu-section]").forEach(section => {
-let hasVisibleCards = Array.from(section.querySelectorAll(".card"))
-.some(card => card.style.display !== "none");
-section.style.display = hasVisibleCards ? "block" : "none";
-});
-}
-
-function setCardProgressMeta(card, found, total){
-if(!card) return;
-let safeFound = Number.isFinite(found) ? found : 0;
-let safeTotal = Number.isFinite(total) ? total : null;
-let hasKnownTotal = safeTotal !== null && safeTotal > 0;
-let ratio = hasKnownTotal ? safeFound / safeTotal : 0;
-let completed = hasKnownTotal && safeFound === safeTotal;
-
-card.dataset.progressFound = String(safeFound);
-card.dataset.progressTotal = safeTotal === null ? "" : String(safeTotal);
-card.dataset.progressRatio = String(ratio);
-card.dataset.progressComplete = completed ? "1" : "0";
-}
-
-function applyMenuOrdering(){
-let orderSelect = document.getElementById("menuOrder");
-let selected = orderSelect ? orderSelect.value : "original";
-document.querySelectorAll(".grid").forEach(grid => {
-let cards = Array.from(grid.querySelectorAll(".card"));
-
-if(selected === "original"){
-cards
-.slice()
-.sort((a, b) => Number(a.dataset.originalOrder || 0) - Number(b.dataset.originalOrder || 0))
-.forEach(card => grid.appendChild(card));
-return;
-}
-
-let sorted = cards.slice().sort((a, b) => {
-let ratioA = Number(a.dataset.progressRatio || 0);
-let ratioB = Number(b.dataset.progressRatio || 0);
-let foundA = Number(a.dataset.progressFound || 0);
-let foundB = Number(b.dataset.progressFound || 0);
-let totalA = Number(a.dataset.progressTotal);
-let totalB = Number(b.dataset.progressTotal);
-let hasTotalA = a.dataset.progressTotal !== "" && Number.isFinite(totalA);
-let hasTotalB = b.dataset.progressTotal !== "" && Number.isFinite(totalB);
-let completeA = a.dataset.progressComplete === "1";
-let completeB = b.dataset.progressComplete === "1";
-let amountA = hasTotalA ? totalA : foundA;
-let amountB = hasTotalB ? totalB : foundB;
-
-if(selected === "decrescente"){
-if(amountA !== amountB) return amountB - amountA;
-return ratioB - ratioA;
-}
-if(selected === "nao-finalizadas"){
-if(completeA !== completeB) return completeA ? 1 : -1;
-if(ratioA !== ratioB) return ratioB - ratioA;
-return foundB - foundA;
-}
-if(selected === "finalizadas"){
-if(completeA !== completeB) return completeA ? -1 : 1;
-if(ratioA !== ratioB) return ratioB - ratioA;
-return foundB - foundA;
-}
-if(amountA !== amountB) return amountA - amountB;
-return ratioA - ratioB;
-});
-
-sorted.forEach(card => grid.appendChild(card));
-});
-}
-
-function applyThumbBorder(card, percentage){
-let thumb = card.querySelector(".thumb");
-if(!thumb) return;
-
-thumb.classList.remove("progress-complete");
-
-if(percentage < 100) return;
-thumb.classList.add("progress-complete");
-}
-
-function exportProgress(){
-try{
-let payload = {
-exportedAt: new Date().toISOString(),
-source: "varios-nadas-menu",
-localStorage: {}
-};
-
-for(let i = 0; i < localStorage.length; i++){
-let key = localStorage.key(i);
-payload.localStorage[key] = localStorage.getItem(key);
-}
-
-let blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-let url = URL.createObjectURL(blob);
-let a = document.createElement("a");
-a.href = url;
-a.download = "varios-nadas-progresso.json";
-a.click();
-URL.revokeObjectURL(url);
-}catch{
-alert("Não foi possível exportar o progresso.");
-}
-}
-
-function importProgressFromFile(file){
-if(!file) return;
-
-let reader = new FileReader();
-reader.onload = function(){
-try{
-let parsed = JSON.parse(reader.result);
-let storageData = parsed && parsed.localStorage ? parsed.localStorage : parsed;
-
-if(!storageData || typeof storageData !== "object"){
-throw new Error("Formato inválido");
-}
-
-Object.keys(storageData).forEach(key => {
-if(typeof storageData[key] === "string"){
-localStorage.setItem(key, storageData[key]);
-}
-});
-
-alert("Progresso importado com sucesso. A página será atualizada.");
-window.location.reload();
-}catch{
-alert("Arquivo inválido. Selecione um JSON de exportação válido.");
-}
-};
-reader.readAsText(file);
-}
-
-window.addEventListener("DOMContentLoaded", function(){
-document.querySelectorAll(".card").forEach((card, index) => {
-card.dataset.originalOrder = String(index);
-});
-
-let exportButton = document.getElementById("exportProgressButton");
-let importButton = document.getElementById("importProgressButton");
-let importInput = document.getElementById("importProgressInput");
-
-if(exportButton){
-exportButton.addEventListener("click", exportProgress);
-}
-
-if(importButton && importInput){
-importButton.addEventListener("click", () => importInput.click());
-importInput.addEventListener("change", () => {
-importProgressFromFile(importInput.files && importInput.files[0]);
-importInput.value = "";
-});
-}
-
-let menuFilter = document.getElementById("menuFilter");
-if(menuFilter){
-menuFilter.addEventListener("change", applyMenuFilter);
-}
-let menuOrder = document.getElementById("menuOrder");
-if(menuOrder){
-menuOrder.addEventListener("change", applyMenuOrdering);
-}
-
-document.querySelectorAll(".card").forEach(card => {
-
-if(card.dataset.celtic === "true"){
-let statusEl = card.querySelector(".status");
-let thumbEl = document.getElementById("celticThumb");
-let totalFallback = parseInt(card.dataset.total);
-let initial = getCelticStatus(null, totalFallback);
-setCardProgressMeta(card, initial.found, initial.total);
-setCelticThumb(thumbEl, initial.thumb);
-renderStatus(statusEl, initial.found, initial.total);
-updateLockedTags(card, initial.found);
-applyMenuFilter();
-applyMenuOrdering();
-let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
-applyThumbBorder(card, initialPercentage);
-
-getCelticCounterMeta().then(meta => {
-let updated = getCelticStatus(meta, totalFallback);
-setCardProgressMeta(card, updated.found, updated.total);
-setCelticThumb(thumbEl, updated.thumb);
-renderStatus(statusEl, updated.found, updated.total);
-updateLockedTags(card, updated.found);
-applyMenuFilter();
-applyMenuOrdering();
-let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
-applyThumbBorder(card, updatedPercentage);
-});
-return;
-}
-
-if(card.id === "luciferCard"){
-let total = parseInt(card.dataset.total);
-if(Number.isNaN(total)) return;
-let statusEl = card.querySelector(".status");
-let luciferStatus = getLuciferStatus(total);
-setCardProgressMeta(card, luciferStatus.found, luciferStatus.total);
-renderStatus(statusEl, luciferStatus.found, luciferStatus.total);
-let percentage = luciferStatus.total > 0 ? (luciferStatus.found / luciferStatus.total) * 100 : 0;
-applyThumbBorder(card, percentage);
-return;
-}
-
-if(card.id === "tyreCard"){
-let total = parseInt(card.dataset.total);
-if(Number.isNaN(total)) return;
-let statusEl = card.querySelector(".status");
-let tyreStatus = getTyreStatus(total);
-setCardProgressMeta(card, tyreStatus.found, tyreStatus.total);
-renderStatus(statusEl, tyreStatus.found, tyreStatus.total);
-let percentage = tyreStatus.total > 0 ? (tyreStatus.found / tyreStatus.total) * 100 : 0;
-applyThumbBorder(card, percentage);
-return;
-}
-
-if(card.id === "flowerCard"){
-let total = parseInt(card.dataset.total);
-if(Number.isNaN(total)) return;
-let statusEl = card.querySelector(".status");
-let flowerStatus = getFlowerStatus(total);
-setCardProgressMeta(card, flowerStatus.found, flowerStatus.total);
-renderStatus(statusEl, flowerStatus.found, flowerStatus.total);
-let percentage = flowerStatus.total > 0 ? (flowerStatus.found / flowerStatus.total) * 100 : 0;
-applyThumbBorder(card, percentage);
-return;
-}
-
-if(card.id === "passacagliaCard"){
-let total = parseInt(card.dataset.total);
-if(Number.isNaN(total)) return;
-let statusEl = card.querySelector(".status");
-let passacagliaStatus = getPassacagliaStatus(total);
-setCardProgressMeta(card, passacagliaStatus.found, passacagliaStatus.total);
-renderStatus(statusEl, passacagliaStatus.found, passacagliaStatus.total);
-updateLockedTags(card, passacagliaStatus.found, {
-passacagliaLevelTwoUnlocked: passacagliaStatus.levelTwoUnlocked
-});
-let percentage = passacagliaStatus.total > 0 ? (passacagliaStatus.found / passacagliaStatus.total) * 100 : 0;
-applyThumbBorder(card, percentage);
-return;
-}
-
-
-if(card.id === "allthewitchesCard"){
-let statusEl = card.querySelector(".status");
-let thumbEl = card.querySelector(".thumb img");
-let allthewitchesStatus = getAllthewitchesStatus();
-setCardProgressMeta(card, allthewitchesStatus.found, allthewitchesStatus.total);
-renderStatus(statusEl, allthewitchesStatus.found, allthewitchesStatus.total);
-if(thumbEl){
-thumbEl.src = allthewitchesStatus.thumb;
-}
-updateLockedTags(card, allthewitchesStatus.found, {
-allthewitchesJadugarUnlocked: allthewitchesStatus.jadugarUnlocked,
-allthewitchesMusicalUnlocked: allthewitchesStatus.musicalUnlocked
-});
-let percentage = allthewitchesStatus.total > 0 ? (allthewitchesStatus.found / allthewitchesStatus.total) * 100 : 0;
-applyThumbBorder(card, percentage);
-return;
-}
-
-if(card.id === "polvoCard"){
-let statusEl = card.querySelector(".status");
-let initial = getFundodomarStatus(null);
-setCardProgressMeta(card, initial.found, initial.total);
-renderStatus(statusEl, initial.found, initial.total);
-updateLockedTags(card, initial.found, { levelThreeUnlocked: initial.levelThreeUnlocked });
-applyMenuFilter();
-applyMenuOrdering();
-let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
-applyThumbBorder(card, initialPercentage);
-
-getFundodomarCounterMeta().then(meta => {
-let updated = getFundodomarStatus(meta);
-setCardProgressMeta(card, updated.found, updated.total);
-renderStatus(statusEl, updated.found, updated.total);
-updateLockedTags(card, updated.found, { levelThreeUnlocked: updated.levelThreeUnlocked });
-applyMenuFilter();
-applyMenuOrdering();
-let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
-applyThumbBorder(card, updatedPercentage);
-});
-return;
-}
-
-let key = card.dataset.key;
-let total = parseInt(card.dataset.total);
-
-/* SKIP cards without progress data */
-if(!key || Number.isNaN(total)) return;
-
-let statusEl = card.querySelector(".status");
-let found = getStoredProgressCount(key);
-setCardProgressMeta(card, found, total);
-renderStatus(statusEl, found, total);
-
-let percentage = total > 0 ? (found / total) * 100 : 0;
-applyThumbBorder(card, percentage);
-
-});
-
-applyMenuFilter();
-applyMenuOrdering();
-
-});
-</script>
+  <div id="nextLevelOverlay" class="nextLevelOverlay"></div>
+  <script>
+    const STORAGE_KEY = "baba_witch_jigsaw_levels";
+    const PASSWORD_KEY = "baba_witch_jigsaw_unlocked";
+    const MAGIC_PASSWORD = "baba yaga";
+    const IMAGE_SIZE = 768;
+    const SNAP = 34;
+    const LEVELS = [
+      {name:"Baba Witch", image:"baba_witch.png", guideMaxOpacity:0.3, cols:11, rows:6},
+      {name:"A Witch", image:"a_witch.png", guideMaxOpacity:0.3, cols:11, rows:6}
+    ];
+    const LEVEL_OVERLAYS = ["baba_witch_overlay.png", "a_witch_overlay.png"];
+    const THEMES = [
+      {
+        bg1:"#17100c", bg2:"#4a2e19", panel:"#3a281b", panel2:"#1f150e", line:"#d09043", text:"#fff1df", muted:"#dfc1a0",
+        btn1:"rgba(151,88,43,.96)", btn2:"rgba(91,53,30,.96)", tray1:"#21140e", tray2:"#5b351e", tray3:"#2d1b10",
+        trayGlow:"rgba(255,212,151,.12)", bgGlow:"rgba(222,151,71,.3)", card1:"rgba(255,231,198,.07)", card2:"rgba(38,19,8,.28)",
+        modalBackdrop:"rgba(16,10,7,.76)"
+      },
+      {
+        bg1:"#100907", bg2:"#4a1c0d", panel:"#2f170f", panel2:"#170b07", line:"#b8874b", text:"#f8e6c6", muted:"#c9aa78",
+        btn1:"rgba(136,50,20,.96)", btn2:"rgba(82,36,15,.96)", tray1:"#130906", tray2:"#623601", tray3:"#2a1209",
+        trayGlow:"rgba(227,200,151,.13)", bgGlow:"rgba(136,50,20,.32)", card1:"rgba(227,200,151,.08)", card2:"rgba(14,6,4,.3)",
+        modalBackdrop:"rgba(14,6,4,.78)"
+      }
+    ];
+    const ABOUT_IMAGES = [
+      `<a title="Ivan Bilibin, Public domain, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Bilibin._Baba_Yaga.jpg" target="_blank" rel="noopener"><img width="250" alt="Bilibin. Baba Yaga" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Bilibin._Baba_Yaga.jpg/250px-Bilibin._Baba_Yaga.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"></a>`,
+      `<a title="Edgar Bundy, Public domain, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:A_Witch_Edgar_Bundy).jpg" target="_blank" rel="noopener"><img width="250" alt="A Witch Edgar Bundy)" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/A_Witch_Edgar_Bundy%29.jpg/250px-A_Witch_Edgar_Bundy%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"></a>`
+    ];
+    const FINAL_TARGETS = [
+      {id:"1", x:9, y:12, radius:43},
+      {id:"2", x:18, y:754, radius:35},
+      {id:"3", x:749, y:750, radius:32},
+      {id:"4", x:747, y:20, radius:30},
+      {id:"5", x:245, y:50, radius:14},
+      {id:"6", x:743, y:313, radius:14},
+      {id:"7", x:384, y:743, radius:17},
+      {id:"8", x:28, y:455, radius:16},
+      {id:"9", x:383, y:23, radius:16},
+      {id:"10", x:522, y:719, radius:15}
+    ];
+    const MEMORY_END_ROUND = 13;
+
+    const el = {
+      board: document.getElementById("board"),
+      tray: document.getElementById("tray"),
+      controls: document.querySelector(".controls"),
+      guide: document.getElementById("guide"),
+      guideVal: document.getElementById("guideVal"),
+      placed: document.getElementById("placed"),
+      puzzleTitle: document.getElementById("puzzleTitle"),
+      levelLabel: document.getElementById("levelLabel"),
+      shuffle: document.getElementById("shuffle"),
+      testSolve: document.getElementById("testSolve"),
+      reset: document.getElementById("reset"),
+      about: document.getElementById("about"),
+      aboutModal: document.getElementById("aboutModal"),
+      aboutContent: document.getElementById("aboutContent"),
+      aboutClose: document.getElementById("aboutClose"),
+      nextLevelOverlay: document.getElementById("nextLevelOverlay"),
+      complete: document.getElementById("complete")
+    };
+
+    const state = {
+      pieces: [],
+      drag: null,
+      z: 2,
+      boardRect: null,
+      trayRect: null,
+      scale: 1,
+      images: [],
+      image: null,
+      edges: [],
+      currentLevel: 0,
+      progress: Array.from({length: LEVELS.length}, () => []),
+      trayOrder: [],
+      mode: "puzzle",
+      finalFound: [],
+      memorySequence: [],
+      memoryRound: 1,
+      memoryInputIndex: 0,
+      memoryShowing: false,
+      memoryComplete: false,
+      memoryTimers: [],
+      nextLevelTimer: null,
+      transitioning: false,
+      guide: 1
+    };
+
+    el.guide.addEventListener("input", () => {
+      applyGuide(Number(el.guide.value) / 100);
+      save();
+    });
+    el.shuffle.addEventListener("click", shuffleLoose);
+    el.testSolve.addEventListener("click", solveAll);
+    el.reset.addEventListener("click", resetPuzzle);
+    el.about.addEventListener("click", showAboutImage);
+    el.aboutClose.addEventListener("click", hideAboutImage);
+    el.aboutModal.addEventListener("click", (event) => {
+      if(event.target === el.aboutModal) hideAboutImage();
+    });
+    addEventListener("keydown", (event) => {
+      if(event.key === "Escape") hideAboutImage();
+    });
+    addEventListener("resize", onResize);
+
+    preloadImages().then(() => {
+      const saved = load();
+      if(saved){
+        state.guide = saved.guide;
+        state.currentLevel = Math.min(saved.currentLevel, LEVELS.length - 1);
+        state.progress = saved.progress;
+        state.mode = saved.mode;
+        state.finalFound = saved.finalFound;
+        state.memorySequence = saved.memorySequence;
+        state.memoryRound = saved.memoryRound;
+        state.memoryComplete = saved.memoryComplete;
+      }
+      if(!requirePassword()){
+        showPasswordRequired();
+        return;
+      }
+      if(state.mode === "final"){
+        buildFinalStage();
+        return;
+      }
+      buildLevel(state.currentLevel);
+    });
+
+    function preloadImages(){
+      return Promise.all(LEVELS.map((level) => new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = level.image;
+      }))).then((images) => {
+        state.images = images;
+      });
+    }
+
+    function requirePassword(){
+      if(localStorage.getItem(PASSWORD_KEY) === "true") return true;
+
+      while(true){
+        const answer = prompt("Palavra Mágica:");
+        if(answer === null) return false;
+
+        if(answer.trim().toLowerCase() === MAGIC_PASSWORD){
+          localStorage.setItem(PASSWORD_KEY, "true");
+          return true;
+        }
+
+        alert("Palavra mágica incorreta.");
+      }
+    }
+
+    function showPasswordRequired(){
+      applyTheme(0);
+      el.puzzleTitle.textContent = "Baba Witch Jigsaw";
+      el.levelLabel.textContent = "Locked";
+      el.placed.textContent = "0 / 66";
+      el.complete.textContent = "Palavra Mágica required.";
+      el.complete.classList.add("show");
+      el.tray.innerHTML = '<div class="empty">Palavra Mágica required.</div>';
+      el.shuffle.disabled = true;
+      el.testSolve.disabled = true;
+      el.about.disabled = true;
+    }
+
+    function getLevel(){
+      return LEVELS[state.currentLevel];
+    }
+
+    function getLevelTotal(level = getLevel()){
+      return level.rows * level.cols;
+    }
+
+    function applyGuide(value){
+      state.guide = value;
+      const level = getLevel();
+      const opacity = value * level.guideMaxOpacity;
+      document.documentElement.style.setProperty("--guide-image", `url("${level.image}")`);
+      document.documentElement.style.setProperty("--guide-opacity", String(opacity));
+      el.guide.value = String(Math.round(value * 100));
+      el.guideVal.textContent = `${Math.round(value * 100)}%`;
+    }
+
+    function applyTheme(levelIndex){
+      const theme = THEMES[levelIndex] || THEMES[0];
+      const root = document.documentElement;
+      root.style.setProperty("--bg-1", theme.bg1);
+      root.style.setProperty("--bg-2", theme.bg2);
+      root.style.setProperty("--panel", theme.panel);
+      root.style.setProperty("--panel-2", theme.panel2);
+      root.style.setProperty("--line", theme.line);
+      root.style.setProperty("--text", theme.text);
+      root.style.setProperty("--muted", theme.muted);
+      root.style.setProperty("--btn-1", theme.btn1);
+      root.style.setProperty("--btn-2", theme.btn2);
+      root.style.setProperty("--tray-grad-1", theme.tray1);
+      root.style.setProperty("--tray-grad-2", theme.tray2);
+      root.style.setProperty("--tray-grad-3", theme.tray3);
+      root.style.setProperty("--tray-glow", theme.trayGlow);
+      root.style.setProperty("--bg-glow", theme.bgGlow);
+      root.style.setProperty("--card-bg-1", theme.card1);
+      root.style.setProperty("--card-bg-2", theme.card2);
+      root.style.setProperty("--modal-backdrop", theme.modalBackdrop);
+    }
+
+    function showAboutImage(){
+      el.aboutContent.innerHTML = ABOUT_IMAGES[state.currentLevel] || ABOUT_IMAGES[0];
+      el.aboutModal.classList.add("show");
+    }
+
+    function hideAboutImage(){
+      el.aboutModal.classList.remove("show");
+    }
+
+    function setLevelUi(){
+      const levelNumber = state.currentLevel + 1;
+      el.puzzleTitle.textContent = "Baba Witch Jigsaw";
+      el.levelLabel.textContent = `${levelNumber} / ${LEVELS.length}`;
+      document.title = "Baba Witch Jigsaw";
+      el.complete.textContent = levelNumber < LEVELS.length
+        ? `Level ${levelNumber} complete. Loading level ${levelNumber + 1}...`
+        : "Puzzle complete.";
+    }
+
+    function updateProgressDisplay(){
+      const placed = state.pieces.filter((piece) => piece.placed).length;
+      el.placed.textContent = `${placed} / ${getLevelTotal()}`;
+    }
+
+    function getTab(level = getLevel()){
+      return Math.round(Math.min(IMAGE_SIZE / level.cols, IMAGE_SIZE / level.rows) * 0.24);
+    }
+
+    function buildLevel(levelIndex, preserveTransition = false){
+      clearMemoryTimers();
+      if(!preserveTransition) clearNextLevelTimer();
+      state.mode = "puzzle";
+      el.shuffle.disabled = false;
+      el.testSolve.disabled = false;
+      el.about.disabled = false;
+      state.currentLevel = levelIndex;
+      applyTheme(levelIndex);
+      state.image = state.images[levelIndex];
+      state.edges = createEdges(LEVELS[levelIndex].rows, LEVELS[levelIndex].cols);
+      state.transitioning = false;
+      state.trayOrder = [];
+      state.pieces.forEach((piece) => piece.node.remove());
+      state.pieces = [];
+      el.board.classList.remove("finalStage");
+      el.controls.classList.remove("hidden");
+      el.nextLevelOverlay.classList.remove("show", "reveal", "blackout");
+      el.board.querySelectorAll(".finalBoardImage,.finalFullOverlay,.finalOverlayReveal,.finalOverlaySpot").forEach((node) => node.remove());
+      el.tray.innerHTML = "";
+      el.complete.classList.remove("show");
+      setLevelUi();
+      createPieces();
+      rects();
+      applyGuide(state.guide);
+      restoreCurrentLevel();
+      updatePlaced();
+    }
+
+    function createEdges(rows, cols){
+      const map = Array.from({length: rows}, () => Array.from({length: cols}, () => null));
+      for(let r = 0; r < rows; r++){
+        for(let c = 0; c < cols; c++){
+          const top = r === 0 ? 0 : -map[r - 1][c].bottom;
+          const left = c === 0 ? 0 : -map[r][c - 1].right;
+          const bottom = r === rows - 1 ? 0 : (Math.random() > 0.5 ? 1 : -1);
+          const right = c === cols - 1 ? 0 : (Math.random() > 0.5 ? 1 : -1);
+          map[r][c] = {top, right, bottom, left};
+        }
+      }
+      return map;
+    }
+
+    function createPieces(){
+      const level = getLevel();
+      const pw = IMAGE_SIZE / level.cols;
+      const ph = IMAGE_SIZE / level.rows;
+      const tab = getTab(level);
+      for(let row = 0; row < level.rows; row++){
+        for(let col = 0; col < level.cols; col++){
+          const piece = makePiece(row, col, pw, ph, tab, state.edges[row][col]);
+          state.pieces.push(piece);
+          el.tray.appendChild(piece.node);
+        }
+      }
+    }
+
+    function makePiece(row, col, pw, ph, tab, edge){
+      const w = Math.round(pw + tab * 2);
+      const h = Math.round(ph + tab * 2);
+      const node = document.createElement("button");
+      node.className = "piece";
+      node.type = "button";
+      node.setAttribute("aria-label", `Puzzle piece ${row * getLevel().cols + col + 1}`);
+      node.style.width = `${w}px`;
+      node.style.height = `${h}px`;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      drawPiece(canvas, row, col, pw, ph, tab, edge);
+      node.appendChild(canvas);
+
+      const piece = {
+        id: `L${state.currentLevel}-${row}-${col}`,
+        row,
+        col,
+        w,
+        h,
+        node,
+        canvas,
+        edge,
+        placed: false,
+        sourceX: 0,
+        sourceY: 0,
+        currentX: 0,
+        currentY: 0,
+        targetX: col * pw - tab,
+        targetY: row * ph - tab
+      };
+
+      node.addEventListener("pointerdown", (event) => startDrag(event, piece));
+      return piece;
+    }
+
+    function drawPiece(canvas, row, col, pw, ph, tab, edge){
+      const ctx = canvas.getContext("2d");
+      const sx = tab;
+      const sy = tab;
+      const sourceScaleX = state.image.naturalWidth / IMAGE_SIZE;
+      const sourceScaleY = state.image.naturalHeight / IMAGE_SIZE;
+      ctx.save();
+      ctx.beginPath();
+      tracePiece(ctx, sx, sy, pw, ph, tab, edge);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(
+        state.image,
+        (col * pw - tab) * sourceScaleX,
+        (row * ph - tab) * sourceScaleY,
+        (pw + tab * 2) * sourceScaleX,
+        (ph + tab * 2) * sourceScaleY,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+      ctx.restore();
+      ctx.beginPath();
+      tracePiece(ctx, sx, sy, pw, ph, tab, edge);
+      ctx.closePath();
+      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = "rgba(70,48,34,.62)";
+      ctx.stroke();
+    }
+
+    function tracePiece(ctx, sx, sy, w, h, tab, edge){
+      ctx.moveTo(sx, sy);
+      traceH(ctx, sx, sy, w, tab, edge.top, 1);
+      traceV(ctx, sx + w, sy, h, tab, edge.right, 1);
+      traceH(ctx, sx + w, sy + h, w, tab, edge.bottom, -1);
+      traceV(ctx, sx, sy + h, h, tab, edge.left, -1);
+    }
+
+    function traceH(ctx, sx, sy, span, tab, dir, sign){
+      const segment = span / 3;
+      if(sign === 1){
+        ctx.lineTo(sx + segment, sy);
+        if(dir !== 0){
+          ctx.bezierCurveTo(sx + segment + tab * 0.15, sy, sx + segment + tab * 0.25, sy - tab * dir, sx + span / 2, sy - tab * dir);
+          ctx.bezierCurveTo(sx + segment * 2 - tab * 0.25, sy - tab * dir, sx + segment * 2 - tab * 0.15, sy, sx + segment * 2, sy);
+        }else{
+          ctx.lineTo(sx + segment * 2, sy);
+        }
+        ctx.lineTo(sx + span, sy);
+      }else{
+        ctx.lineTo(sx - segment, sy);
+        if(dir !== 0){
+          ctx.bezierCurveTo(sx - segment - tab * 0.15, sy, sx - segment - tab * 0.25, sy + tab * dir, sx - span / 2, sy + tab * dir);
+          ctx.bezierCurveTo(sx - segment * 2 + tab * 0.25, sy + tab * dir, sx - segment * 2 + tab * 0.15, sy, sx - segment * 2, sy);
+        }else{
+          ctx.lineTo(sx - segment * 2, sy);
+        }
+        ctx.lineTo(sx - span, sy);
+      }
+    }
+
+    function traceV(ctx, sx, sy, span, tab, dir, sign){
+      const segment = span / 3;
+      if(sign === 1){
+        ctx.lineTo(sx, sy + segment);
+        if(dir !== 0){
+          ctx.bezierCurveTo(sx, sy + segment + tab * 0.15, sx + tab * dir, sy + segment + tab * 0.25, sx + tab * dir, sy + span / 2);
+          ctx.bezierCurveTo(sx + tab * dir, sy + segment * 2 - tab * 0.25, sx, sy + segment * 2 - tab * 0.15, sx, sy + segment * 2);
+        }else{
+          ctx.lineTo(sx, sy + segment * 2);
+        }
+        ctx.lineTo(sx, sy + span);
+      }else{
+        ctx.lineTo(sx, sy - segment);
+        if(dir !== 0){
+          ctx.bezierCurveTo(sx, sy - segment - tab * 0.15, sx - tab * dir, sy - segment - tab * 0.25, sx - tab * dir, sy - span / 2);
+          ctx.bezierCurveTo(sx - tab * dir, sy - segment * 2 + tab * 0.25, sx, sy - segment * 2 + tab * 0.15, sx, sy - segment * 2);
+        }else{
+          ctx.lineTo(sx, sy - segment * 2);
+        }
+        ctx.lineTo(sx, sy - span);
+      }
+    }
+
+    function startDrag(event, piece){
+      if(piece.placed || state.transitioning) return;
+      event.preventDefault();
+      rects();
+      const rect = piece.node.getBoundingClientRect();
+      state.drag = {
+        piece,
+        ox: event.clientX - rect.left,
+        oy: event.clientY - rect.top
+      };
+      piece.node.classList.add("drag");
+      piece.node.style.zIndex = String(state.z++);
+      const source = el.board.contains(piece.node) ? el.board : el.tray;
+      if(source !== document.body){
+        const sourceRect = source.getBoundingClientRect();
+        piece.sourceX = rect.left - sourceRect.left + source.scrollLeft;
+        piece.sourceY = rect.top - sourceRect.top + source.scrollTop;
+        document.body.appendChild(piece.node);
+        piece.node.style.position = "fixed";
+        placeAt(piece, rect.left, rect.top);
+      }
+      addEventListener("pointermove", moveDrag);
+      addEventListener("pointerup", endDrag, {once:true});
+    }
+
+    function moveDrag(event){
+      if(!state.drag) return;
+      const {piece, ox, oy} = state.drag;
+      placeAt(piece, event.clientX - ox, event.clientY - oy);
+    }
+
+    function endDrag(){
+      if(!state.drag) return;
+      const piece = state.drag.piece;
+      piece.node.classList.remove("drag");
+      const targetLeft = state.boardRect.left + piece.targetX * state.scale;
+      const targetTop = state.boardRect.top + piece.targetY * state.scale;
+      const distance = Math.hypot(piece.currentX - targetLeft, piece.currentY - targetTop);
+      if(distance <= SNAP){
+        placeOnBoard(piece);
+      }else{
+        backToTray(piece);
+      }
+      state.drag = null;
+      removeEventListener("pointermove", moveDrag);
+      save();
+    }
+
+    function placeAt(piece, left, top){
+      piece.currentX = left;
+      piece.currentY = top;
+      piece.node.style.left = `${left}px`;
+      piece.node.style.top = `${top}px`;
+    }
+
+    function placeOnBoard(piece){
+      if(!piece.placed){
+        piece.placed = true;
+        piece.node.classList.add("placed");
+      }
+      el.board.appendChild(piece.node);
+      piece.node.style.position = "absolute";
+      piece.node.style.left = `${piece.targetX * state.scale}px`;
+      piece.node.style.top = `${piece.targetY * state.scale}px`;
+      piece.currentX = state.boardRect.left + piece.targetX * state.scale;
+      piece.currentY = state.boardRect.top + piece.targetY * state.scale;
+      layoutLoosePieces();
+      updatePlaced();
+    }
+
+    function backToTray(piece){
+      if(!el.tray.contains(piece.node)){
+        el.tray.appendChild(piece.node);
+      }
+      piece.placed = false;
+      piece.node.classList.remove("placed");
+      piece.node.style.position = "absolute";
+      layoutLoosePieces();
+      updatePlaced();
+    }
+
+    function shuffleLoose(){
+      if(state.transitioning) return;
+      rects();
+      const loose = shuffle(state.pieces.filter((piece) => !piece.placed));
+      if(!loose.length){
+        showEmpty();
+        return;
+      }
+      layoutLoosePieces(loose, true);
+      save();
+    }
+
+    function layoutLoosePieces(loosePieces = state.pieces.filter((piece) => !piece.placed), randomizeOrder = false){
+      clearEmpty();
+      if(!loosePieces.length){
+        state.trayOrder = [];
+        showEmpty();
+        return;
+      }
+      rects();
+      const pad = 12;
+      const trayWidth = Math.max(el.tray.clientWidth, 220);
+      const cellWidth = Math.max(...loosePieces.map((piece) => piece.w)) + pad;
+      const cellHeight = Math.max(...loosePieces.map((piece) => piece.h)) + pad;
+      const columns = Math.max(1, Math.floor((trayWidth - pad) / cellWidth));
+      const rows = Math.ceil(loosePieces.length / columns);
+      const trayHeight = Math.max(620, rows * cellHeight + pad);
+      el.tray.style.minHeight = `${trayHeight}px`;
+
+      const orderedPieces = getTrayOrder(loosePieces, columns, randomizeOrder);
+      state.trayOrder = orderedPieces.map((piece) => piece.id);
+      orderedPieces.forEach((piece, index) => {
+        el.tray.appendChild(piece.node);
+        piece.node.style.position = "absolute";
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const left = pad + col * cellWidth + Math.max(0, (cellWidth - pad - piece.w) / 2);
+        const top = pad + row * cellHeight + Math.max(0, (cellHeight - pad - piece.h) / 2);
+        piece.node.style.left = `${left}px`;
+        piece.node.style.top = `${top}px`;
+        piece.sourceX = left;
+        piece.sourceY = top;
+        piece.currentX = state.trayRect.left + left;
+        piece.currentY = state.trayRect.top + top;
+        piece.node.style.zIndex = String(state.z++);
+      });
+    }
+
+    function solveAll(){
+      if(state.transitioning) return;
+      rects();
+      clearEmpty();
+      const loose = state.pieces.filter((piece) => !piece.placed);
+      if(loose.length <= 1){
+        save();
+        return;
+      }
+      const holdOut = loose[loose.length - 1];
+      loose.forEach((piece) => {
+        if(piece !== holdOut){
+          placeOnBoard(piece);
+        }
+      });
+      save();
+    }
+
+    function updatePlaced(){
+      if(state.mode !== "puzzle") return;
+      const placed = state.pieces.filter((piece) => piece.placed).length;
+      const total = getLevelTotal();
+      updateProgressDisplay();
+      if(placed === total){
+        el.complete.classList.add("show");
+        clearEmpty();
+        save();
+        if(state.currentLevel < LEVELS.length - 1 && !state.transitioning){
+          state.transitioning = true;
+          setTimeout(() => {
+            startLevelTransition(state.currentLevel, state.currentLevel + 1);
+          }, 700);
+        }else if(state.currentLevel === LEVELS.length - 1 && !state.transitioning){
+          state.transitioning = true;
+          setTimeout(() => {
+            buildFinalStage();
+          }, 700);
+        }
+      }else{
+        el.complete.classList.remove("show");
+      }
+    }
+
+    function startLevelTransition(fromLevelIndex, toLevelIndex){
+      showCompletedLevelImage(fromLevelIndex);
+      clearNextLevelTimer();
+      state.nextLevelTimer = setTimeout(() => {
+        el.nextLevelOverlay.classList.remove("reveal", "blackout");
+        el.nextLevelOverlay.classList.add("show");
+        state.nextLevelTimer = setTimeout(() => {
+          el.nextLevelOverlay.classList.add("blackout");
+          buildLevel(toLevelIndex, true);
+          el.nextLevelOverlay.classList.remove("show", "blackout");
+          el.nextLevelOverlay.classList.add("reveal");
+          state.nextLevelTimer = setTimeout(() => {
+            el.nextLevelOverlay.classList.remove("reveal", "blackout");
+            state.nextLevelTimer = null;
+          }, 3500);
+        }, 3800);
+      }, 1300);
+    }
+
+    function showCompletedLevelImage(levelIndex){
+      const level = LEVELS[levelIndex];
+      el.board.classList.add("finalStage");
+      el.controls.classList.add("hidden");
+      el.complete.classList.remove("show");
+      el.board.querySelectorAll(".finalBoardImage,.finalFullOverlay,.finalOverlayReveal,.finalOverlaySpot").forEach((node) => node.remove());
+      state.pieces.forEach((piece) => piece.node.remove());
+      state.pieces = [];
+      clearEmpty();
+      el.tray.innerHTML = '<div class="empty">Loading next level.</div>';
+      document.documentElement.style.setProperty("--guide-opacity", "0");
+
+      const image = document.createElement("div");
+      image.className = "finalBoardImage";
+      image.style.backgroundImage = `url("${level.image}")`;
+      el.board.prepend(image);
+
+      const overlay = document.createElement("div");
+      overlay.className = "finalFullOverlay";
+      overlay.style.backgroundImage = `url("${LEVEL_OVERLAYS[levelIndex]}")`;
+      el.board.appendChild(overlay);
+      requestAnimationFrame(() => {
+        overlay.classList.add("show");
+      });
+    }
+
+    function buildFinalStage(){
+      state.mode = "final";
+      state.currentLevel = 1;
+      state.transitioning = false;
+      state.memoryInputIndex = 0;
+      clearMemoryTimers();
+      applyTheme(1);
+      state.pieces.forEach((piece) => piece.node.remove());
+      state.pieces = [];
+      state.trayOrder = [];
+      if(state.memorySequence.length !== MEMORY_END_ROUND){
+        state.memorySequence = createMemorySequence();
+        state.memoryRound = 1;
+        state.memoryComplete = false;
+      }
+      el.board.classList.add("finalStage");
+      el.controls.classList.add("hidden");
+      el.board.querySelectorAll(".finalBoardImage,.finalFullOverlay,.finalOverlayReveal,.finalOverlaySpot").forEach((node) => node.remove());
+      el.complete.classList.remove("show");
+      el.shuffle.disabled = true;
+      el.testSolve.disabled = true;
+      el.about.disabled = false;
+      el.puzzleTitle.textContent = "Baba Witch Jigsaw";
+      el.levelLabel.textContent = "Final";
+      updateMemoryStatus();
+      document.documentElement.style.setProperty("--guide-opacity", "0");
+
+      const image = document.createElement("div");
+      image.className = "finalBoardImage";
+      image.style.backgroundImage = `url("${LEVELS[1].image}")`;
+      el.board.prepend(image);
+
+      const fullOverlay = document.createElement("div");
+      fullOverlay.className = "finalFullOverlay";
+      fullOverlay.style.backgroundImage = `url("${LEVEL_OVERLAYS[1]}")`;
+      el.board.appendChild(fullOverlay);
+
+      FINAL_TARGETS.forEach((target) => {
+        const reveal = document.createElement("div");
+        reveal.className = "finalOverlayReveal";
+        reveal.dataset.target = target.id;
+        reveal.style.backgroundImage = `url("${LEVEL_OVERLAYS[1]}")`;
+        reveal.style.clipPath = `circle(${toPct(target.radius)} at ${toPct(target.x)} ${toPct(target.y)})`;
+        reveal.style.webkitClipPath = reveal.style.clipPath;
+
+        const spot = document.createElement("button");
+        spot.className = "finalOverlaySpot";
+        spot.type = "button";
+        spot.setAttribute("aria-label", `Memory area ${target.id}`);
+        spot.dataset.target = target.id;
+        spot.style.clipPath = `circle(${toPct(target.radius)} at ${toPct(target.x)} ${toPct(target.y)})`;
+        spot.style.webkitClipPath = spot.style.clipPath;
+        spot.addEventListener("click", () => handleMemoryClick(target.id));
+
+        el.board.appendChild(reveal);
+        el.board.appendChild(spot);
+      });
+      if(state.memoryComplete){
+        showMemoryComplete();
+      }else{
+        playMemoryRound();
+      }
+      save();
+    }
+
+    function createMemorySequence(){
+      const sequence = [];
+      const counts = new Map();
+      while(sequence.length < MEMORY_END_ROUND){
+        const candidates = FINAL_TARGETS
+          .map((target) => target.id)
+          .filter((targetId) => (counts.get(targetId) || 0) < 3);
+        const target = candidates[Math.floor(Math.random() * candidates.length)];
+        const last = sequence[sequence.length - 1];
+        const beforeLast = sequence[sequence.length - 2];
+        const thirdLast = sequence[sequence.length - 3];
+        if(target === last && target === beforeLast && target === thirdLast) continue;
+        sequence.push(target);
+        counts.set(target, (counts.get(target) || 0) + 1);
+      }
+      return sequence;
+    }
+
+    function playMemoryRound(){
+      clearMemoryTimers();
+      state.memoryShowing = true;
+      state.memoryInputIndex = 0;
+      updateMemoryStatus("Watch");
+      const sequence = state.memorySequence.slice(0, state.memoryRound);
+      sequence.forEach((targetId, index) => {
+        state.memoryTimers.push(setTimeout(() => flashMemoryTarget(targetId, 520), index * 760));
+      });
+      state.memoryTimers.push(setTimeout(() => {
+        state.memoryShowing = false;
+        updateMemoryStatus("Repeat");
+      }, sequence.length * 760 + 80));
+    }
+
+    function handleMemoryClick(targetId){
+      if(state.memoryShowing || state.memoryComplete) return;
+      flashMemoryTarget(targetId, 260);
+      const expected = state.memorySequence[state.memoryInputIndex];
+      if(targetId !== expected){
+        state.memoryInputIndex = 0;
+        state.memoryShowing = true;
+        updateMemoryStatus("Try again");
+        state.memoryTimers.push(setTimeout(playMemoryRound, 900));
+        return;
+      }
+
+      state.memoryInputIndex += 1;
+      if(state.memoryInputIndex < state.memoryRound){
+        updateMemoryStatus("Repeat");
+        return;
+      }
+
+      if(state.memoryRound >= MEMORY_END_ROUND){
+        state.memoryComplete = true;
+        showMemoryComplete();
+      }else{
+        state.memoryRound += 1;
+        state.memoryInputIndex = 0;
+        state.memoryShowing = true;
+        updateMemoryStatus("Good");
+        state.memoryTimers.push(setTimeout(playMemoryRound, 900));
+      }
+      save();
+    }
+
+    function flashMemoryTarget(targetId, duration){
+      const reveal = el.board.querySelector(`.finalOverlayReveal[data-target="${targetId}"]`);
+      if(!reveal) return;
+      reveal.classList.add("flash");
+      state.memoryTimers.push(setTimeout(() => {
+        reveal.classList.remove("flash");
+      }, duration));
+    }
+
+    function updateMemoryStatus(label = "Memory"){
+      el.placed.textContent = `${state.memoryRound} / ${MEMORY_END_ROUND}`;
+      el.tray.innerHTML = `<div class="empty">${label}: ${state.memoryInputIndex} / ${state.memoryRound}</div>`;
+    }
+
+    function showMemoryComplete(){
+      clearMemoryTimers();
+      state.memoryShowing = false;
+      el.placed.textContent = `${MEMORY_END_ROUND} / ${MEMORY_END_ROUND}`;
+      el.tray.innerHTML = '<div class="empty">Memory complete.</div>';
+      FINAL_TARGETS.forEach((target) => {
+        el.board.querySelector(`.finalOverlayReveal[data-target="${target.id}"]`)?.classList.add("show");
+      });
+      el.board.querySelector(".finalFullOverlay")?.classList.add("show");
+      el.complete.textContent = "Memory complete.";
+      el.complete.classList.add("show");
+      startNextLevelTransition();
+      save();
+    }
+
+    function clearMemoryTimers(){
+      state.memoryTimers.forEach((timer) => clearTimeout(timer));
+      state.memoryTimers = [];
+    }
+
+    function startNextLevelTransition(){
+      clearNextLevelTimer();
+      state.nextLevelTimer = setTimeout(() => {
+        el.nextLevelOverlay.classList.add("show");
+        state.nextLevelTimer = setTimeout(() => {
+          el.nextLevelOverlay.classList.add("blackout");
+          try{
+            sessionStorage.setItem("baba_center_next_level", "true");
+          }catch(_error){}
+          state.nextLevelTimer = setTimeout(() => {
+            location.href = "index_abruxa.html";
+          }, 120);
+        }, 3800);
+      }, 1300);
+    }
+
+    function clearNextLevelTimer(){
+      if(state.nextLevelTimer){
+        clearTimeout(state.nextLevelTimer);
+        state.nextLevelTimer = null;
+      }
+    }
+
+    function toPct(value){
+      return `${(value / IMAGE_SIZE) * 100}%`;
+    }
+
+    function showEmpty(){
+      clearEmpty();
+      if(state.pieces.some((piece) => !piece.placed)) return;
+      const empty = document.createElement("div");
+      empty.id = "empty";
+      empty.className = "empty";
+      empty.textContent = "All pieces are on the board.";
+      el.tray.appendChild(empty);
+    }
+
+    function clearEmpty(){
+      document.getElementById("empty")?.remove();
+    }
+
+    function rects(){
+      state.boardRect = el.board.getBoundingClientRect();
+      state.trayRect = el.tray.getBoundingClientRect();
+      state.scale = state.boardRect.width / IMAGE_SIZE;
+    }
+
+    function onResize(){
+      rects();
+      state.pieces.forEach((piece) => {
+        if(piece.placed){
+          piece.node.style.left = `${piece.targetX * state.scale}px`;
+          piece.node.style.top = `${piece.targetY * state.scale}px`;
+          piece.currentX = state.boardRect.left + piece.targetX * state.scale;
+          piece.currentY = state.boardRect.top + piece.targetY * state.scale;
+        }else{
+          piece.currentX = state.trayRect.left + piece.sourceX;
+          piece.currentY = state.trayRect.top + piece.sourceY;
+        }
+      });
+    }
+
+    function save(){
+      try{
+        const progress = state.progress.map((ids) => [...ids]);
+        if(state.mode === "puzzle"){
+          progress[state.currentLevel] = state.pieces.filter((piece) => piece.placed).map((piece) => piece.id);
+        }
+        state.progress = progress;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          guide: state.guide,
+          currentLevel: state.currentLevel,
+          progress,
+          mode: state.mode,
+          finalFound: state.finalFound,
+          memorySequence: state.memorySequence,
+          memoryRound: state.memoryRound,
+          memoryComplete: state.memoryComplete
+        }));
+      }catch(_error){}
+    }
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return null;
+        const parsed = JSON.parse(raw);
+        if(!Array.isArray(parsed.progress)) return null;
+        return {
+          guide: typeof parsed.guide === "number" ? parsed.guide : 1,
+          currentLevel: typeof parsed.currentLevel === "number" ? parsed.currentLevel : 0,
+          progress: Array.from({length: LEVELS.length}, (_item, index) => Array.isArray(parsed.progress[index]) ? parsed.progress[index] : []),
+          mode: parsed.mode === "final" ? "final" : "puzzle",
+          finalFound: Array.isArray(parsed.finalFound) ? parsed.finalFound : [],
+          memorySequence: Array.isArray(parsed.memorySequence) ? parsed.memorySequence : [],
+          memoryRound: typeof parsed.memoryRound === "number" ? Math.max(1, Math.min(MEMORY_END_ROUND, parsed.memoryRound)) : 1,
+          memoryComplete: parsed.memoryComplete === true
+        };
+      }catch(_error){
+        return null;
+      }
+    }
+
+    function restoreCurrentLevel(){
+      const ids = new Set(state.progress[state.currentLevel] || []);
+      if(!ids.size){
+        shuffleLoose();
+        return;
+      }
+      state.pieces.forEach((piece) => {
+        if(ids.has(piece.id)){
+          placeOnBoard(piece);
+        }
+      });
+      shuffleLoose();
+      state.pieces.forEach((piece) => {
+        if(piece.placed){
+          placeOnBoard(piece);
+        }
+      });
+      if(ids.size === getLevelTotal()){
+        showEmpty();
+      }
+    }
+
+    function resetPuzzle(){
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PASSWORD_KEY);
+      state.guide = 1;
+      state.progress = Array.from({length: LEVELS.length}, () => []);
+      state.mode = "puzzle";
+      state.finalFound = [];
+      state.memorySequence = [];
+      state.memoryRound = 1;
+      state.memoryInputIndex = 0;
+      state.memoryShowing = false;
+      state.memoryComplete = false;
+      clearMemoryTimers();
+      clearNextLevelTimer();
+      el.nextLevelOverlay.classList.remove("show", "blackout");
+      if(!requirePassword()){
+        showPasswordRequired();
+        return;
+      }
+      buildLevel(0);
+    }
+
+    function shuffle(list){
+      const copy = [...list];
+      for(let i = copy.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function createTrayOrder(pieces, columns){
+      if(pieces.length <= 2) return shuffle(pieces);
+
+      let best = shuffle(pieces);
+      let bestScore = scoreTrayOrder(best, columns);
+      for(let attempt = 0; attempt < 700 && bestScore > 0; attempt++){
+        const candidate = shuffle(pieces);
+        const score = scoreTrayOrder(candidate, columns);
+        if(score < bestScore){
+          best = candidate;
+          bestScore = score;
+        }
+      }
+      return best;
+    }
+
+    function getTrayOrder(pieces, columns, randomizeOrder){
+      if(randomizeOrder || !state.trayOrder.length){
+        return createTrayOrder(pieces, columns);
+      }
+
+      const byId = new Map(pieces.map((piece) => [piece.id, piece]));
+      const ordered = state.trayOrder
+        .map((id) => byId.get(id))
+        .filter(Boolean);
+      const used = new Set(ordered.map((piece) => piece.id));
+      const missing = pieces.filter((piece) => !used.has(piece.id));
+
+      if(missing.length){
+        ordered.push(...createTrayOrder(missing, columns));
+      }
+      return ordered;
+    }
+
+    function scoreTrayOrder(pieces, columns){
+      let score = 0;
+      for(let index = 0; index < pieces.length; index++){
+        const piece = pieces[index];
+        const right = index % columns < columns - 1 ? pieces[index + 1] : null;
+        const down = pieces[index + columns];
+        if(right) score += getNeighborPenalty(piece, right);
+        if(down) score += getNeighborPenalty(piece, down);
+      }
+      return score;
+    }
+
+    function getNeighborPenalty(a, b){
+      const samePuzzleRow = a.row === b.row;
+      const samePuzzleCol = a.col === b.col;
+      const horizontalNeighbors = samePuzzleRow && Math.abs(a.col - b.col) === 1;
+      const verticalNeighbors = samePuzzleCol && Math.abs(a.row - b.row) === 1;
+      if(horizontalNeighbors || verticalNeighbors) return 10;
+      if(samePuzzleRow || samePuzzleCol) return 1;
+      return 0;
+    }
+
+  </script>
 </body>
 </html>

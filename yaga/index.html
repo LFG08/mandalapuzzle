@@ -456,27 +456,33 @@
       `Hand Bells, A#/Bb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339811/" target="_blank" rel="noopener">https://freesound.org/s/339811/</a> -- License: Attribution 4.0`
     ];
     const FINAL_TARGETS = [
-      {id:"1", x:9, y:12, radius:43},
-      {id:"2", x:18, y:754, radius:35},
-      {id:"3", x:749, y:750, radius:32},
-      {id:"4", x:747, y:20, radius:30},
-      {id:"5", x:245, y:50, radius:14},
-      {id:"6", x:743, y:313, radius:14},
-      {id:"7", x:384, y:743, radius:17},
-      {id:"8", x:28, y:455, radius:16},
-      {id:"9", x:383, y:23, radius:16},
-      {id:"10", x:522, y:719, radius:15}
+      {id:"1", label:"1", x:9, y:12, radius:43},
+      {id:"2", label:"2", x:18, y:754, radius:35},
+      {id:"3", label:"3", x:749, y:750, radius:32},
+      {id:"4", label:"4", x:747, y:20, radius:30},
+      {id:"5", label:"5", x:245, y:50, radius:14},
+      {id:"6", label:"6", x:743, y:313, radius:14},
+      {id:"7", label:"7", x:384, y:743, radius:17},
+      {id:"8", label:"8", x:28, y:455, radius:16},
+      {id:"9", label:"9", x:383, y:23, radius:16},
+      {id:"10", label:"10", x:522, y:719, radius:15}
     ];
-    const MEMORY_NOTE_SEQUENCE = ["G", "A", "Bb", "C", "D", "C", "Bb", "A", "G", "F", "G", "A", "Bb"];
-    const MEMORY_END_ROUND = MEMORY_NOTE_SEQUENCE.length;
-    const MEMORY_NOTE_TARGETS = {
-      G: "1",
-      A: "2",
-      Bb: "3",
-      C: "4",
-      D: "5",
-      F: "6"
-    };
+    const MEMORY_STEPS = [
+      {note:"G", targetId:"1"},
+      {note:"A", targetId:"2"},
+      {note:"Bb", targetId:"3"},
+      {note:"C", targetId:"4"},
+      {note:"D", targetId:"5"},
+      {note:"C", targetId:"6"},
+      {note:"Bb", targetId:"7"},
+      {note:"A", targetId:"8"},
+      {note:"G", targetId:"9"},
+      {note:"F", targetId:"10"},
+      {note:"G", targetId:"1"},
+      {note:"A", targetId:"2"},
+      {note:"Bb", targetId:"3"}
+    ];
+    const MEMORY_END_ROUND = MEMORY_STEPS.length;
     const MEMORY_NOTE_SOUND_SRCS = {
       G: "/sound_effects/339818__inspectorj__hand-bells-G-single.wav",
       A: "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
@@ -486,7 +492,7 @@
       F: "/sound_effects/339816__inspectorj__hand-bells-F-single.wav"
     };
     const MEMORY_TARGET_NOTES = Object.fromEntries(
-      Object.entries(MEMORY_NOTE_TARGETS).map(([note, targetId]) => [targetId, note])
+      MEMORY_STEPS.map(({note, targetId}) => [targetId, note])
     );
     const placementSound = new Audio(PIECE_PLACE_SOUND_SRC);
     const transitionSounds = TRANSITION_SOUND_SRCS.map((src) => {
@@ -1157,7 +1163,7 @@
         const spot = document.createElement("button");
         spot.className = "finalOverlaySpot";
         spot.type = "button";
-        spot.setAttribute("aria-label", `Memory area ${target.id}`);
+        spot.setAttribute("aria-label", `Memory area ${target.label}`);
         spot.dataset.target = target.id;
         spot.style.clipPath = `circle(${toPct(target.radius)} at ${toPct(target.x)} ${toPct(target.y)})`;
         spot.style.webkitClipPath = spot.style.clipPath;
@@ -1175,7 +1181,7 @@
     }
 
     function createMemorySequence(){
-      return MEMORY_NOTE_SEQUENCE.map((note) => MEMORY_NOTE_TARGETS[note]);
+      return MEMORY_STEPS.map((step) => step.targetId);
     }
 
     function isCurrentMemorySequence(sequence){
@@ -1204,10 +1210,10 @@
       if(state.memoryShowing || state.memoryComplete) return;
       const expected = state.memorySequence[state.memoryInputIndex];
       if(targetId !== expected){
-        flashMemoryTarget(targetId, 260);
+        flashMemoryTarget(targetId, 260, false);
         state.memoryInputIndex = 0;
         state.memoryShowing = true;
-        updateMemoryStatus("Try again");
+        updateMemoryStatus("Watch again");
         state.memoryTimers.push(setTimeout(playMemoryRound, 900));
         return;
       }
@@ -1232,10 +1238,12 @@
       save();
     }
 
-    function flashMemoryTarget(targetId, duration){
+    function flashMemoryTarget(targetId, duration, playNote = true){
       const reveal = el.board.querySelector(`.finalOverlayReveal[data-target="${targetId}"]`);
       if(!reveal) return;
-      playMemoryTargetNote(targetId);
+      if(playNote){
+        playMemoryTargetNote(targetId);
+      }
       reveal.classList.add("flash");
       state.memoryTimers.push(setTimeout(() => {
         reveal.classList.remove("flash");

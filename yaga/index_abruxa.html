@@ -813,9 +813,15 @@ const answerSoundSettings = {
 "Anciã": { maxDuration: 3 },
 "Mnadrágora": { volume: 0.18 },
 "Pã": { trimEnd: 0.5 },
+"Caldeirão": { maxDuration: 2 },
+"Poção_01": { maxDuration: 2 },
+"Poção_02": { maxDuration: 2 },
+"Poção_03": { maxDuration: 2 },
+"Poção_04": { maxDuration: 2 },
 "Rosto": { maxDuration: 3 }
 };
 const defaultAnswerSoundVolume = 0.46;
+const potionSoundSrc = "/sound_effects/BubblesShortBassyBursts.wav";
 const handbellSoundSrcs = [
 "/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
 "/sound_effects/339813__inspectorj__hand-bells-D-single.wav",
@@ -830,16 +836,18 @@ const answerSoundSrcs = {
 "caramujo": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
 "Cobra": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
 "Corvo": "/sound_effects/Raven&Crow.wav",
+"Gato Preto": "/sound_effects/412017__skymary__cat-meow-short.wav",
 "Joaninha": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
 "Lagartixa": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
 "Minhoca": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
 "Mnadrágora": "/sound_effects/Scream.mp3",
 "mulher": extraSoundEffectsBaseSrc + "Breathe Out.wav",
 "Pã": extraSoundEffectsBaseSrc + "Cm 134 BPM.wav",
-"Poção_01": "/sound_effects/BubblesShortBassyBursts.wav",
-"Poção_02": "/sound_effects/BubblesShortBassyBursts.wav",
-"Poção_03": "/sound_effects/BubblesShortBassyBursts.wav",
-"Poção_04": "/sound_effects/BubblesShortBassyBursts.wav",
+"Caldeirão": potionSoundSrc,
+"Poção_01": potionSoundSrc,
+"Poção_02": potionSoundSrc,
+"Poção_03": potionSoundSrc,
+"Poção_04": potionSoundSrc,
 "coruja": "/sound_effects/OwlHoot(clean).wav.wav",
 "Sapo_01": "/sound_effects/MonofroschmitHall.wav",
 "Sapo_02": "/sound_effects/MonofroschmitHall.wav",
@@ -860,6 +868,8 @@ let availableHints = initialAvailableHints;
 let awardedHintWords = {};
 let ambianceEnabled = localStorage.getItem(ambianceStorageKey) !== "false";
 let ambianceVolume = getStoredAmbianceVolume();
+let ambianceControlsInitialized = false;
+let ambianceUnlockInstalled = false;
 const ambianceSound = new Audio(ambianceLoopSrc);
 ambianceSound.loop = true;
 ambianceSound.preload = "auto";
@@ -924,11 +934,8 @@ const regionDefinitions = [
 /* load */
 window.addEventListener("load", function(){
 
-showAmbienceWarningOnce();
-updateAmbianceButton();
-updateAmbianceVolumeControl();
+initAmbianceControls();
 syncAmbiancePlayback();
-installAmbianceUnlock();
 sortWordMenu();
 applyMenuHoverTips();
 hideAreaHoverTitles();
@@ -1018,7 +1025,18 @@ ambianceVolumeValue.textContent = getAmbianceVolumeLabel();
 ambianceVolumeSlider.setAttribute("aria-label", "Ambiance volume " + getAmbianceVolumeLabel());
 }
 
+function initAmbianceControls(){
+if(ambianceControlsInitialized) return;
+ambianceControlsInitialized = true;
+installAmbianceUnlock();
+showAmbienceWarningOnce();
+updateAmbianceButton();
+updateAmbianceVolumeControl();
+syncAmbiancePlayback();
+}
+
 function syncAmbiancePlayback(){
+ambianceSound.volume = ambianceVolume;
 if(ambianceEnabled){
   ambianceSound.play().catch(() => {});
 }else{
@@ -1028,14 +1046,26 @@ if(ambianceEnabled){
 }
 
 function installAmbianceUnlock(){
+if(ambianceUnlockInstalled) return;
+ambianceUnlockInstalled = true;
 const unlock = () => {
   syncAmbiancePlayback();
   document.removeEventListener("pointerdown", unlock);
+  document.removeEventListener("touchstart", unlock);
   document.removeEventListener("keydown", unlock);
 };
 document.addEventListener("pointerdown", unlock);
+document.addEventListener("touchstart", unlock, { passive: true });
 document.addEventListener("keydown", unlock);
+window.addEventListener("pageshow", syncAmbiancePlayback);
+document.addEventListener("visibilitychange", () => {
+  if(!document.hidden){
+    syncAmbiancePlayback();
+  }
+});
 }
+
+initAmbianceControls();
 
 function playAudioClone(baseSound, options = {}){
 const sound = baseSound.cloneNode();
@@ -1079,14 +1109,14 @@ playAudioClone(handbellSounds[Math.floor(Math.random() * handbellSounds.length)]
 }
 
 function playAnswerSound(word){
-const customSound = answerSounds[word];
-if(customSound){
-  if(ambianceEnabled){
-    playAudioClone(customSound, answerSoundSettings[word]);
-  }
+if(!ambianceEnabled){
+  playRandomHandbell();
   return;
 }
-playRandomHandbell();
+const customSound = answerSounds[word];
+if(customSound){
+  playAudioClone(customSound, answerSoundSettings[word]);
+}
 }
 
 

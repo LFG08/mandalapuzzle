@@ -415,7 +415,8 @@ visibility:visible;
 #clearButton,
 #toggleClickMode,
 #rotateMandala,
-#ambianceToggle{
+#ambianceToggle,
+.ambianceVolumeControl{
 
 border:none;
 border-top:1px solid white;
@@ -427,6 +428,25 @@ padding:8px;
 font-family:Times New Roman, Times, serif;
 cursor:pointer;
 
+}
+
+.ambianceVolumeControl{
+display:flex;
+align-items:center;
+gap:8px;
+cursor:default;
+}
+
+.ambianceVolumeControl label,
+#ambianceVolumeValue{
+white-space:nowrap;
+}
+
+#ambianceVolumeSlider{
+width:100%;
+min-width:0;
+accent-color:#d08c53;
+cursor:pointer;
 }
 
 #mobileMenuOptions{
@@ -542,9 +562,14 @@ font-family:inherit;
   #clearButton,
   #toggleClickMode,
   #rotateMandala,
-  #ambianceToggle{
+  #ambianceToggle,
+  .ambianceVolumeControl{
     padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
     font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+
+  .ambianceVolumeControl{
+    gap:calc(4px * var(--mobile-menu-ui-scale));
   }
 }
 
@@ -641,6 +666,11 @@ font-family:inherit;
 <button id="toggleClickMode">Desmarcar: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
 <button id="ambianceToggle" type="button">Ambiance: ON</button>
+<div class="ambianceVolumeControl">
+  <label for="ambianceVolumeSlider">Volume</label>
+  <input id="ambianceVolumeSlider" type="range" min="0" max="1" step="0.01" value="0.68">
+  <span id="ambianceVolumeValue">68%</span>
+</div>
 
 <select id="overlaySelector">
 <option value="gabarito_overlay_roxo.webp">Roxo</option>
@@ -774,8 +804,18 @@ const mobileMenuPinKey = "bruxadafloresta_mobileMenuPin";
 const hintCounterStorageKey = "bruxadafloresta_availableHints";
 const hintAwardsStorageKey = "bruxadafloresta_hintAwards";
 const ambianceStorageKey = "bruxadafloresta_ambianceEnabled";
+const ambianceVolumeStorageKey = "bruxadafloresta_ambianceVolume";
 const ambianceWarningStorageKey = "bruxadafloresta_ambienceWarningSeen";
 const ambianceLoopSrc = "/sound_effects/Ambiance_Atmosphere_Interior_Wood_Rain_Thunders_Fire_Loop_Stereo.ogg";
+const extraSoundEffectsBaseSrc = "/soundeffects/";
+const defaultAmbianceVolume = 0.68;
+const answerSoundSettings = {
+"Anciã": { maxDuration: 3 },
+"Mnadrágora": { volume: 0.18 },
+"Pã": { trimEnd: 0.5 },
+"Rosto": { maxDuration: 3 }
+};
+const defaultAnswerSoundVolume = 0.46;
 const handbellSoundSrcs = [
 "/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
 "/sound_effects/339813__inspectorj__hand-bells-D-single.wav",
@@ -786,8 +826,16 @@ const handbellSoundSrcs = [
 "/sound_effects/339811__inspectorj__hand-bells-Bb-single.wav"
 ];
 const answerSoundSrcs = {
+"Anciã": extraSoundEffectsBaseSrc + "f_Synth_Wind_Whoosh_6.wav",
+"caramujo": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
+"Cobra": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
 "Corvo": "/sound_effects/Raven&Crow.wav",
+"Joaninha": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
+"Lagartixa": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
+"Minhoca": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
 "Mnadrágora": "/sound_effects/Scream.mp3",
+"mulher": extraSoundEffectsBaseSrc + "Breathe Out.wav",
+"Pã": extraSoundEffectsBaseSrc + "Cm 134 BPM.wav",
 "Poção_01": "/sound_effects/BubblesShortBassyBursts.wav",
 "Poção_02": "/sound_effects/BubblesShortBassyBursts.wav",
 "Poção_03": "/sound_effects/BubblesShortBassyBursts.wav",
@@ -796,6 +844,7 @@ const answerSoundSrcs = {
 "Sapo_01": "/sound_effects/MonofroschmitHall.wav",
 "Sapo_02": "/sound_effects/MonofroschmitHall.wav",
 "Sapo_Palavra": "/sound_effects/MonofroschmitHall.wav",
+"Vasoura": extraSoundEffectsBaseSrc + "Swing.wav",
 "Rosto": "/sound_effects/Witchlaugh.wav"
 };
 const initialAvailableHints = 10;
@@ -810,10 +859,11 @@ let isBootstrapping = true;
 let availableHints = initialAvailableHints;
 let awardedHintWords = {};
 let ambianceEnabled = localStorage.getItem(ambianceStorageKey) !== "false";
+let ambianceVolume = getStoredAmbianceVolume();
 const ambianceSound = new Audio(ambianceLoopSrc);
 ambianceSound.loop = true;
 ambianceSound.preload = "auto";
-ambianceSound.volume = 0.36;
+ambianceSound.volume = ambianceVolume;
 const handbellSounds = handbellSoundSrcs.map(src => {
 const sound = new Audio(src);
 sound.preload = "auto";
@@ -876,6 +926,7 @@ window.addEventListener("load", function(){
 
 showAmbienceWarningOnce();
 updateAmbianceButton();
+updateAmbianceVolumeControl();
 syncAmbiancePlayback();
 installAmbianceUnlock();
 sortWordMenu();
@@ -931,6 +982,13 @@ updateAmbianceButton();
 syncAmbiancePlayback();
 };
 
+ambianceVolumeSlider.oninput=function(){
+ambianceVolume = Number(this.value);
+localStorage.setItem(ambianceVolumeStorageKey, String(ambianceVolume));
+ambianceSound.volume = ambianceVolume;
+updateAmbianceVolumeControl();
+};
+
 function showAmbienceWarningOnce(){
 if(localStorage.getItem(ambianceWarningStorageKey) === "true") return;
 alert("Deixe o  Ambience ativado por sua própria conta e risco. Não me responsabilizo por danos a tímpanos ou emergências cardíacas");
@@ -940,6 +998,24 @@ localStorage.setItem(ambianceWarningStorageKey, "true");
 function updateAmbianceButton(){
 ambianceToggle.textContent = ambianceEnabled ? "Ambiance: ON" : "Ambiance: OFF";
 ambianceToggle.setAttribute("aria-pressed", String(ambianceEnabled));
+}
+
+function getStoredAmbianceVolume(){
+const storedVolume = Number(localStorage.getItem(ambianceVolumeStorageKey));
+if(Number.isFinite(storedVolume)){
+  return Math.min(1, Math.max(0, storedVolume));
+}
+return defaultAmbianceVolume;
+}
+
+function getAmbianceVolumeLabel(){
+return Math.round(ambianceVolume * 100) + "%";
+}
+
+function updateAmbianceVolumeControl(){
+ambianceVolumeSlider.value = String(ambianceVolume);
+ambianceVolumeValue.textContent = getAmbianceVolumeLabel();
+ambianceVolumeSlider.setAttribute("aria-label", "Ambiance volume " + getAmbianceVolumeLabel());
 }
 
 function syncAmbiancePlayback(){
@@ -961,9 +1037,39 @@ document.addEventListener("pointerdown", unlock);
 document.addEventListener("keydown", unlock);
 }
 
-function playAudioClone(baseSound){
+function playAudioClone(baseSound, options = {}){
 const sound = baseSound.cloneNode();
-sound.volume = 0.46;
+sound.volume = options.volume ?? defaultAnswerSoundVolume;
+const stopSound = () => {
+  sound.pause();
+  sound.currentTime = 0;
+};
+const getStopTime = () => {
+  if(options.maxDuration) return options.maxDuration;
+  if(options.trimEnd && Number.isFinite(sound.duration)){
+    return Math.max(0, sound.duration - options.trimEnd);
+  }
+  return null;
+};
+if(options.maxDuration || options.trimEnd){
+  sound.addEventListener("timeupdate", () => {
+    const stopTime = getStopTime();
+    if(stopTime !== null && sound.currentTime >= stopTime){
+      stopSound();
+    }
+  });
+  const scheduleStop = () => {
+    const stopTime = getStopTime();
+    if(stopTime !== null){
+      setTimeout(stopSound, stopTime * 1000);
+    }
+  };
+  if(options.maxDuration){
+    scheduleStop();
+  }else{
+    sound.addEventListener("loadedmetadata", scheduleStop, { once: true });
+  }
+}
 sound.play().catch(() => {});
 }
 
@@ -976,7 +1082,7 @@ function playAnswerSound(word){
 const customSound = answerSounds[word];
 if(customSound){
   if(ambianceEnabled){
-    playAudioClone(customSound);
+    playAudioClone(customSound, answerSoundSettings[word]);
   }
   return;
 }

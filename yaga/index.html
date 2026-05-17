@@ -390,6 +390,17 @@
     const STORAGE_KEY = "baba_witch_jigsaw_levels";
     const PASSWORD_KEY = "baba_witch_jigsaw_unlocked";
     const MAGIC_PASSWORD = "baba yaga";
+    const PIECE_PLACE_SOUND_SRC = "/fundodomar/766640__stavsounds__keyboard_tactile_9.ogg";
+    const TRANSITION_SOUND_SRCS = [
+      "/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
+      "/sound_effects/339813__inspectorj__hand-bells-D-single.wav",
+      "/sound_effects/339814__inspectorj__hand-bells-Eb-single.wav",
+      "/sound_effects/339816__inspectorj__hand-bells-F-single.wav",
+      "/sound_effects/339818__inspectorj__hand-bells-G-single.wav",
+      "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
+      "/sound_effects/339811__inspectorj__hand-bells-Bb-single.wav"
+    ];
+    const TRANSITION_NOTE_DELAY = 150;
     const IMAGE_SIZE = 768;
     const SNAP = 34;
     const LEVELS = [
@@ -428,6 +439,13 @@
       {id:"10", x:522, y:719, radius:15}
     ];
     const MEMORY_END_ROUND = 13;
+    const placementSound = new Audio(PIECE_PLACE_SOUND_SRC);
+    const transitionSounds = TRANSITION_SOUND_SRCS.map((src) => {
+      const sound = new Audio(src);
+      sound.preload = "auto";
+      return sound;
+    });
+    placementSound.preload = "auto";
 
     const el = {
       board: document.getElementById("board"),
@@ -470,6 +488,7 @@
       memoryShowing: false,
       memoryComplete: false,
       memoryTimers: [],
+      transitionSoundTimers: [],
       nextLevelTimer: null,
       transitioning: false,
       guide: 1
@@ -842,7 +861,7 @@
       const targetTop = state.boardRect.top + piece.targetY * state.scale;
       const distance = Math.hypot(piece.currentX - targetLeft, piece.currentY - targetTop);
       if(distance <= SNAP){
-        placeOnBoard(piece);
+        placeOnBoard(piece, true);
       }else{
         backToTray(piece);
       }
@@ -858,10 +877,14 @@
       piece.node.style.top = `${top}px`;
     }
 
-    function placeOnBoard(piece){
-      if(!piece.placed){
+    function placeOnBoard(piece, playSound = false){
+      const newlyPlaced = !piece.placed;
+      if(newlyPlaced){
         piece.placed = true;
         piece.node.classList.add("placed");
+      }
+      if(newlyPlaced && playSound){
+        playPlacementSound();
       }
       el.board.appendChild(piece.node);
       piece.node.style.position = "absolute";
@@ -871,6 +894,12 @@
       piece.currentY = state.boardRect.top + piece.targetY * state.scale;
       layoutLoosePieces();
       updatePlaced();
+    }
+
+    function playPlacementSound(){
+      const soundInstance = placementSound.cloneNode();
+      soundInstance.volume = 0.42;
+      soundInstance.play().catch(() => {});
     }
 
     function backToTray(piece){
@@ -967,6 +996,7 @@
         }else if(state.currentLevel === LEVELS.length - 1 && !state.transitioning){
           state.transitioning = true;
           setTimeout(() => {
+            playTransitionScale();
             buildFinalStage();
           }, 700);
         }
@@ -978,6 +1008,7 @@
     function startLevelTransition(fromLevelIndex, toLevelIndex){
       showCompletedLevelImage(fromLevelIndex);
       clearNextLevelTimer();
+      playTransitionScale();
       state.nextLevelTimer = setTimeout(() => {
         el.nextLevelOverlay.classList.remove("reveal", "blackout");
         el.nextLevelOverlay.classList.add("show");
@@ -1185,6 +1216,7 @@
 
     function startNextLevelTransition(){
       clearNextLevelTimer();
+      playTransitionScale();
       state.nextLevelTimer = setTimeout(() => {
         el.nextLevelOverlay.classList.add("show");
         state.nextLevelTimer = setTimeout(() => {
@@ -1204,6 +1236,24 @@
         clearTimeout(state.nextLevelTimer);
         state.nextLevelTimer = null;
       }
+      clearTransitionSoundTimers();
+    }
+
+    function clearTransitionSoundTimers(){
+      state.transitionSoundTimers.forEach((timer) => clearTimeout(timer));
+      state.transitionSoundTimers = [];
+    }
+
+    function playTransitionScale(){
+      clearTransitionSoundTimers();
+      transitionSounds.forEach((sound, index) => {
+        const timer = setTimeout(() => {
+          const soundInstance = sound.cloneNode();
+          soundInstance.volume = 0.46;
+          soundInstance.play().catch(() => {});
+        }, index * TRANSITION_NOTE_DELAY);
+        state.transitionSoundTimers.push(timer);
+      });
     }
 
     function toPct(value){

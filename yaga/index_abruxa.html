@@ -184,37 +184,22 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  flex-wrap:wrap;
-  gap:calc(6px * var(--mobile-menu-ui-scale));
-  min-width:0;
-  max-width:100%;
-  overflow:visible;
-  box-sizing:border-box;
+  gap:6px;
   touch-action:none;
 }
 /* LEFT SIDE */
 .title {
+  flex-shrink:inherit;
+
+  white-space: nowrap;
+
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  margin-left:calc(8px * var(--mobile-menu-ui-scale));
+  margin-top:calc(8px * var(--mobile-menu-ui-scale));
+  margin-bottom:calc(8px * var(--mobile-menu-ui-scale));
   display:flex;
   align-items:center;
   gap:calc(6px * var(--mobile-menu-ui-scale));
-}
-
-#menuHeader > .title:first-child{
-  flex:1 1 auto;
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  line-height:1.2;
-  margin:calc(8px * var(--mobile-menu-ui-scale)) 0 calc(8px * var(--mobile-menu-ui-scale)) calc(8px * var(--mobile-menu-ui-scale));
-}
-
-#menuHeader > .title:last-child{
-  flex:0 1 auto;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  min-width:0;
-  margin:calc(8px * var(--mobile-menu-ui-scale)) calc(4px * var(--mobile-menu-ui-scale)) calc(8px * var(--mobile-menu-ui-scale)) 0;
 }
 
 /* COUNTER */
@@ -233,17 +218,13 @@ animation:centerReveal 3.6s cubic-bezier(.5,0,.16,1) forwards;
   justify-content:center;
   
   width:calc(14px * var(--mobile-menu-ui-scale));
-  min-height:calc(14px * var(--mobile-menu-ui-scale));
-  height:auto;
-  min-width:calc(14px * var(--mobile-menu-ui-scale));
-  flex:0 0 auto;
+  height:calc(14px * var(--mobile-menu-ui-scale));
   border-radius:50%;
   border:none;
   font-size:calc(11px * var(--mobile-menu-ui-scale));
   cursor:pointer;
   background:#ccc;
-  line-height:1;
-  aspect-ratio:1;
+  line-height:calc(14px * var(--mobile-menu-ui-scale));
   padding:0;
   margin-right:calc(4px * var(--mobile-menu-ui-scale));
 }
@@ -433,7 +414,8 @@ visibility:visible;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
-#rotateMandala{
+#rotateMandala,
+#ambianceToggle{
 
 border:none;
 border-top:1px solid white;
@@ -484,22 +466,17 @@ font-family:inherit;
   }
 
   #menuHeader{
-    gap:2px;
-    row-gap:0;
-    padding-right:2px;
+    gap:1px;
+    padding-right:1px;
   }
 
-  #menuHeader > .title:first-child{
+  .title{
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
     font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
-    margin:8px 0 8px 2px;
-    gap:2px;
-  }
-
-  #menuHeader > .title:last-child{
-    margin:8px 1px 8px 0;
+    margin-right:2px;
+    margin-left:2px;
     gap:2px;
   }
 
@@ -564,7 +541,8 @@ font-family:inherit;
   #overlaySelector,
   #clearButton,
   #toggleClickMode,
-  #rotateMandala{
+  #rotateMandala,
+  #ambianceToggle{
     padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
     font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
   }
@@ -662,6 +640,7 @@ font-family:inherit;
 <button id="clearButton" onclick="confirmReset()">Reset</button>
 <button id="toggleClickMode">Desmarcar: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
+<button id="ambianceToggle" type="button">Ambiance: ON</button>
 
 <select id="overlaySelector">
 <option value="gabarito_overlay_roxo.webp">Roxo</option>
@@ -794,6 +773,17 @@ const defaultOverlay = "gabarito_overlay_roxo.webp";
 const mobileMenuPinKey = "bruxadafloresta_mobileMenuPin";
 const hintCounterStorageKey = "bruxadafloresta_availableHints";
 const hintAwardsStorageKey = "bruxadafloresta_hintAwards";
+const ambianceStorageKey = "bruxadafloresta_ambianceEnabled";
+const ambianceWarningStorageKey = "bruxadafloresta_ambienceWarningSeen";
+const handbellSoundSrcs = [
+"/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
+"/sound_effects/339813__inspectorj__hand-bells-D-single.wav",
+"/sound_effects/339814__inspectorj__hand-bells-Eb-single.wav",
+"/sound_effects/339816__inspectorj__hand-bells-F-single.wav",
+"/sound_effects/339818__inspectorj__hand-bells-G-single.wav",
+"/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
+"/sound_effects/339811__inspectorj__hand-bells-Bb-single.wav"
+];
 const initialAvailableHints = 10;
 const hintBonusByWord = {
 "Poção_01": 1,
@@ -805,6 +795,12 @@ const hintBonusByWord = {
 let isBootstrapping = true;
 let availableHints = initialAvailableHints;
 let awardedHintWords = {};
+let ambianceEnabled = localStorage.getItem(ambianceStorageKey) !== "false";
+const handbellSounds = handbellSoundSrcs.map(src => {
+const sound = new Audio(src);
+sound.preload = "auto";
+return sound;
+});
 const menuHoverTips = {
 "mystical being": "Figura sobrenatural escondida perto da borda inferior.",
 "caramujo": "Pequena concha rasteira no limite da imagem.",
@@ -855,6 +851,8 @@ const regionDefinitions = [
 /* load */
 window.addEventListener("load", function(){
 
+showAmbienceWarningOnce();
+updateAmbianceButton();
 sortWordMenu();
 applyMenuHoverTips();
 hideAreaHoverTitles();
@@ -896,6 +894,34 @@ applyMenuBounds();
 isBootstrapping = false;
 updateCounter();
 });
+
+
+/* ===== ambiance ===== */
+
+ambianceToggle.onclick=function(){
+
+ambianceEnabled = !ambianceEnabled;
+localStorage.setItem(ambianceStorageKey, String(ambianceEnabled));
+updateAmbianceButton();
+};
+
+function showAmbienceWarningOnce(){
+if(localStorage.getItem(ambianceWarningStorageKey) === "true") return;
+alert("Deixe o  Ambience ativado por sua própria conta e risco. Não me responsabilizo por danos a tímpanos ou emergências cardíacas");
+localStorage.setItem(ambianceWarningStorageKey, "true");
+}
+
+function updateAmbianceButton(){
+ambianceToggle.textContent = ambianceEnabled ? "Ambiance: ON" : "Ambiance: OFF";
+ambianceToggle.setAttribute("aria-pressed", String(ambianceEnabled));
+}
+
+function playRandomHandbell(){
+if(ambianceEnabled || !handbellSounds.length) return;
+const sound = handbellSounds[Math.floor(Math.random() * handbellSounds.length)].cloneNode();
+sound.volume = 0.46;
+sound.play().catch(() => {});
+}
 
 
 /* ===== toggle mode ===== */
@@ -1493,6 +1519,9 @@ if(!isVisible){
   menuWord.classList.add("found");
   menuWord.classList.remove("hint-revealed");
   awardHintsForWord(word);
+  if(!isBootstrapping){
+    playRandomHandbell();
+  }
 
   if(menuWord.classList.contains("hidden-word")){
   finishGuessEdit(menuWord, false);

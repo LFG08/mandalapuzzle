@@ -594,6 +594,23 @@ id="allthewitchesCard">
   <div class="status"></div>
 
 </a>
+
+<a href="yaga" class="card"
+id="yagaCard">
+
+  <div class="thumb">
+    <img src="thumb_yaga_1.png" loading="lazy">
+  </div>
+
+  <div class="tags">#jigsawpuzzle #quebra-cabeça #senha #BabaYaga
+    <span class="tag locked-tag"
+          data-unlock-stage="yagaLastLevelUnlocked"
+          data-real="#caça-palavras-elementos">#???</span>
+  </div>
+
+  <div class="status"></div>
+
+</a>
 </div>
 </section>
 
@@ -781,6 +798,60 @@ levelTwoUnlocked: status.total !== null
 };
 }
 
+
+function getYagaBaseStatus(finalMeta){
+let raw = localStorage.getItem("baba_witch_jigsaw_levels");
+let parsed = null;
+try{
+parsed = raw ? JSON.parse(raw) : null;
+}catch{
+parsed = null;
+}
+
+let progress = Array.isArray(parsed && parsed.progress) ? parsed.progress : [];
+let levelOneFound = Array.isArray(progress[0]) ? progress[0].length : 0;
+let levelTwoFound = Array.isArray(progress[1]) ? progress[1].length : 0;
+let mode = parsed && parsed.mode === "final" ? "final" : "puzzle";
+let currentLevel = Number.isFinite(parsed && parsed.currentLevel) ? parsed.currentLevel : 0;
+let memoryRound = Number.isFinite(parsed && parsed.memoryRound) ? Math.max(1, Math.min(13, parsed.memoryRound)) : 1;
+let memoryComplete = parsed && parsed.memoryComplete === true;
+let memoryFound = memoryComplete ? 13 : (mode === "final" ? Math.max(0, memoryRound - 1) : 0);
+let finalLevelFound = safeParseStoredArray("bruxadaflorestaPuzzleProgress").length;
+let lastLevelUnlocked = memoryComplete || finalLevelFound > 0;
+let finalLevelTotal = finalMeta && Number.isFinite(finalMeta.finalLevelTotal) ? finalMeta.finalLevelTotal : 0;
+let found = levelOneFound + levelTwoFound + memoryFound + finalLevelFound;
+let total = lastLevelUnlocked ? 66 + 66 + 13 + finalLevelTotal : null;
+let completed = total !== null && finalLevelTotal > 0 && found >= total;
+let thumb = "thumb_yaga_1.png";
+
+if(lastLevelUnlocked){
+thumb = "thumb_yaga3.png";
+}else if(mode === "final" || currentLevel >= 1 || levelTwoFound > 0){
+thumb = "thumb_yaga2.png";
+}
+
+return {
+found,
+total,
+thumb,
+lastLevelUnlocked,
+completed
+};
+}
+
+async function getYagaFinalLevelMeta(){
+try{
+let response = await fetch("yaga/index_abruxa.html", { cache: "no-store" });
+if(!response.ok) throw new Error("Falha ao carregar yaga/index_abruxa.html");
+let html = await response.text();
+let matches = html.match(/<li\s+id="menu-[^"]+"/g) || [];
+return {
+finalLevelTotal: matches.length
+};
+}catch{
+return null;
+}
+}
 
 function getAllthewitchesStatus(){
 let raw = localStorage.getItem("lenvouteuse_jigsaw_levels");
@@ -1044,8 +1115,9 @@ return new Set(tagMatches.map(tag => tag.toLowerCase()));
 function cardMatchesFilter(card, filterValue){
 if(!filterValue || filterValue === "todos") return true;
 let tags = getCardTagSet(card);
-let hasWords = tags.has("#caça-palavras");
-let hasElements = tags.has("#caça-elementos");
+let hasCombinedWordsElements = tags.has("#caça-palavras-elementos");
+let hasWords = tags.has("#caça-palavras") || hasCombinedWordsElements;
+let hasElements = tags.has("#caça-elementos") || hasCombinedWordsElements;
 
 if(filterValue === "quebra-cabeca"){
 return tags.has("#quebra-cabeça");
@@ -1334,6 +1406,37 @@ allthewitchesMusicalUnlocked: allthewitchesStatus.musicalUnlocked
 });
 let percentage = allthewitchesStatus.total > 0 ? (allthewitchesStatus.found / allthewitchesStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
+return;
+}
+
+if(card.id === "yagaCard"){
+let statusEl = card.querySelector(".status");
+let thumbEl = card.querySelector(".thumb img");
+let initial = getYagaBaseStatus(null);
+setCardProgressMeta(card, initial.found, initial.total);
+renderStatus(statusEl, initial.found, initial.total);
+if(thumbEl){
+thumbEl.src = initial.thumb;
+}
+updateLockedTags(card, initial.found, { yagaLastLevelUnlocked: initial.lastLevelUnlocked });
+applyMenuFilter();
+applyMenuOrdering();
+let initialPercentage = initial.total > 0 ? (initial.found / initial.total) * 100 : 0;
+applyThumbBorder(card, initialPercentage);
+
+getYagaFinalLevelMeta().then(meta => {
+let updated = getYagaBaseStatus(meta);
+setCardProgressMeta(card, updated.found, updated.total);
+renderStatus(statusEl, updated.found, updated.total);
+if(thumbEl){
+thumbEl.src = updated.thumb;
+}
+updateLockedTags(card, updated.found, { yagaLastLevelUnlocked: updated.lastLevelUnlocked });
+applyMenuFilter();
+applyMenuOrdering();
+let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
+applyThumbBorder(card, updatedPercentage);
+});
 return;
 }
 

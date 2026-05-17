@@ -284,6 +284,28 @@
       border:1px solid rgba(255,231,200,.22);
       box-shadow:0 12px 34px rgba(0,0,0,.28);
     }
+    .imageCredit,
+    .soundCredits{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.35;
+      text-align:left;
+    }
+    .imageCredit{
+      text-align:center;
+    }
+    .imageCredit strong,
+    .soundCredits strong{
+      color:var(--text);
+    }
+    .soundCredits ul{
+      margin:8px 0 0;
+      padding-left:18px;
+    }
+    .soundCredits li + li{
+      margin-top:6px;
+    }
     .aboutClose{margin-top:14px}
     .nextLevelOverlay{
       position:fixed;
@@ -362,10 +384,6 @@
             <span class="small">Progress</span><br>
             <strong id="placed" class="value">0 / ?</strong>
           </div>
-          <div class="line">
-            <span class="small">Level</span><br>
-            <strong id="levelLabel" class="value">1 / 2</strong>
-          </div>
           <div class="actions">
             <button id="shuffle" class="btn" type="button">Shuffle Loose Pieces</button>
             <button id="testSolve" class="btn" type="button">Test Auto Place</button>
@@ -392,16 +410,10 @@
     const MAGIC_PASSWORD = "baba yaga";
     const PIECE_PLACE_SOUND_SRC = "/fundodomar/766640__stavsounds__keyboard_tactile_9.ogg";
     const TRANSITION_SOUND_SRCS = [
-      "/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
-      "/sound_effects/339813__inspectorj__hand-bells-D-single.wav",
-      "/sound_effects/339814__inspectorj__hand-bells-Eb-single.wav",
-      "/sound_effects/339816__inspectorj__hand-bells-F-single.wav",
-      "/sound_effects/339818__inspectorj__hand-bells-G-single.wav",
-      "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
-      "/sound_effects/339811__inspectorj__hand-bells-Bb-single.wav"
+      "/celtic/476715__sergequadrado__harp-glissando-descending.wav"
     ];
-    const TRANSITION_NOTE_DELAY = 150;
-    const TRANSITION_NOTE_DURATION_MS = 4200;
+    const TRANSITION_NOTE_DELAY = 0;
+    const TRANSITION_NOTE_DURATION_MS = 4500;
     const IMAGE_SIZE = 768;
     const SNAP = 34;
     const LEVELS = [
@@ -424,8 +436,24 @@
       }
     ];
     const ABOUT_IMAGES = [
-      `<a title="Ivan Bilibin, Public domain, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Bilibin._Baba_Yaga.jpg" target="_blank" rel="noopener"><img width="250" alt="Bilibin. Baba Yaga" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Bilibin._Baba_Yaga.jpg/250px-Bilibin._Baba_Yaga.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"></a>`,
-      `<a title="Edgar Bundy, Public domain, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:A_Witch_Edgar_Bundy).jpg" target="_blank" rel="noopener"><img width="250" alt="A Witch Edgar Bundy)" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/A_Witch_Edgar_Bundy%29.jpg/250px-A_Witch_Edgar_Bundy%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"></a>`
+      {
+        image: `<a title="Ivan Bilibin, Public domain, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Bilibin._Baba_Yaga.jpg" target="_blank" rel="noopener"><img width="250" alt="Bilibin. Baba Yaga" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Bilibin._Baba_Yaga.jpg/250px-Bilibin._Baba_Yaga.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"></a>`,
+        credit: `Inspirado por <a href="https://commons.wikimedia.org/wiki/File:Bilibin._Baba_Yaga.jpg" target="_blank" rel="noopener">Ivan Bilibin, <em>Baba Yaga</em></a> -- Public domain, via Wikimedia Commons.`
+      },
+      {
+        image: `<a title="Edgar Bundy, Public domain, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:A_Witch_Edgar_Bundy).jpg" target="_blank" rel="noopener"><img width="250" alt="A Witch Edgar Bundy)" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/A_Witch_Edgar_Bundy%29.jpg/250px-A_Witch_Edgar_Bundy%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"></a>`,
+        credit: `Inspirado por <a href="https://commons.wikimedia.org/wiki/File:A_Witch_Edgar_Bundy).jpg" target="_blank" rel="noopener">Edgar Bundy, <em>A Witch</em></a> -- Public domain, via Wikimedia Commons.`
+      }
+    ];
+    const JIGSAW_SOUND_CREDITS = [
+      `Keyboard tactile 9 by StavSounds -- <a href="https://freesound.org/s/766640/" target="_blank" rel="noopener">https://freesound.org/s/766640/</a> -- License: Attribution 4.0`,
+      `Harp Glissando Descending by SergeQuadrado -- <a href="https://freesound.org/s/476715/" target="_blank" rel="noopener">https://freesound.org/s/476715/</a> -- License: Attribution NonCommercial 3.0`,
+      `Hand Bells, Low-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">https://freesound.org/s/339815/</a> -- License: Attribution 4.0`,
+      `Hand Bells, D, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">https://freesound.org/s/339813/</a> -- License: Attribution 4.0`,
+      `Hand Bells, F, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339816/" target="_blank" rel="noopener">https://freesound.org/s/339816/</a> -- License: Attribution 4.0`,
+      `Hand Bells, G, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339818/" target="_blank" rel="noopener">https://freesound.org/s/339818/</a> -- License: Attribution 4.0`,
+      `Hand Bells, A, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339810/" target="_blank" rel="noopener">https://freesound.org/s/339810/</a> -- License: Attribution 4.0`,
+      `Hand Bells, A#/Bb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339811/" target="_blank" rel="noopener">https://freesound.org/s/339811/</a> -- License: Attribution 4.0`
     ];
     const FINAL_TARGETS = [
       {id:"1", x:9, y:12, radius:43},
@@ -439,12 +467,27 @@
       {id:"9", x:383, y:23, radius:16},
       {id:"10", x:522, y:719, radius:15}
     ];
-    const MEMORY_END_ROUND = 13;
-    const MEMORY_NOTE_SEQUENCE = ["A", "Eb", "A", "A", "Eb", "Eb", "A", "A", "A", "Eb", "A", "A", "A"];
-    const MEMORY_NOTE_SOUND_SRCS = {
-      A: "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
-      Eb: "/sound_effects/339814__inspectorj__hand-bells-Eb-single.wav"
+    const MEMORY_NOTE_SEQUENCE = ["G", "A", "Bb", "C", "D", "C", "Bb", "A", "G", "F", "G", "A", "Bb"];
+    const MEMORY_END_ROUND = MEMORY_NOTE_SEQUENCE.length;
+    const MEMORY_NOTE_TARGETS = {
+      G: "1",
+      A: "2",
+      Bb: "3",
+      C: "4",
+      D: "5",
+      F: "6"
     };
+    const MEMORY_NOTE_SOUND_SRCS = {
+      G: "/sound_effects/339818__inspectorj__hand-bells-G-single.wav",
+      A: "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
+      Bb: "/sound_effects/339811__inspectorj__hand-bells-Bb-single.wav",
+      C: "/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
+      D: "/sound_effects/339813__inspectorj__hand-bells-D-single.wav",
+      F: "/sound_effects/339816__inspectorj__hand-bells-F-single.wav"
+    };
+    const MEMORY_TARGET_NOTES = Object.fromEntries(
+      Object.entries(MEMORY_NOTE_TARGETS).map(([note, targetId]) => [targetId, note])
+    );
     const placementSound = new Audio(PIECE_PLACE_SOUND_SRC);
     const transitionSounds = TRANSITION_SOUND_SRCS.map((src) => {
       const sound = new Audio(src);
@@ -466,7 +509,6 @@
       guideVal: document.getElementById("guideVal"),
       placed: document.getElementById("placed"),
       puzzleTitle: document.getElementById("puzzleTitle"),
-      levelLabel: document.getElementById("levelLabel"),
       shuffle: document.getElementById("shuffle"),
       testSolve: document.getElementById("testSolve"),
       reset: document.getElementById("reset"),
@@ -576,7 +618,6 @@
     function showPasswordRequired(){
       applyTheme(0);
       el.puzzleTitle.textContent = "Baba Witch Jigsaw";
-      el.levelLabel.textContent = "Locked";
       el.placed.textContent = "0 / 66";
       el.complete.textContent = "Palavra Mágica required.";
       el.complete.classList.add("show");
@@ -627,7 +668,15 @@
     }
 
     function showAboutImage(){
-      el.aboutContent.innerHTML = ABOUT_IMAGES[state.currentLevel] || ABOUT_IMAGES[0];
+      const about = ABOUT_IMAGES[state.currentLevel] || ABOUT_IMAGES[0];
+      el.aboutContent.innerHTML = `
+        ${about.image}
+        <p class="imageCredit"><strong>Inspirado por:</strong> ${about.credit.replace(/^Inspirado por\s*/, "")}</p>
+        <div class="soundCredits">
+          <strong>Créditos dos efeitos sonoros:</strong>
+          <ul>${JIGSAW_SOUND_CREDITS.map((credit) => `<li>${credit}</li>`).join("")}</ul>
+        </div>
+      `;
       el.aboutModal.classList.add("show");
     }
 
@@ -638,7 +687,6 @@
     function setLevelUi(){
       const levelNumber = state.currentLevel + 1;
       el.puzzleTitle.textContent = "Baba Witch Jigsaw";
-      el.levelLabel.textContent = `${levelNumber} / ${LEVELS.length}`;
       document.title = "Baba Witch Jigsaw";
       el.complete.textContent = levelNumber < LEVELS.length
         ? `Level ${levelNumber} complete. Loading level ${levelNumber + 1}...`
@@ -1072,7 +1120,7 @@
       state.pieces.forEach((piece) => piece.node.remove());
       state.pieces = [];
       state.trayOrder = [];
-      if(state.memorySequence.length !== MEMORY_END_ROUND){
+      if(!isCurrentMemorySequence(state.memorySequence)){
         state.memorySequence = createMemorySequence();
         state.memoryRound = 1;
         state.memoryComplete = false;
@@ -1085,7 +1133,6 @@
       el.testSolve.disabled = true;
       el.about.disabled = false;
       el.puzzleTitle.textContent = "Baba Witch Jigsaw";
-      el.levelLabel.textContent = "Final";
       updateMemoryStatus();
       document.documentElement.style.setProperty("--guide-opacity", "0");
 
@@ -1128,21 +1175,14 @@
     }
 
     function createMemorySequence(){
-      const sequence = [];
-      const counts = new Map();
-      while(sequence.length < MEMORY_END_ROUND){
-        const candidates = FINAL_TARGETS
-          .map((target) => target.id)
-          .filter((targetId) => (counts.get(targetId) || 0) < 3);
-        const target = candidates[Math.floor(Math.random() * candidates.length)];
-        const last = sequence[sequence.length - 1];
-        const beforeLast = sequence[sequence.length - 2];
-        const thirdLast = sequence[sequence.length - 3];
-        if(target === last && target === beforeLast && target === thirdLast) continue;
-        sequence.push(target);
-        counts.set(target, (counts.get(target) || 0) + 1);
-      }
-      return sequence;
+      return MEMORY_NOTE_SEQUENCE.map((note) => MEMORY_NOTE_TARGETS[note]);
+    }
+
+    function isCurrentMemorySequence(sequence){
+      const currentSequence = createMemorySequence();
+      return Array.isArray(sequence)
+        && sequence.length === currentSequence.length
+        && sequence.every((targetId, index) => targetId === currentSequence[index]);
     }
 
     function playMemoryRound(){
@@ -1152,7 +1192,7 @@
       updateMemoryStatus("Watch");
       const sequence = state.memorySequence.slice(0, state.memoryRound);
       sequence.forEach((targetId, index) => {
-        state.memoryTimers.push(setTimeout(() => flashMemoryTarget(targetId, 520, index), index * 760));
+        state.memoryTimers.push(setTimeout(() => flashMemoryTarget(targetId, 520), index * 760));
       });
       state.memoryTimers.push(setTimeout(() => {
         state.memoryShowing = false;
@@ -1172,7 +1212,7 @@
         return;
       }
 
-      flashMemoryTarget(targetId, 260, state.memoryInputIndex);
+      flashMemoryTarget(targetId, 260);
       state.memoryInputIndex += 1;
       if(state.memoryInputIndex < state.memoryRound){
         updateMemoryStatus("Repeat");
@@ -1192,18 +1232,18 @@
       save();
     }
 
-    function flashMemoryTarget(targetId, duration, noteIndex = null){
+    function flashMemoryTarget(targetId, duration){
       const reveal = el.board.querySelector(`.finalOverlayReveal[data-target="${targetId}"]`);
       if(!reveal) return;
-      if(noteIndex !== null) playMemoryNote(noteIndex);
+      playMemoryTargetNote(targetId);
       reveal.classList.add("flash");
       state.memoryTimers.push(setTimeout(() => {
         reveal.classList.remove("flash");
       }, duration));
     }
 
-    function playMemoryNote(noteIndex){
-      const note = MEMORY_NOTE_SEQUENCE[noteIndex];
+    function playMemoryTargetNote(targetId){
+      const note = MEMORY_TARGET_NOTES[targetId];
       const sound = memoryNoteSounds[note];
       if(!sound) return;
       const soundInstance = sound.cloneNode();

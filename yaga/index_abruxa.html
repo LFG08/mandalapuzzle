@@ -487,6 +487,90 @@ font-size:inherit;
 font-family:inherit;
 }
 
+#creditsButton{
+position:fixed;
+left:18px;
+bottom:18px;
+z-index:26;
+border:1px solid #f5e6d3;
+border-radius:999px;
+background:rgba(0,0,0,0.82);
+color:#f5e6d3;
+font-family:Times New Roman, Times, serif;
+font-size:16px;
+padding:8px 14px;
+cursor:pointer;
+box-sizing:border-box;
+}
+
+#creditsButton:hover{
+background:rgba(40,30,18,0.92);
+}
+
+.creditsModal{
+position:fixed;
+inset:0;
+display:none;
+place-items:center;
+padding:24px;
+background:rgba(0,0,0,0.72);
+z-index:100001;
+box-sizing:border-box;
+}
+
+.creditsModal.show{
+display:grid;
+}
+
+.creditsCard{
+width:min(760px, calc(100vw - 32px));
+max-height:min(82vh, 760px);
+overflow:auto;
+background:rgba(25,18,10,0.97);
+color:#f5e6d3;
+border:1px solid #f5e6d3;
+border-radius:18px;
+box-shadow:0 24px 70px rgba(0,0,0,.55);
+font-family:Times New Roman, Times, serif;
+padding:20px;
+box-sizing:border-box;
+}
+
+.creditsCard h2{
+margin:0 0 12px;
+}
+
+.creditsCard p{
+margin:0 0 12px;
+line-height:1.35;
+}
+
+.creditsCard ul{
+margin:0;
+padding-left:20px;
+line-height:1.35;
+}
+
+.creditsCard li + li{
+margin-top:8px;
+}
+
+.creditsCard a{
+color:#f8d69a;
+}
+
+#creditsClose{
+margin-top:16px;
+width:100%;
+border:1px solid #f5e6d3;
+border-radius:999px;
+background:rgba(0,0,0,0.55);
+color:#f5e6d3;
+font-family:inherit;
+padding:10px 12px;
+cursor:pointer;
+}
+
 
 @media (max-width: 900px) and (any-pointer: coarse){
   :root{
@@ -710,6 +794,38 @@ font-family:inherit;
 
 <!-- ================= MANDALA ================= -->
 
+<button id="creditsButton" type="button">créditos</button>
+
+<div id="creditsModal" class="creditsModal" role="dialog" aria-modal="true" aria-labelledby="creditsTitle">
+  <div class="creditsCard">
+    <h2 id="creditsTitle">Créditos dos efeitos sonoros</h2>
+    <p>Efeitos sonoros usados em <em>A Bruxa da Floresta</em>:</p>
+    <ul>
+      <li>Ambiance_Atmosphere_Interior_Wood_Rain_Thunders_Fire_Loop_Stereo.ogg by Nox_Sound -- <a href="https://freesound.org/s/553887/" target="_blank" rel="noopener">https://freesound.org/s/553887/</a> -- License: Creative Commons 0</li>
+      <li>Hand Bells, Low-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">https://freesound.org/s/339815/</a> -- License: Attribution 4.0</li>
+      <li>Hand Bells, D, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">https://freesound.org/s/339813/</a> -- License: Attribution 4.0</li>
+      <li>Hand Bells, D#/Eb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339814/" target="_blank" rel="noopener">https://freesound.org/s/339814/</a> -- License: Attribution 4.0</li>
+      <li>Hand Bells, F, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339816/" target="_blank" rel="noopener">https://freesound.org/s/339816/</a> -- License: Attribution 4.0</li>
+      <li>Hand Bells, G, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339818/" target="_blank" rel="noopener">https://freesound.org/s/339818/</a> -- License: Attribution 4.0</li>
+      <li>Hand Bells, A, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339810/" target="_blank" rel="noopener">https://freesound.org/s/339810/</a> -- License: Attribution 4.0</li>
+      <li>Hand Bells, A#/Bb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339811/" target="_blank" rel="noopener">https://freesound.org/s/339811/</a> -- License: Attribution 4.0</li>
+      <li>Rustling leaves.wav by Elandre01 -- <a href="https://freesound.org/s/594400/" target="_blank" rel="noopener">https://freesound.org/s/594400/</a> -- License: Creative Commons 0</li>
+      <li>Woman Exasperated Sigh, Breathe Out by monsterthing -- <a href="https://freesound.org/s/663651/" target="_blank" rel="noopener">https://freesound.org/s/663651/</a> -- License: Creative Commons 0</li>
+      <li>CUSTOMIZE YOUR PAN FLUTE LOOP Cm 134 BPM by CarlosCarty -- <a href="https://freesound.org/s/521434/" target="_blank" rel="noopener">https://freesound.org/s/521434/</a> -- License: Attribution 4.0</li>
+      <li>Swing.mp3 by XxChr0nosxX -- <a href="https://freesound.org/s/268227/" target="_blank" rel="noopener">https://freesound.org/s/268227/</a> -- License: Creative Commons 0</li>
+      <li>Bubbles Short Bassy Bursts.wav by murraysortz -- <a href="https://freesound.org/s/192500/" target="_blank" rel="noopener">https://freesound.org/s/192500/</a> -- License: Attribution 3.0</li>
+      <li>f_Synth_Wind_Whoosh_6.wav by cyclonek -- <a href="https://freesound.org/s/529411/" target="_blank" rel="noopener">https://freesound.org/s/529411/</a> -- License: Attribution 4.0</li>
+      <li>Raven &amp; Crow by EminYILDIRIM -- <a href="https://freesound.org/s/567844/" target="_blank" rel="noopener">https://freesound.org/s/567844/</a> -- License: Attribution 4.0</li>
+      <li>cat meow short by skymary -- <a href="https://freesound.org/s/412017/" target="_blank" rel="noopener">https://freesound.org/s/412017/</a> -- License: Creative Commons 0</li>
+      <li>Scream.mp3 by Topschool -- <a href="https://freesound.org/s/360464/" target="_blank" rel="noopener">https://freesound.org/s/360464/</a> -- License: Creative Commons 0</li>
+      <li>OwlHoot(clean).wav by musicmasta1 -- <a href="https://freesound.org/s/251937/" target="_blank" rel="noopener">https://freesound.org/s/251937/</a> -- License: Attribution NonCommercial 3.0</li>
+      <li>Monofrosch mit Hall by mbezzola -- <a href="https://freesound.org/s/275551/" target="_blank" rel="noopener">https://freesound.org/s/275551/</a> -- License: Creative Commons 0</li>
+      <li>Witch laugh.wav by Sulainar -- <a href="https://freesound.org/s/471613/" target="_blank" rel="noopener">https://freesound.org/s/471613/</a> -- License: Creative Commons 0</li>
+    </ul>
+    <button id="creditsClose" type="button">Fechar</button>
+  </div>
+</div>
+
 <div class="container">
 
 <img src="bruxadafloresta.webp" usemap="#image-map" width="3072" height="3072" decoding="async" fetchpriority="high"><!-- UPDATED: explicit dimensions for the real full-resolution mandala -->
@@ -814,6 +930,27 @@ font-family:inherit;
 
 /* prevent image dragging */
 document.addEventListener("dragstart", e=>e.preventDefault());
+
+const creditsButton = document.getElementById("creditsButton");
+const creditsModal = document.getElementById("creditsModal");
+const creditsClose = document.getElementById("creditsClose");
+
+function showCredits(){
+creditsModal.classList.add("show");
+}
+
+function hideCredits(){
+creditsModal.classList.remove("show");
+}
+
+creditsButton.addEventListener("click", showCredits);
+creditsClose.addEventListener("click", hideCredits);
+creditsModal.addEventListener("click", event => {
+if(event.target === creditsModal) hideCredits();
+});
+document.addEventListener("keydown", event => {
+if(event.key === "Escape") hideCredits();
+});
 
 const overlayStorageKey = "bruxadafloresta_selectedOverlay";
 const guessStorageKey = "bruxadafloresta_wordGuesses";

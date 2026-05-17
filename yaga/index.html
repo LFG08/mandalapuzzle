@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Baba Witch Jigsaw</title>
+  <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+  <title>Baba Yaga</title>
   <style>
     @property --edge-fade-radius{
       syntax:"<percentage>";
@@ -194,6 +195,9 @@
       margin-top:16px;
     }
     .btn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
       width:100%;
       border:1px solid rgba(255,234,210,.18);
       border-radius:999px;
@@ -201,6 +205,8 @@
       background:linear-gradient(180deg,var(--btn-1),var(--btn-2));
       color:#fff4e8;
       cursor:pointer;
+      text-align:center;
+      text-decoration:none;
     }
     .btn:hover{filter:brightness(1.06)}
     .btn:disabled{opacity:.55; cursor:not-allowed}
@@ -310,6 +316,21 @@
     .soundCredits li + li{
       margin-top:6px;
     }
+    .pageFootnote{
+      width:min(1100px,calc(100vw - 24px));
+      margin:22px auto 0;
+      padding:16px 18px;
+      border:1px solid rgba(255,231,200,.14);
+      border-radius:18px;
+      background:rgba(0,0,0,.16);
+    }
+    .pageFootnote ul{
+      columns:2;
+      column-gap:28px;
+    }
+    @media (max-width:760px){
+      .pageFootnote ul{columns:1}
+    }
     .aboutClose{margin-top:14px}
     .nextLevelOverlay{
       position:fixed;
@@ -384,7 +405,7 @@
       <aside class="panel side">
         <div id="menuCard" class="card">
           <div class="menuHeader">
-            <h1 id="puzzleTitle" class="title">Baba Witch Jigsaw</h1>
+            <h1 id="puzzleTitle" class="title">Baba Yaga</h1>
             <button id="menuToggle" class="btn" type="button">Minimizar</button>
           </div>
           <div id="menuBody" class="menuBody">
@@ -404,6 +425,19 @@
         <div id="tray" class="tray"></div>
       </aside>
     </section>
+    <footer class="soundCredits pageFootnote" aria-label="Créditos dos efeitos sonoros">
+      <strong>Créditos dos efeitos sonoros:</strong>
+      <ul>
+        <li>Keyboard tactile 9 by StavSounds -- <a href="https://freesound.org/s/766640/" target="_blank" rel="noopener">https://freesound.org/s/766640/</a> -- License: Attribution 4.0</li>
+        <li>Harp Glissando Descending by SergeQuadrado -- <a href="https://freesound.org/s/476715/" target="_blank" rel="noopener">https://freesound.org/s/476715/</a> -- License: Attribution NonCommercial 3.0</li>
+        <li>Hand Bells, Low-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">https://freesound.org/s/339815/</a> -- License: Attribution 4.0</li>
+        <li>Hand Bells, D, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">https://freesound.org/s/339813/</a> -- License: Attribution 4.0</li>
+        <li>Hand Bells, F, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339816/" target="_blank" rel="noopener">https://freesound.org/s/339816/</a> -- License: Attribution 4.0</li>
+        <li>Hand Bells, G, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339818/" target="_blank" rel="noopener">https://freesound.org/s/339818/</a> -- License: Attribution 4.0</li>
+        <li>Hand Bells, A, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339810/" target="_blank" rel="noopener">https://freesound.org/s/339810/</a> -- License: Attribution 4.0</li>
+        <li>Hand Bells, A#/Bb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339811/" target="_blank" rel="noopener">https://freesound.org/s/339811/</a> -- License: Attribution 4.0</li>
+      </ul>
+    </footer>
   </main>
   <div id="aboutModal" class="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
     <div class="aboutCard">
@@ -426,8 +460,8 @@
     const IMAGE_SIZE = 768;
     const SNAP = 34;
     const LEVELS = [
-      {name:"Baba Witch", image:"baba_witch.png", guideMaxOpacity:0.3, cols:11, rows:6},
-      {name:"A Witch", image:"a_witch.png", guideMaxOpacity:0.3, cols:11, rows:6}
+      {name:"Baba Yaga", image:"baba_witch.png", guideMaxOpacity:0.3, cols:11, rows:6},
+      {name:"Uma Bruxa", image:"a_witch.png", guideMaxOpacity:0.3, cols:11, rows:6}
     ];
     const LEVEL_OVERLAYS = ["baba_witch_overlay.png", "a_witch_overlay.png"];
     const THEMES = [
@@ -636,7 +670,7 @@
 
     function showPasswordRequired(){
       applyTheme(0);
-      el.puzzleTitle.textContent = "Baba Witch Jigsaw";
+      el.puzzleTitle.textContent = "Baba Yaga";
       el.placed.textContent = "0 / 66";
       el.complete.textContent = "Palavra Mágica required.";
       el.complete.classList.add("show");
@@ -701,10 +735,6 @@
       el.aboutContent.innerHTML = `
         ${about.image}
         <p class="imageCredit"><strong>Inspirado por:</strong> ${about.credit.replace(/^Inspirado por\s*/, "")}</p>
-        <div class="soundCredits">
-          <strong>Créditos dos efeitos sonoros:</strong>
-          <ul>${JIGSAW_SOUND_CREDITS.map((credit) => `<li>${credit}</li>`).join("")}</ul>
-        </div>
       `;
       el.aboutModal.classList.add("show");
     }
@@ -715,8 +745,8 @@
 
     function setLevelUi(){
       const levelNumber = state.currentLevel + 1;
-      el.puzzleTitle.textContent = "Baba Witch Jigsaw";
-      document.title = "Baba Witch Jigsaw";
+      el.puzzleTitle.textContent = "Baba Yaga";
+      document.title = "Baba Yaga";
       el.complete.textContent = levelNumber < LEVELS.length
         ? `Level ${levelNumber} complete. Loading level ${levelNumber + 1}...`
         : "Puzzle complete.";
@@ -1159,7 +1189,7 @@
       el.complete.classList.remove("show");
       el.shuffle.disabled = true;
       el.about.disabled = false;
-      el.puzzleTitle.textContent = "Baba Witch Jigsaw";
+      el.puzzleTitle.textContent = "Baba Yaga";
       updateMemoryStatus();
       document.documentElement.style.setProperty("--guide-opacity", "0");
 

@@ -400,8 +400,8 @@
       "/sound_effects/339810__inspectorj__hand-bells-A-single.wav",
       "/sound_effects/339811__inspectorj__hand-bells-Bb-single.wav"
     ];
-    const TRANSITION_NOTE_DELAY = 150;
-    const TRANSITION_NOTE_DURATION_MS = 4200;
+    const TRANSITION_NOTE_DURATION_MS = 600;
+    const TRANSITION_NOTE_GAP_MS = 150;
     const IMAGE_SIZE = 768;
     const SNAP = 34;
     const LEVELS = [
@@ -1272,23 +1272,25 @@
 
     function playTransitionScale(){
       clearTransitionSoundTimers();
+      const noteSpacing = TRANSITION_NOTE_DURATION_MS + TRANSITION_NOTE_GAP_MS;
       transitionSounds.forEach((sound, index) => {
         const startTimer = setTimeout(() => {
           const soundInstance = sound.cloneNode();
           const removeSoundInstance = () => {
             state.transitionSoundInstances = state.transitionSoundInstances.filter((item) => item !== soundInstance);
           };
+          const stopSoundInstance = () => {
+            soundInstance.pause();
+            soundInstance.currentTime = 0;
+            removeSoundInstance();
+          };
           soundInstance.volume = 0.46;
           state.transitionSoundInstances.push(soundInstance);
           soundInstance.addEventListener("ended", removeSoundInstance, { once: true });
           soundInstance.play().catch(removeSoundInstance);
-          const stopTimer = setTimeout(() => {
-            soundInstance.pause();
-            soundInstance.currentTime = 0;
-            removeSoundInstance();
-          }, TRANSITION_NOTE_DURATION_MS);
+          const stopTimer = setTimeout(stopSoundInstance, TRANSITION_NOTE_DURATION_MS);
           state.transitionSoundTimers.push(stopTimer);
-        }, index * TRANSITION_NOTE_DELAY);
+        }, index * noteSpacing);
         state.transitionSoundTimers.push(startTimer);
       });
     }

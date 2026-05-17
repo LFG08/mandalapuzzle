@@ -626,7 +626,7 @@ font-family:inherit;
 <li id="menu-Floresta" class="hidden-word" data-hidden="Floresta" data-def="Floresta"></li>
 <li id="menu-Sapo-01" class="hidden-word" data-hidden="Sapo_01" data-def="Sapo_01"></li>
 <li id="menu-Deusa" class="hidden-word" data-hidden="Deusa" data-def="Deusa"></li>
-<li id="menu-Vasoura" class="hidden-word" data-hidden="Vasoura" data-def="Vasoura"></li>
+<li id="menu-Vasoura" class="hidden-word" data-hidden="Vassoura" data-def="Vassoura"></li>
 <li id="menu-Sapo-02" class="hidden-word" data-hidden="Sapo_02" data-def="Sapo_02"></li>
 <li id="menu-Bruxa" class="hidden-word" data-hidden="Bruxa" data-def="Bruxa"></li>
 <li id="menu-Rosto" class="hidden-word" data-hidden="Rosto" data-def="Rosto"></li>
@@ -732,7 +732,7 @@ font-family:inherit;
 
     <area id="area-Deusa" alt="Deusa" href="" coords="1707,1945,1677,1961,1658,1980,1650,2002,1677,2010,1704,1997,1734,1975,1731,1945" shape="poly" onclick="toggleAnswer(this,'Deusa'); return false;">
 
-    <area id="area-Vassoura" alt="Vassoura" href="" coords="1229,1654,1199,1676,1210,1698,1224,1730,1248,1758,1267,1792,1294,1765,1264,1730,1251,1692" shape="poly" onclick="toggleAnswer(this,'Vasoura'); return false;">
+    <area id="area-Vassoura" alt="Vassoura" href="" coords="1229,1654,1199,1676,1210,1698,1224,1730,1248,1758,1267,1792,1294,1765,1264,1730,1251,1692" shape="poly" onclick="toggleAnswer(this,'Vassoura'); return false;">
 
     <area id="area-Sapo-02" alt="Sapo_02" href="" coords="1840,1809,1823,1812,1815,1828,1818,1847,1840,1853,1853,1831" shape="poly" onclick="toggleAnswer(this,'Sapo_02'); return false;">
 
@@ -807,7 +807,7 @@ const ambianceStorageKey = "bruxadafloresta_ambianceEnabled";
 const ambianceVolumeStorageKey = "bruxadafloresta_ambianceVolume";
 const ambianceWarningStorageKey = "bruxadafloresta_ambienceWarningSeen";
 const ambianceLoopSrc = "/sound_effects/Ambiance_Atmosphere_Interior_Wood_Rain_Thunders_Fire_Loop_Stereo.ogg";
-const extraSoundEffectsBaseSrc = "/soundeffects/";
+const extraSoundEffectsBaseSrc = "/sound_effects/";
 const defaultAmbianceVolume = 0.68;
 const answerSoundSettings = {
 "Anciã": { maxDuration: 3 },
@@ -821,6 +821,10 @@ const answerSoundSettings = {
 "Rosto": { maxDuration: 3 }
 };
 const defaultAnswerSoundVolume = 0.46;
+const leavesSoundSrc = extraSoundEffectsBaseSrc + "Rustling leaves.wav";
+const mulherSoundSrc = extraSoundEffectsBaseSrc + "BreatheOut.wav";
+const panFluteSoundSrc = extraSoundEffectsBaseSrc + "Cm134BPM.wav";
+const broomSoundSrc = extraSoundEffectsBaseSrc + "Swing.mp3";
 const potionSoundSrc = "/sound_effects/BubblesShortBassyBursts.wav";
 const handbellSoundSrcs = [
 "/sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
@@ -833,16 +837,16 @@ const handbellSoundSrcs = [
 ];
 const answerSoundSrcs = {
 "Anciã": extraSoundEffectsBaseSrc + "f_Synth_Wind_Whoosh_6.wav",
-"caramujo": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
-"Cobra": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
+"caramujo": leavesSoundSrc,
+"Cobra": leavesSoundSrc,
 "Corvo": "/sound_effects/Raven&Crow.wav",
 "Gato Preto": "/sound_effects/412017__skymary__cat-meow-short.wav",
-"Joaninha": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
-"Lagartixa": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
-"Minhoca": extraSoundEffectsBaseSrc + "Rustling leaves.wav",
+"Joaninha": leavesSoundSrc,
+"Lagartixa": leavesSoundSrc,
+"Minhoca": leavesSoundSrc,
 "Mnadrágora": "/sound_effects/Scream.mp3",
-"mulher": extraSoundEffectsBaseSrc + "Breathe Out.wav",
-"Pã": extraSoundEffectsBaseSrc + "Cm 134 BPM.wav",
+"mulher": mulherSoundSrc,
+"Pã": panFluteSoundSrc,
 "Caldeirão": potionSoundSrc,
 "Poção_01": potionSoundSrc,
 "Poção_02": potionSoundSrc,
@@ -852,7 +856,7 @@ const answerSoundSrcs = {
 "Sapo_01": "/sound_effects/MonofroschmitHall.wav",
 "Sapo_02": "/sound_effects/MonofroschmitHall.wav",
 "Sapo_Palavra": "/sound_effects/MonofroschmitHall.wav",
-"Vasoura": extraSoundEffectsBaseSrc + "Swing.wav",
+"Vassoura": broomSoundSrc,
 "Rosto": "/sound_effects/Witchlaugh.wav"
 };
 const initialAvailableHints = 10;

@@ -31,6 +31,7 @@
     .piece.placed{cursor:default}
     .piece.placed canvas{filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
     .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#bcc688}
+    .credits{margin:16px 4px 0;color:#bcc688;font-size:.82rem;line-height:1.5}
     @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}.boardWrap{overflow:auto}}
   </style>
@@ -44,17 +45,19 @@
       <aside class="trayWrap">
         <div class="card">
           <h1 class="title">Green Eye</h1>
-          <div class="line"><span class="small">Pecas colocadas</span><br><strong id="placed" class="value">0 / 58</strong></div>
-          <div class="actions"><button id="shuffle" class="btn" type="button">Embaralhar Pecas Soltas</button><button id="reset" class="btn" type="button">Reset</button></div>
+          <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 58</strong></div>
+          <div class="actions"><button id="mainMenu" class="btn" type="button">Menu Principal</button><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button">Som: Ligado</button></div>
         </div>
-        <h2 class="trayTitle">Bandeja de Pecas</h2>
+        <h2 class="trayTitle">Bandeja de Peças</h2>
         <div id="tray" class="tray"></div>
+        <p class="credits">Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0</p>
       </aside>
     </section>
   </main>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
     const BOARD=768,SNAP=82,KEY="greenEyeJigsawProgress";
+    const PIECE_PLACE_SOUND_SRC="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     const PIECES=Array.from({length:58},(_,i)=>`${i+1}.png`);
     const BOUNDS={
       "1": {x:586,y:234,w:42,h:73},
@@ -122,24 +125,37 @@
       tpl:document.getElementById("tpl"),
       placed:document.getElementById("placed"),
       shuffle:document.getElementById("shuffle"),
-      reset:document.getElementById("reset")
+      reset:document.getElementById("reset"),
+      mainMenu:document.getElementById("mainMenu"),
+      soundToggle:document.getElementById("soundToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2};
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true};
+    const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`The puzzle could not be initialized. ${e.message||""}`.trim())});
 
     async function init(){
       st.pieces=await Promise.all(PIECES.map((src,i)=>makePiece(src,i+1)));
       rects();
       const saved=load();
-      if(saved)restore(saved);
+      if(saved){
+        st.soundOn=saved.soundOn!==false;
+        restore(saved);
+      }
+      el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
       shuffleLoose(true);
       status();
       addEventListener("resize",resize);
       el.shuffle.onclick=()=>shuffleLoose(true);
       el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+      el.mainMenu.onclick=()=>{location.href="/"};
+      el.soundToggle.onclick=()=>{
+        st.soundOn=!st.soundOn;
+        el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
+        save();
+      };
     }
     function load(){try{const raw=localStorage.getItem(KEY);return raw?JSON.parse(raw):null}catch{return null}}
-    function save(){try{localStorage.setItem(KEY,JSON.stringify({placed:st.pieces.filter(p=>p.placed).map(p=>p.id)}))}catch{}}
+    function save(){try{localStorage.setItem(KEY,JSON.stringify({placed:st.pieces.filter(p=>p.placed).map(p=>p.id),soundOn:st.soundOn}))}catch{}}
     function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
     function loadImage(src){return new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(new Error(`Image load failed for ${src}`));img.src=src})}
     async function makePiece(src,n){
@@ -198,6 +214,7 @@
       compact();
       save();
       status();
+      playPlaceSound();
     }
     function backToTray(piece){
       if(!el.tray.contains(piece.node))el.tray.appendChild(piece.node);
@@ -275,6 +292,13 @@
       return mixed;
     }
     function resize(){rects();for(const p of st.pieces)if(p.placed){p.currentX=st.boardRect.left+p.targetX;p.currentY=st.boardRect.top+p.targetY}}
+    function playPlaceSound(){
+      if(!st.soundOn)return;
+      try{
+        placeSound.currentTime=0;
+        placeSound.play().catch(()=>{});
+      }catch{}
+    }
   </script>
 </body>
 </html>

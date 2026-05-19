@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Green Eye Jigsaw</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:#eef4d8;background:radial-gradient(circle at 50% 0,rgba(176,188,104,.18),transparent 30%),linear-gradient(180deg,#1a210f,#070a05 76%)}
+    button,input{font:inherit}
+    .app{width:min(1480px,calc(100vw - 28px));margin:0 auto;padding:22px 0 34px}
+    .layout{display:grid;grid-template-columns:minmax(768px,820px) minmax(320px,1fr);gap:24px;align-items:start}
+    .card,.trayWrap,.boardWrap{background:linear-gradient(180deg,rgba(26,34,14,.98),rgba(10,14,7,.98));border:1px solid #6f7d33;border-radius:24px;box-shadow:0 26px 60px rgba(0,0,0,.32)}
+    .boardWrap{position:sticky;top:18px;padding:18px}
+    .board{position:relative;width:768px;height:768px;overflow:hidden;background:#101508 url("board.png") center/100% 100% no-repeat;box-shadow:inset 0 0 0 1px rgba(238,244,216,.12)}
+    .controls label,.small{color:#bcc688;text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}
+    .trayWrap{padding:18px;min-height:850px}
+    .card{padding:18px;margin-bottom:18px}
+    .title{margin:0 0 14px;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.34rem}
+    .line+.line{margin-top:12px}
+    .value{display:inline-block;margin-top:4px;color:#fbffe8}
+    .actions{display:grid;gap:8px;margin-top:16px}
+    .btn{width:100%;border:1px solid rgba(238,244,216,.2);border-radius:999px;padding:9px 12px;background:linear-gradient(180deg,rgba(80,94,35,.98),rgba(34,45,17,.98));color:#fbffe8;cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .trayTitle{margin:0 0 14px;font-size:1.12rem}
+    .tray{position:relative;min-height:710px;height:calc(100vh - 190px);overflow:auto;border-radius:20px;background:linear-gradient(135deg,#070a05,#26310f),repeating-linear-gradient(45deg,rgba(238,244,216,.045) 0,rgba(238,244,216,.045) 16px,transparent 16px,transparent 32px);border:2px inset #151c0a}
+    .piece{position:absolute;border:0;padding:0;margin:0;background:transparent;cursor:grab;touch-action:none;user-select:none;transition:transform .15s ease,filter .15s ease;z-index:2}
+    .piece:hover{transform:translateY(-2px)}
+    .piece canvas{display:block;filter:drop-shadow(0 12px 22px rgba(0,0,0,.28))}
+    .piece.drag{position:fixed;cursor:grabbing;z-index:9999;transition:none}
+    .piece.placed{cursor:default}
+    .piece.placed canvas{filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
+    .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#bcc688}
+    @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
+    @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}.boardWrap{overflow:auto}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="layout">
+      <div class="boardWrap">
+        <div id="board" class="board"></div>
+      </div>
+      <aside class="trayWrap">
+        <div class="card">
+          <h1 class="title">Green Eye</h1>
+          <div class="line"><span class="small">Pecas colocadas</span><br><strong id="placed" class="value">0 / 58</strong></div>
+          <div class="actions"><button id="shuffle" class="btn" type="button">Embaralhar Pecas Soltas</button><button id="reset" class="btn" type="button">Reset</button></div>
+        </div>
+        <h2 class="trayTitle">Bandeja de Pecas</h2>
+        <div id="tray" class="tray"></div>
+      </aside>
+    </section>
+  </main>
+  <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
+  <script>
+    const BOARD=768,SNAP=82,KEY="greenEyeJigsawProgress";
+    const PIECES=Array.from({length:58},(_,i)=>`${i+1}.png`);
+    const BOUNDS={
+      "1": {x:586,y:234,w:42,h:73},
+      "2": {x:660,y:305,w:108,h:158},
+      "3": {x:140,y:234,w:42,h:73},
+      "4": {x:51,y:570,w:147,h:147},
+      "5": {x:0,y:305,w:108,h:158},
+      "6": {x:140,y:461,w:42,h:73},
+      "7": {x:305,y:0,w:158,h:108},
+      "8": {x:586,y:461,w:42,h:73},
+      "9": {x:246,y:585,w:78,h:65},
+      "10": {x:246,y:118,w:78,h:65},
+      "11": {x:444,y:585,w:78,h:65},
+      "12": {x:305,y:660,w:158,h:108},
+      "13": {x:0,y:383,w:133,h:156},
+      "14": {x:570,y:570,w:147,h:147},
+      "15": {x:225,y:525,w:159,h:108},
+      "16": {x:135,y:384,w:108,h:159},
+      "17": {x:525,y:225,w:108,h:159},
+      "18": {x:51,y:51,w:147,h:147},
+      "19": {x:444,y:118,w:78,h:65},
+      "20": {x:225,y:135,w:159,h:108},
+      "21": {x:384,y:525,w:159,h:108},
+      "22": {x:157,y:410,w:139,h:158},
+      "23": {x:135,y:225,w:108,h:159},
+      "24": {x:570,y:51,w:147,h:147},
+      "25": {x:384,y:135,w:159,h:108},
+      "26": {x:423,y:273,w:110,h:112},
+      "27": {x:525,y:384,w:108,h:159},
+      "28": {x:200,y:472,w:158,h:139},
+      "29": {x:157,y:200,w:139,h:158},
+      "30": {x:472,y:410,w:139,h:158},
+      "31": {x:472,y:200,w:139,h:158},
+      "32": {x:200,y:157,w:158,h:139},
+      "33": {x:235,y:383,w:110,h:112},
+      "34": {x:410,y:472,w:158,h:139},
+      "35": {x:410,y:157,w:158,h:139},
+      "36": {x:235,y:273,w:110,h:112},
+      "37": {x:366,y:374,w:35,h:20},
+      "38": {x:384,y:235,w:54,h:137},
+      "39": {x:423,y:383,w:110,h:112},
+      "40": {x:383,y:0,w:156,h:133},
+      "41": {x:384,y:396,w:54,h:137},
+      "42": {x:229,y:0,w:156,h:133},
+      "43": {x:229,y:635,w:156,h:133},
+      "44": {x:565,y:5,w:203,h:275},
+      "45": {x:5,y:0,w:275,h:203},
+      "46": {x:183,y:183,w:402,h:402},
+      "47": {x:635,y:229,w:133,h:156},
+      "48": {x:635,y:383,w:133,h:156},
+      "49": {x:383,y:635,w:156,h:133},
+      "50": {x:330,y:235,w:54,h:137},
+      "51": {x:330,y:396,w:54,h:137},
+      "52": {x:488,y:565,w:275,h:203},
+      "53": {x:0,y:229,w:133,h:156},
+      "54": {x:488,y:0,w:275,h:203},
+      "55": {x:565,y:488,w:203,h:275},
+      "56": {x:0,y:488,w:203,h:275},
+      "57": {x:5,y:565,w:275,h:203},
+      "58": {x:0,y:5,w:203,h:275}
+    };
+    const el={
+      board:document.getElementById("board"),
+      tray:document.getElementById("tray"),
+      tpl:document.getElementById("tpl"),
+      placed:document.getElementById("placed"),
+      shuffle:document.getElementById("shuffle"),
+      reset:document.getElementById("reset")
+    };
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2};
+    init().catch(e=>{console.error(e);alert(`The puzzle could not be initialized. ${e.message||""}`.trim())});
+
+    async function init(){
+      st.pieces=await Promise.all(PIECES.map((src,i)=>makePiece(src,i+1)));
+      rects();
+      const saved=load();
+      if(saved)restore(saved);
+      shuffleLoose(true);
+      status();
+      addEventListener("resize",resize);
+      el.shuffle.onclick=()=>shuffleLoose(true);
+      el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+    }
+    function load(){try{const raw=localStorage.getItem(KEY);return raw?JSON.parse(raw):null}catch{return null}}
+    function save(){try{localStorage.setItem(KEY,JSON.stringify({placed:st.pieces.filter(p=>p.placed).map(p=>p.id)}))}catch{}}
+    function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
+    function loadImage(src){return new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(new Error(`Image load failed for ${src}`));img.src=src})}
+    async function makePiece(src,n){
+      const img=await loadImage(src),box=BOUNDS[String(n)];
+      if(!box)throw new Error(`${src} has no visible pixels`);
+      const can=document.createElement("canvas");
+      can.width=box.w;can.height=box.h;
+      const ctx=can.getContext("2d");
+      ctx.drawImage(img,box.x,box.y,box.w,box.h,0,0,box.w,box.h);
+      const node=el.tpl.content.firstElementChild.cloneNode(true);
+      node.appendChild(can);
+      node.style.width=`${box.w}px`;node.style.height=`${box.h}px`;
+      const piece={id:String(n),src,node,can,w:box.w,h:box.h,targetX:box.x,targetY:box.y,currentX:0,currentY:0,sourceX:0,sourceY:0,placed:false};
+      node.onpointerdown=e=>startDrag(e,piece);
+      el.tray.appendChild(node);
+      return piece;
+    }
+    function startDrag(e,piece){
+      if(piece.placed)return;
+      e.preventDefault();rects();
+      const r=piece.node.getBoundingClientRect();
+      st.drag={piece,ox:e.clientX-r.left,oy:e.clientY-r.top};
+      piece.node.classList.add("drag");
+      piece.node.style.zIndex=String(st.z++);
+      if(piece.node.parentElement!==document.body){
+        piece.sourceX=r.left-st.trayRect.left+el.tray.scrollLeft;
+        piece.sourceY=r.top-st.trayRect.top+el.tray.scrollTop;
+        document.body.appendChild(piece.node);
+        piece.node.style.position="fixed";
+        placeAt(piece,r.left,r.top);
+      }
+      addEventListener("pointermove",moveDrag);
+      addEventListener("pointerup",endDrag,{once:true});
+    }
+    function moveDrag(e){if(!st.drag)return;placeAt(st.drag.piece,e.clientX-st.drag.ox,e.clientY-st.drag.oy)}
+    function endDrag(){
+      if(!st.drag)return;
+      const {piece}=st.drag;
+      piece.node.classList.remove("drag");
+      const tx=st.boardRect.left+piece.targetX,ty=st.boardRect.top+piece.targetY;
+      const dx=Math.abs(piece.currentX-tx),dy=Math.abs(piece.currentY-ty);
+      if(dx<=SNAP&&dy<=SNAP)dropOnBoard(piece);else backToTray(piece);
+      st.drag=null;
+      removeEventListener("pointermove",moveDrag);
+    }
+    function placeAt(piece,left,top){piece.currentX=left;piece.currentY=top;piece.node.style.left=`${left}px`;piece.node.style.top=`${top}px`}
+    function dropOnBoard(piece){
+      el.board.appendChild(piece.node);
+      piece.node.style.position="absolute";
+      piece.node.classList.add("placed");
+      piece.node.style.left=`${piece.targetX}px`;
+      piece.node.style.top=`${piece.targetY}px`;
+      piece.placed=true;
+      piece.currentX=st.boardRect.left+piece.targetX;
+      piece.currentY=st.boardRect.top+piece.targetY;
+      compact();
+      save();
+      status();
+    }
+    function backToTray(piece){
+      if(!el.tray.contains(piece.node))el.tray.appendChild(piece.node);
+      const localLeft=piece.currentX-st.trayRect.left+el.tray.scrollLeft,localTop=piece.currentY-st.trayRect.top+el.tray.scrollTop;
+      const inTray=piece.currentX+piece.w*.5>=st.trayRect.left&&piece.currentX+piece.w*.5<=st.trayRect.right&&piece.currentY+piece.h*.5>=st.trayRect.top&&piece.currentY+piece.h*.5<=st.trayRect.bottom;
+      if(inTray){piece.sourceX=Math.max(0,Math.min(el.tray.scrollWidth-piece.w,localLeft));piece.sourceY=Math.max(0,Math.min(el.tray.scrollHeight-piece.h,localTop))}
+      piece.node.style.position="absolute";
+      piece.node.style.left=`${piece.sourceX}px`;
+      piece.node.style.top=`${piece.sourceY}px`;
+      piece.currentX=st.trayRect.left+piece.sourceX;
+      piece.currentY=st.trayRect.top+piece.sourceY;
+      save();
+    }
+    function shuffleLoose(randomize){
+      rects();
+      const loose=st.pieces.filter(p=>!p.placed);
+      if(!loose.length)return empty();
+      clearEmpty();
+      const ordered=randomize?shuffleByTargetZones(loose):loose;
+      layoutTray(ordered);
+      save();
+    }
+    function compact(){
+      rects();
+      const loose=st.pieces.filter(p=>!p.placed).sort((a,b)=>(a.sourceY??0)-(b.sourceY??0)||(a.sourceX??0)-(b.sourceX??0));
+      if(!loose.length)return empty();
+      clearEmpty();
+      layoutTray(loose);
+    }
+    function layoutTray(pieces){
+      const pad=12,max=Math.max(el.tray.clientWidth-pad,180);
+      let x=pad,y=pad,row=0;
+      for(const p of pieces){
+        if(!el.tray.contains(p.node))el.tray.appendChild(p.node);
+        if(x+p.w>max){x=pad;y+=row+pad;row=0}
+        p.node.style.position="absolute";
+        p.node.style.left=`${x}px`;
+        p.node.style.top=`${y}px`;
+        p.sourceX=x;p.sourceY=y;
+        p.currentX=st.trayRect.left+x;p.currentY=st.trayRect.top+y;
+        x+=p.w+pad;row=Math.max(row,p.h);
+      }
+      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;
+    }
+    function restore(saved){
+      const ids=new Set(Array.isArray(saved.placed)?saved.placed:[]);
+      for(const p of st.pieces)if(ids.has(p.id))dropOnBoard(p);
+    }
+    function status(){const placed=st.pieces.filter(p=>p.placed).length;el.placed.textContent=`${placed} / ${st.pieces.length}`}
+    function empty(){clearEmpty();const d=document.createElement("div");d.id="empty";d.className="empty";d.textContent="The tray is empty because every piece has been placed.";el.tray.appendChild(d)}
+    function clearEmpty(){document.getElementById("empty")?.remove()}
+    function shuffleList(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+    function shuffleByTargetZones(pieces){
+      const zones=[
+        p=>p.targetX<BOARD/3&&p.targetY<BOARD/3,
+        p=>p.targetX>=BOARD/3&&p.targetX<BOARD*2/3&&p.targetY<BOARD/3,
+        p=>p.targetX>=BOARD*2/3&&p.targetY<BOARD/3,
+        p=>p.targetX<BOARD/3&&p.targetY>=BOARD/3&&p.targetY<BOARD*2/3,
+        p=>p.targetX>=BOARD/3&&p.targetX<BOARD*2/3&&p.targetY>=BOARD/3&&p.targetY<BOARD*2/3,
+        p=>p.targetX>=BOARD*2/3&&p.targetY>=BOARD/3&&p.targetY<BOARD*2/3,
+        p=>p.targetX<BOARD/3&&p.targetY>=BOARD*2/3,
+        p=>p.targetX>=BOARD/3&&p.targetX<BOARD*2/3&&p.targetY>=BOARD*2/3,
+        p=>p.targetX>=BOARD*2/3&&p.targetY>=BOARD*2/3
+      ];
+      const buckets=zones.map(()=>[]);
+      for(const piece of pieces){
+        const index=zones.findIndex(test=>test(piece));
+        buckets[index<0?0:index].push(piece);
+      }
+      const mixed=[];
+      const shuffledBuckets=shuffleList(buckets.map(shuffleList));
+      while(shuffledBuckets.some(bucket=>bucket.length)){
+        for(const bucket of shuffleList(shuffledBuckets.filter(v=>v.length)))mixed.push(bucket.pop());
+      }
+      return mixed;
+    }
+    function resize(){rects();for(const p of st.pieces)if(p.placed){p.currentX=st.boardRect.left+p.targetX;p.currentY=st.boardRect.top+p.targetY}}
+  </script>
+</body>
+</html>

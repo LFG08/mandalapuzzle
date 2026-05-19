@@ -1389,6 +1389,27 @@ function trimGuess(text, maxLength){
 return Array.from((text || "").replace(/\r?\n/g, "")).slice(0, maxLength).join("");
 }
 
+function normalizeGuess(text){
+return (text || "")
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g, "")
+.replace(/\s+/g, " ")
+.trim()
+.toLocaleLowerCase("pt-BR");
+}
+
+function isCorrectGuess(guess, hiddenWord){
+if(!guess || !hiddenWord) return false;
+return normalizeGuess(guess) === normalizeGuess(hiddenWord);
+}
+
+function isMenuWordRevealed(li){
+if(!li) return false;
+if(li.classList.contains("found")) return true;
+if(Number(li.dataset.hintLevel || 0) >= 1) return true;
+return isCorrectGuess(li.dataset.guess || "", li.dataset.hidden || "");
+}
+
 function formatMenuWord(text){
 let chars = Array.from(text || "");
 if(!chars.length) return "";
@@ -1768,6 +1789,10 @@ if(nextGuess){
 
 renderMenuWord(item);
 saveGuesses();
+
+if(item.classList.contains("hidden-word") && isCorrectGuess(nextGuess, item.dataset.hidden)){
+  applyHint(item, 1);
+}
 }
 
 function requestHint(item){
@@ -1778,6 +1803,10 @@ if(item.classList.contains("found")) return;
 finishGuessEdit(item);
 
 let currentHint = Number(item.dataset.hintLevel || 0);
+if(currentHint < 1 && isMenuWordRevealed(item)){
+  applyHint(item, 1);
+  currentHint = 1;
+}
 
 if(currentHint >= 2){
   alert("Essa palavra já recebeu todas as dicas.");

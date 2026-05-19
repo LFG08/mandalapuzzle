@@ -822,6 +822,130 @@ levelTwoUnlocked: status.total !== null
 };
 }
 
+const greenEyeThumbCache = new Map();
+
+function loadMenuImage(src){
+if(greenEyeThumbCache.has(src)){
+return greenEyeThumbCache.get(src);
+}
+let promise = new Promise((resolve, reject) => {
+let img = new Image();
+img.onload = () => resolve(img);
+img.onerror = () => reject(new Error(`Image load failed: ${src}`));
+img.src = src;
+});
+greenEyeThumbCache.set(src, promise);
+return promise;
+}
+
+async function buildGreenEyeProgressThumb(placedIds){
+const BOARD_SIZE = 768;
+const thumbBase = await loadMenuImage("thumb_green_eye.png");
+const canvas = document.createElement("canvas");
+canvas.width = thumbBase.naturalWidth || thumbBase.width;
+canvas.height = thumbBase.naturalHeight || thumbBase.height;
+const ctx = canvas.getContext("2d");
+ctx.drawImage(thumbBase, 0, 0, canvas.width, canvas.height);
+
+if(!Array.isArray(placedIds) || placedIds.length === 0){
+return canvas.toDataURL("image/png");
+}
+
+const placedSet = new Set(placedIds.map(String));
+const boardImg = await loadMenuImage("green_eye/board.png");
+const boardCanvas = document.createElement("canvas");
+boardCanvas.width = BOARD_SIZE;
+boardCanvas.height = BOARD_SIZE;
+const boardCtx = boardCanvas.getContext("2d");
+boardCtx.drawImage(boardImg, 0, 0, BOARD_SIZE, BOARD_SIZE);
+
+for(let i = 1; i <= 58; i++){
+let id = String(i);
+if(!placedSet.has(id)) continue;
+let box = GREEN_EYE_BOUNDS[id];
+if(!box) continue;
+let pieceImg = await loadMenuImage(`green_eye/${id}.png`);
+boardCtx.save();
+boardCtx.beginPath();
+boardCtx.rect(box.x, box.y, box.w, box.h);
+boardCtx.clip();
+boardCtx.drawImage(pieceImg, 0, 0, BOARD_SIZE, BOARD_SIZE);
+boardCtx.restore();
+}
+
+ctx.drawImage(boardCanvas, 0, 0, BOARD_SIZE, BOARD_SIZE, 0, 0, canvas.width, canvas.height);
+return canvas.toDataURL("image/png");
+}
+
+const GREEN_EYE_BOUNDS = {
+  "1": {x:586,y:234,w:42,h:73},
+  "2": {x:660,y:305,w:108,h:158},
+  "3": {x:140,y:234,w:42,h:73},
+  "4": {x:51,y:570,w:147,h:147},
+  "5": {x:0,y:305,w:108,h:158},
+  "6": {x:140,y:461,w:42,h:73},
+  "7": {x:305,y:0,w:158,h:108},
+  "8": {x:586,y:461,w:42,h:73},
+  "9": {x:246,y:585,w:78,h:65},
+  "10": {x:246,y:118,w:78,h:65},
+  "11": {x:444,y:585,w:78,h:65},
+  "12": {x:305,y:660,w:158,h:108},
+  "13": {x:0,y:383,w:133,h:156},
+  "14": {x:570,y:570,w:147,h:147},
+  "15": {x:225,y:525,w:159,h:108},
+  "16": {x:135,y:384,w:108,h:159},
+  "17": {x:525,y:225,w:108,h:159},
+  "18": {x:51,y:51,w:147,h:147},
+  "19": {x:444,y:118,w:78,h:65},
+  "20": {x:225,y:135,w:159,h:108},
+  "21": {x:384,y:525,w:159,h:108},
+  "22": {x:157,y:410,w:139,h:158},
+  "23": {x:135,y:225,w:108,h:159},
+  "24": {x:570,y:51,w:147,h:147},
+  "25": {x:384,y:135,w:159,h:108},
+  "26": {x:423,y:273,w:110,h:112},
+  "27": {x:525,y:384,w:108,h:159},
+  "28": {x:200,y:472,w:158,h:139},
+  "29": {x:157,y:200,w:139,h:158},
+  "30": {x:472,y:410,w:139,h:158},
+  "31": {x:472,y:200,w:139,h:158},
+  "32": {x:200,y:157,w:158,h:139},
+  "33": {x:235,y:383,w:110,h:112},
+  "34": {x:410,y:472,w:158,h:139},
+  "35": {x:410,y:157,w:158,h:139},
+  "36": {x:235,y:273,w:110,h:112},
+  "37": {x:366,y:374,w:35,h:20},
+  "38": {x:384,y:235,w:54,h:137},
+  "39": {x:423,y:383,w:110,h:112},
+  "40": {x:383,y:0,w:156,h:133},
+  "41": {x:384,y:396,w:54,h:137},
+  "42": {x:229,y:0,w:156,h:133},
+  "43": {x:229,y:635,w:156,h:133},
+  "44": {x:565,y:5,w:203,h:275},
+  "45": {x:5,y:0,w:275,h:203},
+  "46": {x:183,y:183,w:402,h:402},
+  "47": {x:635,y:229,w:133,h:156},
+  "48": {x:635,y:383,w:133,h:156},
+  "49": {x:383,y:635,w:156,h:133},
+  "50": {x:330,y:235,w:54,h:137},
+  "51": {x:330,y:396,w:54,h:137},
+  "52": {x:488,y:565,w:275,h:203},
+  "53": {x:0,y:229,w:133,h:156},
+  "54": {x:488,y:0,w:275,h:203},
+  "55": {x:565,y:488,w:203,h:275},
+  "56": {x:0,y:488,w:203,h:275},
+  "57": {x:5,y:565,w:275,h:203},
+  "58": {x:0,y:5,w:203,h:275}
+};
+
+async function getGreenEyeStatus(total){
+let parsed = getStoredObjectFromKeys(["greenEyeJigsawProgress"]);
+let placedIds = parsed && Array.isArray(parsed.placed) ? parsed.placed : [];
+let found = placedIds.length;
+let thumb = await buildGreenEyeProgressThumb(placedIds);
+return { found, total, thumb };
+}
+
 
 function setYagaCardHref(card, lastLevelUnlocked){
 if(!card) return;
@@ -1401,6 +1525,29 @@ setCardProgressMeta(card, flowerStatus.found, flowerStatus.total);
 renderStatus(statusEl, flowerStatus.found, flowerStatus.total);
 let percentage = flowerStatus.total > 0 ? (flowerStatus.found / flowerStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
+return;
+}
+
+if(card.id === "greenEyeCard"){
+let total = parseInt(card.dataset.total);
+if(Number.isNaN(total)) return;
+let statusEl = card.querySelector(".status");
+let thumbEl = card.querySelector(".thumb img");
+let initialFound = getStoredProgressCount("greenEyeJigsawProgress");
+setCardProgressMeta(card, initialFound, total);
+renderStatus(statusEl, initialFound, total);
+let initialPercentage = total > 0 ? (initialFound / total) * 100 : 0;
+applyThumbBorder(card, initialPercentage);
+getGreenEyeStatus(total).then(greenEyeStatus => {
+setCardProgressMeta(card, greenEyeStatus.found, greenEyeStatus.total);
+renderStatus(statusEl, greenEyeStatus.found, greenEyeStatus.total);
+if(thumbEl){
+thumbEl.src = greenEyeStatus.thumb;
+}
+let percentage = greenEyeStatus.total > 0 ? (greenEyeStatus.found / greenEyeStatus.total) * 100 : 0;
+applyThumbBorder(card, percentage);
+applyMenuOrdering();
+});
 return;
 }
 

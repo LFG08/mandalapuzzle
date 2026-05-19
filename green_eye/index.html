@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Green Eye Jigsaw</title>
+  <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
   <style>
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:#eef4d8;background:radial-gradient(circle at 50% 0,rgba(176,188,104,.18),transparent 30%),linear-gradient(180deg,#1a210f,#070a05 76%)}
@@ -129,7 +130,7 @@
       mainMenu:document.getElementById("mainMenu"),
       soundToggle:document.getElementById("soundToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true};
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false};
     const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`The puzzle could not be initialized. ${e.message||""}`.trim())});
 
@@ -263,7 +264,14 @@
       const ids=new Set(Array.isArray(saved.placed)?saved.placed:[]);
       for(const p of st.pieces)if(ids.has(p.id))dropOnBoard(p);
     }
-    function status(){const placed=st.pieces.filter(p=>p.placed).length;el.placed.textContent=`${placed} / ${st.pieces.length}`}
+    function status(){
+      const placed=st.pieces.filter(p=>p.placed).length;
+      el.placed.textContent=`${placed} / ${st.pieces.length}`;
+      if(placed===st.pieces.length&&!st.completionShown){
+        st.completionShown=true;
+        setTimeout(()=>alert("Puzzle completo!"),120);
+      }
+    }
     function empty(){clearEmpty();const d=document.createElement("div");d.id="empty";d.className="empty";d.textContent="The tray is empty because every piece has been placed.";el.tray.appendChild(d)}
     function clearEmpty(){document.getElementById("empty")?.remove()}
     function shuffleList(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}

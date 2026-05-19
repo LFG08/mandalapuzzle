@@ -840,14 +840,15 @@ return promise;
 
 async function buildGreenEyeProgressThumb(placedIds){
 const BOARD_SIZE = 768;
-const thumbBase = await loadMenuImage("thumb_green_eye.png");
+const isEmptyProgress = !Array.isArray(placedIds) || placedIds.length === 0;
+const thumbBase = await loadMenuImage(isEmptyProgress ? "green_eye/board.png" : "thumb_green_eye.png");
 const canvas = document.createElement("canvas");
 canvas.width = thumbBase.naturalWidth || thumbBase.width;
 canvas.height = thumbBase.naturalHeight || thumbBase.height;
 const ctx = canvas.getContext("2d");
 ctx.drawImage(thumbBase, 0, 0, canvas.width, canvas.height);
 
-if(!Array.isArray(placedIds) || placedIds.length === 0){
+if(isEmptyProgress){
 return canvas.toDataURL("image/png");
 }
 

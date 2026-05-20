@@ -1261,18 +1261,25 @@ syncAmbiancePlayback();
 function syncAmbiancePlayback(){
 ambianceSound.volume = ambianceVolume;
 if(ambianceEnabled){
-  ambianceSound.play().catch(() => {});
-}else{
-  ambianceSound.pause();
-  ambianceSound.currentTime = 0;
+  const playAttempt = ambianceSound.play();
+  if(playAttempt && typeof playAttempt.catch === "function") playAttempt.catch(() => {});
+  return playAttempt;
 }
+ambianceSound.pause();
+ambianceSound.currentTime = 0;
+return Promise.resolve();
 }
 
 function installAmbianceUnlock(){
 if(ambianceUnlockInstalled) return;
 ambianceUnlockInstalled = true;
 const unlock = () => {
-  syncAmbiancePlayback();
+  const attempt = syncAmbiancePlayback();
+  Promise.resolve(attempt).then(() => {
+    if(!ambianceEnabled || !ambianceSound.paused) removeUnlockListeners();
+  });
+};
+const removeUnlockListeners = () => {
   document.removeEventListener("pointerdown", unlock);
   document.removeEventListener("touchstart", unlock);
   document.removeEventListener("keydown", unlock);

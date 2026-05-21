@@ -405,6 +405,8 @@ font-family:inherit;
     <span class="tooltip">
       Mandala e Caça-Palavras inspirados no livro <a href="https://en.wikipedia.org/wiki/There_Are_Rivers_in_the_Sky" class= highlight>"There Are Rivers in The Sky"</a> de Elif Shafak. O livro acompanha três personagens:
       <a class= highlight>Arthur</a>, um garoto de rua na <a class= highlight>Londres</a> vitoriana que se torna um habilidoso <a class= highlight>assiriólogo</a>; <a class= highlight>Narin</a>, uma garota <a class= highlight>yazidi</a> que vive na Turquia em 2014; e <a class= highlight>Zaleekhah</a>, uma hidróloga que vive em uma casa flutuante em Londres em 2018. Os três personagens estão conectados por suas interações com uma única gota d'água.
+      <br><br>
+      Water drop.mp3 by florianreichelt -- <a href="https://freesound.org/s/683102/" class="highlight" target="_blank" rel="noopener noreferrer">https://freesound.org/s/683102/</a> -- License: Creative Commons 0
     </span>
   </span>
   <span class="info-wrapper">
@@ -764,6 +766,7 @@ tooltip.style.opacity = "0";
 /* ===== answer highlights ===== */
 
 const answerClips={};
+const FOUND_SOUND_SRC="../fundodomar/683102__florianreichelt__water-drop.mp3";
 
 function toggleAnswer(area,word){
 
@@ -796,6 +799,8 @@ if(!isVisible){
 
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
+  const foundSound = new Audio(FOUND_SOUND_SRC);
+  foundSound.play().catch(() => {});
 
 }else if(allowToggleOff){
 

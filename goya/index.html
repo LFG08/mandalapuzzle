@@ -492,6 +492,8 @@ font-family:inherit;
 
     <span class="tooltip">
       Mandala inspirada em <a href="https://pt.wikipedia.org/wiki/El_Aquelarre_(1798)" class= highlight>"El Aquelarre" de Goya (1797-1798)</a>.
+      <br><br>
+      Star twinkle ding.wav by robinhood76 -- <a href="https://freesound.org/s/819418/" class="highlight" target="_blank" rel="noopener noreferrer">https://freesound.org/s/819418/</a> -- License: Creative Commons 0
     </span>
   </span>
   <span class="info-wrapper">
@@ -1219,6 +1221,7 @@ applyHint(item, nextHint, wordForHint);
 /* ===== answer highlights ===== */
 
 const answerClips={};
+const FOUND_SOUND_SRC="../celtic/819418__robinhood76__13819-star-twinkle-ding.wav";
 
 function toggleAnswer(area,word,options={}){
 
@@ -1258,6 +1261,8 @@ if(shouldShow && !isVisible){
   if(menuWord){
     menuWord.classList.add("found");
   }
+  const foundSound = new Audio(FOUND_SOUND_SRC);
+  foundSound.play().catch(() => {});
 
   if(menuWord && menuWord.classList.contains("hidden-word")){
     renderMenuWord(menuWord);

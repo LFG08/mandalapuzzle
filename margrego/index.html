@@ -491,6 +491,8 @@ font-family:inherit;
 
     <span class="tooltip">
       Seres e símbolos do mar na mitologia grega... e uns animais marinhos aleatórios 🐟.
+      <br><br>
+      Water drop.mp3 by florianreichelt -- <a href="https://freesound.org/s/683102/" class="highlight" target="_blank" rel="noopener noreferrer">https://freesound.org/s/683102/</a> -- License: Creative Commons 0
     </span>
   </span>
   <span class="info-wrapper">
@@ -1227,6 +1229,7 @@ if(touchHintTimer){
 /* ===== answer highlights ===== */
 
 const answerClips={};
+const FOUND_SOUND_SRC="../fundodomar/683102__florianreichelt__water-drop.mp3";
 
 function toggleAnswer(area,word){
 
@@ -1262,6 +1265,8 @@ if(!isVisible){
   answerClips[word].classList.add("visible");
   menuWord.classList.add("found");
   menuWord.classList.remove("hint-revealed");
+  const foundSound = new Audio(FOUND_SOUND_SRC);
+  foundSound.play().catch(() => {});
 
   if(menuWord.classList.contains("hidden-word")){
   finishGuessEdit(menuWord, false);

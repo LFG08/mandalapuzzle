@@ -329,6 +329,8 @@ cursor:pointer;
       que possui oito partes: <a class= highlight>Niyamas</a>,<a class="highlight">Yamas</a>, <a class="highlight">Asanas</a>, <a class="highlight">Pranayamas</a>, <a class="highlight">Pratyahara</a>, <a class="highlight">Dharana</a>,<a class="highlight">Dhyana</a> e <a class="highlight">Samadhi</a>. Os <a class= highlight>Yamas</a> e <a class= highlight>Niyamas</a> são as disciplinas éticas sociais e individuais, sendo os
       <a class= highlight>Yamas</a>: <a class= highlight>Ahimsa</a>, <a class= highlight>Satya</a>, <a class= highlight>Asteya</a>, <a class= highlight>Brahmacharya</a> e <a class= highlight>Asparaigraha</a></a>; e os
       <a class= highlight>Niyamas</a>:<a class= highlight>Saucha</a>, <a class= highlight>Santosa</a>, <a class= highlight>Tapas</a>, <a class= highlight>Svadhyaya</a> e <a class= highlight>Isvara-pranidhana</a></a>.
+      <br><br>
+      Star twinkle ding.wav by robinhood76 -- <a href="https://freesound.org/s/819418/" class="highlight" target="_blank" rel="noopener noreferrer">https://freesound.org/s/819418/</a> -- License: Creative Commons 0
     </span>
 </span>
 <span class="info-wrapper">
@@ -762,6 +764,7 @@ tooltip.style.opacity = "0";
 /* ===== answer highlights ===== */
 
 const answerClips={};
+const FOUND_SOUND_SRC="../celtic/819418__robinhood76__13819-star-twinkle-ding.wav";
 
 function toggleAnswer(area,word){
 
@@ -796,6 +799,8 @@ if(!isVisible){
 
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
+  const foundSound = new Audio(FOUND_SOUND_SRC);
+  foundSound.play().catch(() => {});
 
 }else if(allowToggleOff){
 

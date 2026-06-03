@@ -47,6 +47,7 @@ left:0;
 width:var(--mandala-display-size);
 height:var(--mandala-display-size);
 pointer-events:none;
+filter:drop-shadow(0 0 0 rgba(255, 245, 150, 0));
 }
 
 #regionHints{
@@ -95,6 +96,13 @@ transition:opacity 0.12s linear;
 
 .answerClip.visible{
 opacity:1;
+filter:drop-shadow(0 0 14px rgba(255, 244, 143, 0.9)) drop-shadow(0 0 28px rgba(255, 178, 84, 0.75));
+animation:foundGabaritoGlow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes foundGabaritoGlow{
+0%{filter:drop-shadow(0 0 9px rgba(255, 244, 143, 0.75)) drop-shadow(0 0 18px rgba(255, 178, 84, 0.45));}
+100%{filter:drop-shadow(0 0 18px rgba(255, 244, 143, 1)) drop-shadow(0 0 34px rgba(255, 178, 84, 0.85));}
 }
 
 /* ================= BACKGROUND ================= */
@@ -513,14 +521,29 @@ const gabaritoOverlays = {
   gatos: "gabarito_gatos.webp"
 };
 const defaultGabarito = "palavras";
+const handbellSounds = {
+  C: "../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
+  D: "../sound_effects/339813__inspectorj__hand-bells-D-single.wav",
+  E: "../sound_effects/339812__inspectorj__hand-bells-e-single.wav",
+  F: "../sound_effects/339816__inspectorj__hand-bells-F-single.wav",
+  G: "../sound_effects/339818__inspectorj__hand-bells-G-single.wav",
+  A: "../sound_effects/339810__inspectorj__hand-bells-A-single.wav",
+  B: "../sound_effects/339809__inspectorj__hand-bells-b-single.wav"
+};
+const foundBellSequence = ["G", "G", "A", "G", "C", "B", "G", "G", "A", "G", "D"];
+const finaleBellSequence = ["C", "G", "G", "G", "E", "C", "B", "A", "F", "F", "E", "C", "D", "C"];
+const finaleMessage = "mais um aniversário finalizado com sucesso✨🎉";
 
 let allowToggleOff = true;
 let rotation = 0;
 let completionShown = false;
 let isBootstrapping = true;
+let finalePlaybackRunning = false;
+let finalePlaybackId = 0;
 
 const menuItems = {};
 const answerClips = {};
+const bellAudio = {};
 
 function clamp(value, min, max){
   return Math.min(max, Math.max(min, value));
@@ -540,22 +563,66 @@ function getPuzzleWords(){
   return Array.from(new Set(words));
 }
 
+function getFoundCount(){
+  return getPuzzleWords().filter(word => answerClips[word]?.classList.contains("visible")).length;
+}
+
+function getBellAudio(note){
+  if(!bellAudio[note]){
+    bellAudio[note] = new Audio(handbellSounds[note]);
+    bellAudio[note].preload = "auto";
+  }
+  return bellAudio[note];
+}
+
+function playBell(note){
+  let audio = getBellAudio(note);
+  audio.pause();
+  audio.currentTime = 0;
+  return audio.play().catch(() => {});
+}
+
+function wait(ms){
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function playBellSequence(notes, intervalMs=430, playbackId=null){
+  for(let note of notes){
+    if(playbackId !== null && playbackId !== finalePlaybackId) return false;
+    playBell(note);
+    await wait(intervalMs);
+  }
+  return playbackId === null || playbackId === finalePlaybackId;
+}
+
+async function playCompletionSequence(){
+  if(finalePlaybackRunning) return;
+  finalePlaybackRunning = true;
+  let playbackId = ++finalePlaybackId;
+  await wait(500);
+  if(playbackId !== finalePlaybackId) return;
+  let completed = await playBellSequence(finaleBellSequence, 430, playbackId);
+  if(completed && playbackId === finalePlaybackId){
+    alert(finaleMessage);
+  }
+  if(playbackId === finalePlaybackId){
+    finalePlaybackRunning = false;
+  }
+}
+
 function updateCounter(){
   let puzzleWords = getPuzzleWords();
   let total = puzzleWords.length || document.querySelectorAll("#wordList li").length;
-  let found = puzzleWords.filter(word => answerClips[word]?.classList.contains("visible")).length;
+  let found = getFoundCount();
 
   document.getElementById("counter").textContent = found + " / " + total;
 
   if(isBootstrapping) return;
 
-  if(found === total && total > 0 && !completionShown){
-    completionShown = true;
-    setTimeout(function(){
-      alert("fim! 🎉🎉");
-    }, 200);
-  }else if(found < total){
+  if(found < total){
     completionShown = false;
+    finalePlaybackRunning = false;
+    finalePlaybackId++;
   }
 }
 
@@ -699,19 +766,38 @@ function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=tr
     answerClips[word] = clip;
   }
 
-  if(!answerClips[word].classList.contains("visible")){
+  let wasVisible = answerClips[word].classList.contains("visible");
+
+  if(!wasVisible){
     answerClips[word].classList.add("visible");
   }else if(allowToggleOff){
     answerClips[word].classList.remove("visible");
   }
 
   let isVisible = answerClips[word].classList.contains("visible");
+  let wasJustFound = !wasVisible && isVisible;
   let menuItem = menuItems["menu-" + word];
   if(menuItem){
     menuItem.classList.toggle("found", isVisible);
   }
 
+  let foundAfterToggle = getFoundCount();
+  let puzzleTotal = getPuzzleWords().length;
+
+  if(wasJustFound && !isBootstrapping){
+    let foundNote = foundBellSequence[foundAfterToggle - 1];
+    if(foundNote){
+      playBell(foundNote);
+    }
+  }
+
   updateCounter();
+
+  if(wasJustFound && !isBootstrapping && foundAfterToggle === puzzleTotal && puzzleTotal > 0 && !completionShown){
+    completionShown = true;
+    playCompletionSequence();
+  }
+
   if(shouldPersist){
     saveProgress();
   }

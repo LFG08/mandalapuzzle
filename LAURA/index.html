@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Laura</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32px32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+:root{
+--mandala-display-size:2048px;
+--mandala-render-size:var(--mandala-display-size);
+--mobile-menu-scale:0.20;
+--mobile-menu-ui-scale:1;
+--mobile-menu-base-width:250px;
+}
+
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+contain:layout paint;
+transition:transform 0.25s ease;
+margin-bottom:20px;
+overflow:hidden;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+}
+
+#regionHints{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+z-index:3;
+}
+
+.hint-region{
+position:absolute;
+border:6px solid rgba(130, 255, 130, 0);
+box-shadow:0 0 0 rgba(130, 255, 130, 0);
+opacity:0;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(130, 255, 130, 0.95);
+box-shadow:0 0 26px rgba(130, 255, 130, 0.95), inset 0 0 18px rgba(130, 255, 130, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(0.996);}
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+
+background-image:url("gabarito_palavras.webp");
+background-size:var(--mandala-display-size) var(--mandala-display-size);
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(26, 18, 43);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+  position:fixed;
+  top:120px;
+  left:30px;
+  width:calc(250px * var(--mobile-menu-ui-scale));
+
+  max-height:70vh;
+
+  background:rgba(0,0,0,0.418);
+  border:1px solid white;
+  color:white;
+
+  font-family:'Times New Roman', Times, serif;
+  font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+  box-sizing:border-box;
+}
+
+#wordMenu.mobile-pinned{
+  left:auto;
+  right:auto;
+  top:auto;
+  bottom:auto;
+}
+
+#menuHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  touch-action:none;
+}
+/* LEFT SIDE */
+.title {
+  flex-shrink:inherit;
+
+  white-space: nowrap;
+
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  margin-left:calc(8px * var(--mobile-menu-ui-scale));
+  margin-top:calc(8px * var(--mobile-menu-ui-scale));
+}
+/* RIGHT SIDE GROUP */
+.right{
+  display:flex;
+  align-items:center;
+  gap:calc(6px * var(--mobile-menu-ui-scale));
+  flex-shrink:0;
+  margin-right:calc(8px * var(--mobile-menu-ui-scale));
+}
+/* COUNTER */
+#counter {
+  white-space: nowrap;
+}
+
+/* ================= INFO ================= */
+
+.info-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.info-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 6px; /* invisible bridge */
+}
+
+.info-btn,
+.menu-btn,
+#toggleMenu{
+  
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:calc(16px * var(--mobile-menu-ui-scale));
+  height:calc(16px * var(--mobile-menu-ui-scale));
+  border-radius:50%;
+  border:none;
+  font-size:calc(11px * var(--mobile-menu-ui-scale));
+  cursor:pointer;
+  background:#ccc;
+  line-height:calc(16px * var(--mobile-menu-ui-scale));
+  padding:0;
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 180px;
+  margin-top: 4px; /* small, safe gap */
+
+  background: rgba(0,0,0,0.85);
+  color: white;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+}
+
+.tooltip.help-tooltip {
+  width: 320px;
+  line-height: 1.35;
+}
+
+/* show tooltip when hovering button OR tooltip itself */
+.info-wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  
+}
+
+.tooltip a {
+  text-decoration: none;
+}
+
+.tooltip a:hover {
+  text-decoration: none; /* optional: add back on hover */
+}
+
+.highlight {
+  color: #03d626;
+  text-decoration: none
+}
+
+.highlight:hover{
+  text-decoration: none;
+}
+
+#wordList{
+flex:1;
+min-height:0;
+overflow-y:auto;
+
+list-style:none;
+margin:0;
+padding:calc(8px * var(--mobile-menu-ui-scale));
+line-height:calc(1.4 * var(--mobile-menu-ui-scale));
+}
+
+#wordList li{
+padding:calc(4px * var(--mobile-menu-ui-scale)) 0;
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#overlaySelector,
+#clearButton,
+#toggleClickMode,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:calc(8px * var(--mobile-menu-ui-scale));
+font-family:'Times New Roman', Times, serif;
+cursor:pointer;
+
+}
+
+#mobileMenuOptions{
+display:none;
+border-top:1px solid white;
+padding:calc(8px * var(--mobile-menu-ui-scale));
+gap:calc(6px * var(--mobile-menu-ui-scale));
+flex-direction:column;
+font-size:inherit;
+font-family:inherit;
+}
+
+#mobileMenuOptions label{
+display:flex;
+flex-direction:column;
+gap:calc(4px * var(--mobile-menu-ui-scale));
+font-size:inherit;
+}
+
+#mobileMenuOptions input,
+#mobileMenuOptions select{
+width:100%;
+font-size:inherit;
+font-family:inherit;
+}
+
+@media (max-width: 900px) and (any-pointer: coarse){
+  :root{
+    --mandala-display-size:min(2048px, 100vw);
+  }
+
+  html,
+  body{
+    margin:0;
+    padding:0;
+    height:auto;
+  }
+
+  .container img{
+    display:block;
+  }
+
+ #wordMenu{
+    top:auto;
+    top:8px;
+    left:8px;
+    bottom: auto;
+    right:auto;
+    width:max(
+      calc(var(--mobile-menu-base-width) * var(--mobile-menu-ui-scale)),
+      calc(var(--mandala-render-size) * var(--mobile-menu-scale))
+    );
+    max-width:calc(100vw - 16px);
+    max-height:40vh;
+    font-size:calc(0.78rem * var(--mobile-menu-ui-scale));
+  }
+
+  #wordMenu.pinned-bottom-collapsed{
+    left:8px !important;
+    right:auto !important;
+    top:655px !important;
+    bottom:auto !important;
+    max-height:none;
+  }
+
+  #wordMenu.pinned-top-left{
+    top:8px !important;
+    left:8px !important;
+    right:auto !important;
+    bottom:auto !important;
+  }
+
+  #wordMenu.pinned-top-right{
+    top:8px !important;
+    right:8px !important;
+    left:auto !important;
+    bottom:auto !important;
+  }
+
+  #mobileMenuOptions{
+    display:flex;
+  }
+
+  #mobileMenuOptions label{
+    font-size: inherit
+  }
+
+  .tooltip.help-tooltip{
+    width:230px;
+  }
+
+
+  #overlaySelector,
+  #clearButton,
+  #toggleClickMode,
+  #rotateMandala{
+    padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
+    font-size:calc(0.78rem * var(--mobile-menu-ui-scale));
+  }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class= "title">🌙Laura</span>
+
+<div class="right">
+<span id="counter"></span>
+
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+
+    <span class="tooltip">
+      Mandala e gabaritos da Laura. 
+    </span>
+  </span>
+  <span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras escondidas. Para dica, clique com o botão direito do mouse na palavra desejada no menu.
+    </span>
+  </span>
+  
+  <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleMenu">–</button>
+</div>
+</div>
+  
+<ul id="wordList">
+
+<li id="menu-Sophie">Sophie</li>
+<li id="menu-Duke">Duke</li>
+<li id="menu-Laura">Laura</li>
+<li id="menu-Gaia">Gaia</li>
+<li id="menu-Hórus">Hórus</li>
+<li id="menu-Rumba">Rumba</li>
+<li id="menu-Linho">Linho</li>
+<li id="menu-Kito">Kito</li>
+
+</ul>
+
+<div id="mobileMenuOptions">
+  <label for="mobileMenuPin">
+    Fixação menu (mobile)
+    <select id="mobileMenuPin">
+      <option value="free">Livre (arrastar)</option>
+      <option value="bottom-collapsed">Recolhido inferior</option>
+      <option value="top-left">Superior esquerdo</option>
+      <option value="top-right">Superior direito</option>
+    </select>
+  </label>
+</div>
+
+<div id="wordTooltip"></div>
+  
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container">
+
+<img src="laura.webp" usemap="#image-map">
+
+<div id="answersOverlay"></div>
+<div id="regionHints">
+  <div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
+  <div id="regionHint-2" class="hint-region" style="left:1px;top:693px;width:2045px;height:667px;"></div>
+  <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
+</div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
+
+<map name="image-map">
+
+<area target="" alt="Sophie" title="Sophie" href="" coords="0,-1,-2,35,90,21,92,1,74,1,-2,1" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Sophie');return false;">
+<area target="" alt="Duke" title="Duke" href="" coords="1847,1982,1905,1988,1907,2026,1854,2027,1842,2011" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Duke');return false;">
+<area target="" alt="Laura" title="Laura" href="" coords="767,1561,792,1617,894,1595,895,1563,979,1539,935,1501,866,1505,809,1534,776,1542" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Laura');return false;">
+<area target="" alt="Gaia" title="Gaia" href="" coords="1454,406,1521,418,1516,511,1458,520" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Gaia');return false;">
+<area target="" alt="Hórus" title="Hórus" href="" coords="1388,1705,1429,1709,1438,1783,1398,1776" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Hórus');return false;">
+<area target="" alt="Rumba" title="Rumba" href="" coords="2015,1136,2015,1163,2046,1170,2046,1087,2032,1082,2021,1105" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Rumba');return false;">
+<area target="" alt="Linho" title="Linho" href="" coords="649,1022,669,964,700,986,675,1029" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Linho');return false;">
+<area target="" alt="Kito" title="Kito" href="" coords="1281,955,1310,935,1337,971,1304,997" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Kito');return false;">
+<area target="" alt="Sophia_cat" title="Sophia_cat" href="" coords="22,23,14,41,34,52,51,48,60,37,45,24,34,19" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Sophia_cat');return false;">
+<area target="" alt="Linho_cat" title="Linho_cat" href="" coords="722,999,722,1017,740,1039,760,1035,765,1017,758,1001,740,988" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Linho_cat');return false;">
+<area target="" alt="Kito_cat" title="Kito_cat" href="" coords="1263,892,1263,915,1263,930,1281,933,1297,928,1301,910,1281,897" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Kito_cat');return false;">
+
+<!-- Add future cat regions with data-gabarito="gatos" so they reveal gabarito_gatos.webp. -->
+
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+const progressStorageKey = "lauraPuzzleProgress";
+const hintStorageKey = "LAURA_wordHints";
+const mobileMenuSizeKey = "LAURA_mobileMenuSize";
+const mobileMenuPinKey = "LAURA_mobileMenuPin";
+const baseMandalaSize = 2048;
+const areaRegionMap = {};
+const gabaritoOverlays = {
+  palavras: "gabarito_palavras.webp",
+  gatos: "gabarito_gatos.webp"
+};
+const defaultGabarito = "palavras";
+
+let allowToggleOff = true;
+let rotation = 0;
+let completionShown = false;
+let isBootstrapping = true;
+
+const menuItems = {};
+const answerClips = {};
+
+function clamp(value, min, max){
+  return Math.min(max, Math.max(min, value));
+}
+
+function getWordFromArea(area){
+  let onclickText = area.getAttribute("onclick") || "";
+  let match = onclickText.match(/'([^']+)'/);
+  return match ? match[1] : null;
+}
+
+function getPuzzleWords(){
+  let words = Array.from(document.querySelectorAll("map[name='image-map'] area"))
+    .map(getWordFromArea)
+    .filter(Boolean);
+
+  return Array.from(new Set(words));
+}
+
+function updateCounter(){
+  let puzzleWords = getPuzzleWords();
+  let total = puzzleWords.length || document.querySelectorAll("#wordList li").length;
+  let found = puzzleWords.filter(word => answerClips[word]?.classList.contains("visible")).length;
+
+  document.getElementById("counter").textContent = found + " / " + total;
+
+  if(isBootstrapping) return;
+
+  if(found === total && total > 0 && !completionShown){
+    completionShown = true;
+    setTimeout(function(){
+      alert("fim! 🎉🎉");
+    }, 200);
+  }else if(found < total){
+    completionShown = false;
+  }
+}
+
+function computeAreaRegion(coordsText){
+  let coords = coordsText.split(",").map(Number).filter(n => !Number.isNaN(n));
+  if(coords.length < 4) return 2;
+  let ys = [];
+  for(let i=1;i<coords.length;i+=2){
+    ys.push(coords[i]);
+  }
+  let avgY = ys.reduce((acc, y) => acc + y, 0) / ys.length;
+  if(avgY <= baseMandalaSize / 3) return 1;
+  if(avgY <= (baseMandalaSize / 3) * 2) return 2;
+  return 3;
+}
+
+function findAreaByWord(word){
+  return Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area => {
+    let handler = area.getAttribute("onclick") || "";
+    return handler.includes("'" + word + "'");
+  }) || null;
+}
+
+function getAreaBounds(area){
+  let coords = (area?.coords || "").split(",").map(Number).filter(Number.isFinite);
+  if(coords.length < 2) return null;
+
+  let xs = [];
+  let ys = [];
+
+  for(let i = 0; i < coords.length; i += 2){
+    xs.push(coords[i]);
+    ys.push(coords[i + 1]);
+  }
+
+  if(!xs.length || !ys.length) return null;
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys)
+  };
+}
+
+function centerViewOnArea(area){
+  let bounds = getAreaBounds(area);
+  if(!bounds) return;
+
+  let container = document.querySelector(".container");
+  if(!container) return;
+
+  let containerRect = container.getBoundingClientRect();
+  let areaCenterX = (bounds.minX + bounds.maxX) / 2;
+  let areaCenterY = (bounds.minY + bounds.maxY) / 2;
+
+  let targetX = window.scrollX + containerRect.left + areaCenterX - (window.innerWidth / 2);
+  let targetY = window.scrollY + containerRect.top + areaCenterY - (window.innerHeight / 2);
+
+  let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+  let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+  window.scrollTo({
+    left: clamp(targetX, 0, maxX),
+    top: clamp(targetY, 0, maxY),
+    behavior: "smooth"
+  });
+}
+
+function showRegionHint(regionId){
+  document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+  let el = document.getElementById("regionHint-" + regionId);
+  if(!el) return;
+  el.classList.add("active");
+  setTimeout(() => el.classList.remove("active"), 1800);
+}
+
+function saveHints(){
+  let hints = {};
+  document.querySelectorAll("#wordList li").forEach(li => {
+    if(Number(li.dataset.hintLevel || 0) > 0){
+      hints[li.id] = 1;
+    }
+  });
+  localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+  let raw = localStorage.getItem(hintStorageKey);
+  if(!raw) return;
+  let hints;
+  try{
+    hints = JSON.parse(raw);
+  }catch{
+    return;
+  }
+  document.querySelectorAll("#wordList li").forEach(li => {
+    if(hints[li.id]){
+      li.dataset.hintLevel = "1";
+    }
+  });
+}
+
+function normalizeGabaritoKey(value){
+  return Object.prototype.hasOwnProperty.call(gabaritoOverlays, value) ? value : defaultGabarito;
+}
+
+function getGabaritoForArea(area, requestedGabarito){
+  if(typeof requestedGabarito === "string"){
+    return normalizeGabaritoKey(requestedGabarito);
+  }
+
+  let areaGabarito = area?.dataset?.gabarito || area?.dataset?.overlay;
+  return normalizeGabaritoKey(areaGabarito || defaultGabarito);
+}
+
+function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=true){
+  if(typeof gabaritoOrShouldPersist === "boolean"){
+    shouldPersist = gabaritoOrShouldPersist;
+    gabaritoOrShouldPersist = null;
+  }
+
+  if(!area || !area.coords) return;
+
+  let gabaritoKey = getGabaritoForArea(area, gabaritoOrShouldPersist);
+  let overlayImage = gabaritoOverlays[gabaritoKey];
+
+  if(!answerClips[word]){
+    let coords = area.coords.split(",");
+    let points = [];
+    for(let i=0;i<coords.length;i+=2){
+      points.push(coords[i] + "px " + coords[i+1] + "px");
+    }
+
+    let clip = document.createElement("div");
+    clip.className = "answerClip";
+    clip.dataset.gabarito = gabaritoKey;
+    clip.style.clipPath = "polygon(" + points.join(",") + ")";
+    clip.style.backgroundImage = "url('" + overlayImage + "')";
+    answersOverlay.appendChild(clip);
+    answerClips[word] = clip;
+  }
+
+  if(!answerClips[word].classList.contains("visible")){
+    answerClips[word].classList.add("visible");
+  }else if(allowToggleOff){
+    answerClips[word].classList.remove("visible");
+  }
+
+  let isVisible = answerClips[word].classList.contains("visible");
+  let menuItem = menuItems["menu-" + word];
+  if(menuItem){
+    menuItem.classList.toggle("found", isVisible);
+  }
+
+  updateCounter();
+  if(shouldPersist){
+    saveProgress();
+  }
+}
+
+function saveProgress(){
+  localStorage.setItem(
+    progressStorageKey,
+    JSON.stringify(Object.keys(answerClips).filter(w => answerClips[w].classList.contains("visible")))
+  );
+}
+
+function loadProgress(){
+  let saved = localStorage.getItem(progressStorageKey);
+  if(!saved) return;
+  let words;
+  try{
+    words = JSON.parse(saved);
+  }catch{
+    return;
+  }
+
+  words.forEach(word => {
+    let area = document.querySelector(`area[onclick*="${word}"]`);
+    if(area){
+      toggleAnswer(area, word, false);
+    }
+  });
+  updateCounter();
+}
+
+function clearAll(){
+  Object.values(answerClips).forEach(clip => clip.classList.remove("visible"));
+  document.querySelectorAll("#wordList li").forEach(li => {
+    li.classList.remove("found");
+    delete li.dataset.hintLevel;
+  });
+  document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+  localStorage.removeItem(progressStorageKey);
+  localStorage.removeItem(hintStorageKey);
+  updateCounter();
+}
+
+function confirmReset(){
+  if(confirm("Reset?")){
+    clearAll();
+  }
+}
+
+function isMobileViewport(){
+  return window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
+}
+
+function setMobileMenuScaleVars(menuScale){
+  let safeScale = clamp(menuScale, 0.20, 0.60);
+  document.documentElement.style.setProperty("--mobile-menu-scale", safeScale.toFixed(2));
+  let uiScale = isMobileViewport() ? clamp(safeScale / 0.25, 0.85, 1.65) : 1;
+  document.documentElement.style.setProperty("--mobile-menu-ui-scale", uiScale.toFixed(2));
+}
+
+function applyMobileMenuPin(pinMode){
+  let menu = wordMenu;
+  menu.classList.remove("mobile-pinned", "pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right");
+
+  if(!isMobileViewport() || pinMode === "free"){
+    localStorage.setItem(mobileMenuPinKey, "free");
+    return;
+  }
+
+  menu.classList.add("mobile-pinned");
+
+  if(pinMode === "bottom-collapsed"){
+    menu.classList.add("collapsed", "pinned-bottom-collapsed");
+  }else if(pinMode === "top-left"){
+    menu.classList.remove("collapsed");
+    menu.classList.add("pinned-top-left");
+  }else if(pinMode === "top-right"){
+    menu.classList.remove("collapsed");
+    menu.classList.add("pinned-top-right");
+  }
+
+  localStorage.setItem(mobileMenuPinKey, pinMode);
+}
+
+function applyMenuBounds(){
+  if(isMobileViewport() && wordMenu.classList.contains("mobile-pinned")) return;
+  let maxLeft = Math.max(0, window.innerWidth - wordMenu.offsetWidth);
+  let maxTop = Math.max(0, window.innerHeight - wordMenu.offsetHeight);
+  let currentLeft = parseFloat(wordMenu.style.left || wordMenu.offsetLeft || 0);
+  let currentTop = parseFloat(wordMenu.style.top || wordMenu.offsetTop || 0);
+  wordMenu.style.left = clamp(currentLeft, 0, maxLeft) + "px";
+  wordMenu.style.top = clamp(currentTop, 0, maxTop) + "px";
+}
+
+function initMobileMenuOptions(){
+  let sizeInput = document.getElementById("mobileMenuSize");
+  let pinSelect = document.getElementById("mobileMenuPin");
+  if(!pinSelect) return;
+
+  let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+  let scale = Number.isFinite(savedScale) && savedScale >= 0.2 && savedScale <= 0.6 ? savedScale : 0.25;
+  setMobileMenuScaleVars(scale);
+  if(sizeInput){
+    sizeInput.value = scale.toFixed(2);
+
+    sizeInput.addEventListener("input", () => {
+      let nextScale = Number(sizeInput.value || 0.25);
+      setMobileMenuScaleVars(nextScale);
+      localStorage.setItem(mobileMenuSizeKey, nextScale.toFixed(2));
+      applyMenuBounds();
+    });
+  }
+
+  let savedPin = localStorage.getItem(mobileMenuPinKey) || "free";
+  pinSelect.value = savedPin;
+  applyMobileMenuPin(savedPin);
+
+  pinSelect.addEventListener("change", () => {
+    applyMobileMenuPin(pinSelect.value);
+    applyMenuBounds();
+  });
+}
+
+/* prevent image dragging */
+document.addEventListener("dragstart", e => e.preventDefault());
+
+/* menu items + tips */
+document.querySelectorAll("#wordList li").forEach(li => {
+  menuItems[li.id] = li;
+  li.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    let word = li.id.replace("menu-", "");
+    let regionId = areaRegionMap[word];
+    let area = findAreaByWord(word);
+    if(area){
+      centerViewOnArea(area);
+    }
+    if(regionId){
+      li.dataset.hintLevel = "1";
+      saveHints();
+      showRegionHint(regionId);
+    }
+  });
+});
+
+document.querySelectorAll("area").forEach(area => {
+  let onclickText = area.getAttribute("onclick") || "";
+  let match = onclickText.match(/'([^']+)'/);
+  if(!match) return;
+  areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
+});
+
+toggleClickMode.onclick = function(){
+  allowToggleOff = !allowToggleOff;
+  this.textContent = allowToggleOff ? "Desmarcar: ON" : "Desmarcar: OFF";
+};
+
+toggleMenu.onclick = () => {
+  wordMenu.classList.toggle("collapsed");
+  applyMenuBounds();
+};
+
+rotateMandala.onclick = function(){
+  rotation = (rotation + 90) % 360;
+  document.querySelector(".container").style.transform = "rotate(" + rotation + "deg)";
+  this.textContent = "Rotate (" + rotation + "°)";
+};
+
+/* menu drag */
+let draggingMenu = false;
+let offsetX = 0;
+let offsetY = 0;
+
+function startMenuDrag(clientX, clientY){
+  if(isMobileViewport() && document.getElementById("mobileMenuPin").value !== "free") return;
+  draggingMenu = true;
+  offsetX = clientX - wordMenu.offsetLeft;
+  offsetY = clientY - wordMenu.offsetTop;
+}
+
+menuHeader.addEventListener("mousedown", e => startMenuDrag(e.clientX, e.clientY));
+menuHeader.addEventListener("touchstart", e => {
+  if(!e.touches[0]) return;
+  startMenuDrag(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+
+document.addEventListener("mousemove", e => {
+  if(!draggingMenu) return;
+  wordMenu.style.left = (e.clientX - offsetX) + "px";
+  wordMenu.style.top = (e.clientY - offsetY) + "px";
+  applyMenuBounds();
+});
+
+document.addEventListener("touchmove", e => {
+  if(!draggingMenu || !e.touches[0]) return;
+  wordMenu.style.left = (e.touches[0].clientX - offsetX) + "px";
+  wordMenu.style.top = (e.touches[0].clientY - offsetY) + "px";
+  applyMenuBounds();
+}, { passive: true });
+
+document.addEventListener("mouseup", () => draggingMenu = false);
+document.addEventListener("touchend", () => draggingMenu = false);
+
+/* drag scroll */
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let scrollLeft = 0;
+let scrollTop = 0;
+
+document.addEventListener("mousedown", e => {
+  if(e.target.closest("#wordMenu")) return;
+  isDragging = true;
+  document.body.classList.add("dragging");
+  startX = e.clientX;
+  startY = e.clientY;
+  scrollLeft = window.scrollX;
+  scrollTop = window.scrollY;
+});
+
+document.addEventListener("mousemove", e => {
+  if(!isDragging) return;
+  window.scrollTo(
+    scrollLeft - (e.clientX - startX),
+    scrollTop - (e.clientY - startY)
+  );
+});
+
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+  document.body.classList.remove("dragging");
+});
+
+window.addEventListener("load", function(){
+  initMobileMenuOptions();
+  loadHints();
+  loadProgress();
+  applyMenuBounds();
+  isBootstrapping = false;
+  updateCounter();
+});
+
+window.addEventListener("resize", () => {
+  let sizeInput = document.getElementById("mobileMenuSize");
+  if(sizeInput){
+    setMobileMenuScaleVars(Number(sizeInput.value || 0.25));
+  }else{
+    let savedScale = Number(localStorage.getItem(mobileMenuSizeKey));
+    let fallbackScale = Number.isFinite(savedScale) ? clamp(savedScale, 0.20, 0.60) : 0.25;
+    setMobileMenuScaleVars(fallbackScale);
+  }
+  let pinSelect = document.getElementById("mobileMenuPin");
+  if(pinSelect){
+    applyMobileMenuPin(pinSelect.value);
+  }
+  applyMenuBounds();
+});
+
+</script>
+
+
+<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
+<script>imageMapResize();</script>
+
+</body>
+</html>

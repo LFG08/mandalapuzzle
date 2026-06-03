@@ -89,6 +89,7 @@ height:var(--mandala-display-size);
 
 background-image:url("gabarito_palavras.webp");
 background-size:var(--mandala-display-size) var(--mandala-display-size);
+background-repeat:no-repeat;
 
 opacity:0;
 transition:opacity 0.12s linear;
@@ -96,13 +97,13 @@ transition:opacity 0.12s linear;
 
 .answerClip.visible{
 opacity:1;
-filter:drop-shadow(0 0 14px rgba(255, 244, 143, 0.9)) drop-shadow(0 0 28px rgba(255, 178, 84, 0.75));
+filter:drop-shadow(0 0 10px rgba(90, 255, 130, 0.9)) drop-shadow(0 0 22px rgba(20, 220, 90, 0.55));
 animation:foundGabaritoGlow 1.2s ease-in-out infinite alternate;
 }
 
 @keyframes foundGabaritoGlow{
-0%{filter:drop-shadow(0 0 9px rgba(255, 244, 143, 0.75)) drop-shadow(0 0 18px rgba(255, 178, 84, 0.45));}
-100%{filter:drop-shadow(0 0 18px rgba(255, 244, 143, 1)) drop-shadow(0 0 34px rgba(255, 178, 84, 0.85));}
+0%{filter:drop-shadow(0 0 7px rgba(90, 255, 130, 0.75)) drop-shadow(0 0 15px rgba(20, 220, 90, 0.38));}
+100%{filter:drop-shadow(0 0 13px rgba(120, 255, 155, 1)) drop-shadow(0 0 26px rgba(20, 220, 90, 0.7));}
 }
 
 /* ================= BACKGROUND ================= */
@@ -521,6 +522,7 @@ const gabaritoOverlays = {
   gatos: "gabarito_gatos.webp"
 };
 const defaultGabarito = "palavras";
+const answerRevealPadding = 42;
 const handbellSounds = {
   C: "../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
   D: "../sound_effects/339813__inspectorj__hand-bells-D-single.wav",
@@ -739,6 +741,41 @@ function getGabaritoForArea(area, requestedGabarito){
   return normalizeGabaritoKey(areaGabarito || defaultGabarito);
 }
 
+function getExpandedAreaPoints(coordsText, padding=answerRevealPadding){
+  let coords = coordsText.split(",").map(Number);
+  let points = [];
+
+  for(let i = 0; i < coords.length; i += 2){
+    let x = coords[i];
+    let y = coords[i + 1];
+    if(Number.isFinite(x) && Number.isFinite(y)){
+      points.push({ x, y });
+    }
+  }
+
+  if(points.length < 3){
+    return points.map(point => point.x + "px " + point.y + "px");
+  }
+
+  let center = points.reduce((acc, point) => {
+    acc.x += point.x;
+    acc.y += point.y;
+    return acc;
+  }, { x: 0, y: 0 });
+  center.x /= points.length;
+  center.y /= points.length;
+
+  return points.map(point => {
+    let dx = point.x - center.x;
+    let dy = point.y - center.y;
+    let distance = Math.hypot(dx, dy);
+    let scale = distance > 0 ? (distance + padding) / distance : 1;
+    let x = clamp(point.x + dx * (scale - 1), 0, baseMandalaSize);
+    let y = clamp(point.y + dy * (scale - 1), 0, baseMandalaSize);
+    return x.toFixed(2) + "px " + y.toFixed(2) + "px";
+  });
+}
+
 function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=true){
   if(typeof gabaritoOrShouldPersist === "boolean"){
     shouldPersist = gabaritoOrShouldPersist;
@@ -751,11 +788,7 @@ function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=tr
   let overlayImage = gabaritoOverlays[gabaritoKey];
 
   if(!answerClips[word]){
-    let coords = area.coords.split(",");
-    let points = [];
-    for(let i=0;i<coords.length;i+=2){
-      points.push(coords[i] + "px " + coords[i+1] + "px");
-    }
+    let points = getExpandedAreaPoints(area.coords);
 
     let clip = document.createElement("div");
     clip.className = "answerClip";

@@ -222,11 +222,13 @@ cursor:grabbing;
   width: 180px;
   margin-top: 4px; /* small, safe gap */
 
-  background: rgba(0,0,0,0.85);
-  color: white;
+  background: linear-gradient(135deg, rgba(0, 25, 47, 0.96), rgba(10, 55, 68, 0.94));
+  color: #dff3cf;
   font-size: 12px;
   padding: 8px;
-  border-radius: 6px;
+  border: 1px solid #a9d6b1;
+  border-radius: 8px;
+  box-shadow: 0 0 14px rgba(122, 188, 194, 0.45), inset 0 0 10px rgba(180, 222, 171, 0.12);
 
   opacity: 0;
   pointer-events: none;
@@ -254,7 +256,7 @@ cursor:grabbing;
 }
 
 .highlight {
-  color: #03d626;
+  color: #a9d6b1;
   text-decoration: none
 }
 
@@ -448,7 +450,7 @@ font-family:inherit;
     <button class="info-btn">?</button>
 
     <span class="tooltip help-tooltip">
-      Como jogar: Encontre as palavras/elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite. Para dicas, clique com o botão direito do mouse no menu. 1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
+      Como jogar: Encontre as palavras/elementos escondidos. Para dicas, clique com o botão direito do mouse no menu. 1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
     </span>
   </span>
   
@@ -467,9 +469,6 @@ font-family:inherit;
 <li id="menu-Rumba" class="hidden-word" data-hidden="Rumba"></li>
 <li id="menu-Linho" class="hidden-word" data-hidden="Linho"></li>
 <li id="menu-Kito" class="hidden-word" data-hidden="Kito"></li>
-<li id="menu-Sophia_cat" class="hidden-word" data-hidden="Sophia_cat"></li>
-<li id="menu-Linho_cat" class="hidden-word" data-hidden="Linho_cat"></li>
-<li id="menu-Kito_cat" class="hidden-word" data-hidden="Kito_cat"></li>
 
 </ul>
 
@@ -555,15 +554,10 @@ const handbellSounds = {
   B: "../sound_effects/339809__inspectorj__hand-bells-b-single.wav"
 };
 const foundBellSequence = ["G", "G", "A", "G", "C", "B", "G", "G", "A", "G", "D"];
-const finaleBellSequence = ["C", "G", "G", "G", "E", "C", "B", "A", "F", "F", "E", "C", "D", "C"];
-const finaleMessage = "mais um aniversário finalizado com sucesso✨🎉";
 
 let allowToggleOff = true;
 let rotation = 0;
-let completionShown = false;
 let isBootstrapping = true;
-let finalePlaybackRunning = false;
-let finalePlaybackId = 0;
 
 const menuItems = {};
 const answerClips = {};
@@ -606,48 +600,12 @@ function playBell(note){
   return audio.play().catch(() => {});
 }
 
-function wait(ms){
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function playBellSequence(notes, intervalMs=430, playbackId=null){
-  for(let note of notes){
-    if(playbackId !== null && playbackId !== finalePlaybackId) return false;
-    playBell(note);
-    await wait(intervalMs);
-  }
-  return playbackId === null || playbackId === finalePlaybackId;
-}
-
-async function playCompletionSequence(){
-  if(finalePlaybackRunning) return;
-  finalePlaybackRunning = true;
-  let playbackId = ++finalePlaybackId;
-  await wait(500);
-  if(playbackId !== finalePlaybackId) return;
-  let completed = await playBellSequence(finaleBellSequence, 430, playbackId);
-  if(completed && playbackId === finalePlaybackId){
-    alert(finaleMessage);
-  }
-  if(playbackId === finalePlaybackId){
-    finalePlaybackRunning = false;
-  }
-}
-
 function updateCounter(){
   let puzzleWords = getPuzzleWords();
   let total = puzzleWords.length || document.querySelectorAll("#wordList li").length;
   let found = getFoundCount();
 
   document.getElementById("counter").textContent = found + " / " + total;
-
-  if(isBootstrapping) return;
-
-  if(found < total){
-    completionShown = false;
-    finalePlaybackRunning = false;
-    finalePlaybackId++;
-  }
 }
 
 function computeAreaRegion(coordsText){
@@ -899,8 +857,6 @@ function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=tr
   }
 
   let foundAfterToggle = getFoundCount();
-  let puzzleTotal = getPuzzleWords().length;
-
   if(wasJustFound && !isBootstrapping){
     let foundNote = foundBellSequence[foundAfterToggle - 1];
     if(foundNote){
@@ -909,11 +865,6 @@ function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=tr
   }
 
   updateCounter();
-
-  if(wasJustFound && !isBootstrapping && foundAfterToggle === puzzleTotal && puzzleTotal > 0 && !completionShown){
-    completionShown = true;
-    playCompletionSequence();
-  }
 
   if(shouldPersist){
     saveProgress();

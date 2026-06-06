@@ -277,9 +277,28 @@ line-height:calc(1.4 * var(--mobile-menu-ui-scale));
 padding:calc(4px * var(--mobile-menu-ui-scale)) 0;
 }
 
+#wordList li.hidden-word{
+cursor:help;
+}
+
 .found{
 text-decoration:line-through;
 opacity:0.6;
+}
+
+.hidden-word.found{
+color:white;
+text-decoration:line-through;
+}
+
+.hidden-word.hint-revealed{
+color:white;
+text-decoration:none;
+opacity:1;
+}
+
+.hidden-word.found.hint-revealed{
+text-decoration:line-through;
 }
 
 .collapsed #wordList{
@@ -429,7 +448,7 @@ font-family:inherit;
     <button class="info-btn">?</button>
 
     <span class="tooltip help-tooltip">
-      Como jogar: Encontre as palavras/elementos escondidos. Para dica, clique com o botão direito do mouse na palavra desejada no menu.
+      Como jogar: Encontre as palavras/elementos escondidos. Caso necessário, utilize o menu para registrar seu palpite. Para dicas, clique com o botão direito do mouse no menu. 1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
     </span>
   </span>
   
@@ -440,14 +459,17 @@ font-family:inherit;
   
 <ul id="wordList">
 
-<li id="menu-Sophie">Sophie</li>
-<li id="menu-Duke">Duke</li>
-<li id="menu-Laura">Laura</li>
-<li id="menu-Gaia">Gaia</li>
-<li id="menu-Hórus">Hórus</li>
-<li id="menu-Rumba">Rumba</li>
-<li id="menu-Linho">Linho</li>
-<li id="menu-Kito">Kito</li>
+<li id="menu-Sophie" class="hidden-word" data-hidden="Sophie"></li>
+<li id="menu-Duke" class="hidden-word" data-hidden="Duke"></li>
+<li id="menu-Laura" class="hidden-word" data-hidden="Laura"></li>
+<li id="menu-Gaia" class="hidden-word" data-hidden="Gaia"></li>
+<li id="menu-Hórus" class="hidden-word" data-hidden="Hórus"></li>
+<li id="menu-Rumba" class="hidden-word" data-hidden="Rumba"></li>
+<li id="menu-Linho" class="hidden-word" data-hidden="Linho"></li>
+<li id="menu-Kito" class="hidden-word" data-hidden="Kito"></li>
+<li id="menu-Sophia_cat" class="hidden-word" data-hidden="Sophia_cat"></li>
+<li id="menu-Linho_cat" class="hidden-word" data-hidden="Linho_cat"></li>
+<li id="menu-Kito_cat" class="hidden-word" data-hidden="Kito_cat"></li>
 
 </ul>
 
@@ -491,17 +513,17 @@ font-family:inherit;
 
 <map name="image-map">
 
-<area target="" alt="Sophie" title="Sophie" href="" coords="0,-1,-2,35,90,21,92,1,74,1,-2,1" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Sophie');return false;">
-<area target="" alt="Duke" title="Duke" href="" coords="1847,1982,1905,1988,1907,2026,1854,2027,1842,2011" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Duke');return false;">
-<area target="" alt="Laura" title="Laura" href="" coords="767,1561,792,1617,894,1595,895,1563,979,1539,935,1501,866,1505,809,1534,776,1542" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Laura');return false;">
-<area target="" alt="Gaia" title="Gaia" href="" coords="1454,406,1521,418,1516,511,1458,520" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Gaia');return false;">
-<area target="" alt="Hórus" title="Hórus" href="" coords="1388,1705,1429,1709,1438,1783,1398,1776" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Hórus');return false;">
-<area target="" alt="Rumba" title="Rumba" href="" coords="2015,1136,2015,1163,2046,1170,2046,1087,2032,1082,2021,1105" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Rumba');return false;">
-<area target="" alt="Linho" title="Linho" href="" coords="649,1022,669,964,700,986,675,1029" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Linho');return false;">
-<area target="" alt="Kito" title="Kito" href="" coords="1281,955,1310,935,1337,971,1304,997" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Kito');return false;">
-<area target="" alt="Sophia_cat" title="Sophia_cat" href="" coords="22,23,14,41,34,52,51,48,60,37,45,24,34,19" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Sophia_cat');return false;">
-<area target="" alt="Linho_cat" title="Linho_cat" href="" coords="722,999,722,1017,740,1039,760,1035,765,1017,758,1001,740,988" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Linho_cat');return false;">
-<area target="" alt="Kito_cat" title="Kito_cat" href="" coords="1263,892,1263,915,1263,930,1281,933,1297,928,1301,910,1281,897" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Kito_cat');return false;">
+<area target="" alt="Sophie" href="" coords="0,-1,-2,35,90,21,92,1,74,1,-2,1" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Sophie');return false;">
+<area target="" alt="Duke" href="" coords="1847,1982,1905,1988,1907,2026,1854,2027,1842,2011" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Duke');return false;">
+<area target="" alt="Laura" href="" coords="767,1561,792,1617,894,1595,895,1563,979,1539,935,1501,866,1505,809,1534,776,1542" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Laura');return false;">
+<area target="" alt="Gaia" href="" coords="1454,406,1521,418,1516,511,1458,520" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Gaia');return false;">
+<area target="" alt="Hórus" href="" coords="1388,1705,1429,1709,1438,1783,1398,1776" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Hórus');return false;">
+<area target="" alt="Rumba" href="" coords="2015,1136,2015,1163,2046,1170,2046,1087,2032,1082,2021,1105" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Rumba');return false;">
+<area target="" alt="Linho" href="" coords="649,1022,669,964,700,986,675,1029" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Linho');return false;">
+<area target="" alt="Kito" href="" coords="1281,955,1310,935,1337,971,1304,997" shape="poly" data-gabarito="palavras" onclick="toggleAnswer(this,'Kito');return false;">
+<area target="" alt="Sophia_cat" href="" coords="22,23,14,41,34,52,51,48,60,37,45,24,34,19" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Sophia_cat');return false;">
+<area target="" alt="Linho_cat" href="" coords="722,999,722,1017,740,1039,760,1035,765,1017,758,1001,740,988" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Linho_cat');return false;">
+<area target="" alt="Kito_cat" href="" coords="1263,892,1263,915,1263,930,1281,933,1297,928,1301,910,1281,897" shape="poly" data-gabarito="gatos" onclick="toggleAnswer(this,'Kito_cat');return false;">
 
 <!-- Add future cat regions with data-gabarito="gatos" so they reveal gabarito_gatos.webp. -->
 
@@ -702,11 +724,34 @@ function showRegionHint(regionId){
   setTimeout(() => el.classList.remove("active"), 1800);
 }
 
+function getHiddenLength(text){
+  return Array.from(text || "").length;
+}
+
+function getMaskedWord(li){
+  return "?".repeat(getHiddenLength(li.dataset.hidden));
+}
+
+function renderMenuWord(li){
+  if(!li.classList.contains("hidden-word")) return;
+
+  let hintLevel = Number(li.dataset.hintLevel || 0);
+  li.classList.toggle("hint-revealed", hintLevel >= 1 && !li.classList.contains("found"));
+
+  if(li.classList.contains("found") || hintLevel >= 1){
+    li.textContent = li.dataset.hidden;
+    return;
+  }
+
+  li.textContent = getMaskedWord(li);
+}
+
 function saveHints(){
   let hints = {};
-  document.querySelectorAll("#wordList li").forEach(li => {
-    if(Number(li.dataset.hintLevel || 0) > 0){
-      hints[li.id] = 1;
+  document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+    let hintLevel = Number(li.dataset.hintLevel || 0);
+    if(hintLevel > 0){
+      hints[li.id] = hintLevel;
     }
   });
   localStorage.setItem(hintStorageKey, JSON.stringify(hints));
@@ -721,11 +766,49 @@ function loadHints(){
   }catch{
     return;
   }
-  document.querySelectorAll("#wordList li").forEach(li => {
-    if(hints[li.id]){
-      li.dataset.hintLevel = "1";
-    }
+  document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
+    let savedHint = Number(hints[li.id] || 0);
+    if(savedHint <= 0) return;
+    li.dataset.hintLevel = String(Math.min(savedHint, 2));
+    renderMenuWord(li);
   });
+}
+
+function applyHint(item, hintLevel){
+  let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
+  item.dataset.hintLevel = String(Math.min(nextLevel, 2));
+
+  let word = item.dataset.hidden;
+  let regionId = areaRegionMap[word];
+  let area = findAreaByWord(word);
+
+  if(hintLevel >= 2){
+    if(regionId){
+      showRegionHint(regionId);
+    }
+    if(area){
+      centerViewOnArea(area);
+    }
+  }
+
+  renderMenuWord(item);
+  saveHints();
+}
+
+function requestHint(item){
+  if(!item.classList.contains("hidden-word")) return;
+  if(item.classList.contains("found")) return;
+
+  let currentHint = Number(item.dataset.hintLevel || 0);
+  if(currentHint >= 2){
+    alert("Essa palavra já recebeu todas as dicas.");
+    return;
+  }
+
+  let nextHint = currentHint + 1;
+  if(!confirm("Deseja a " + nextHint + "° dica?")) return;
+
+  applyHint(item, nextHint);
 }
 
 function normalizeGabaritoKey(value){
@@ -812,6 +895,7 @@ function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=tr
   let menuItem = menuItems["menu-" + word];
   if(menuItem){
     menuItem.classList.toggle("found", isVisible);
+    renderMenuWord(menuItem);
   }
 
   let foundAfterToggle = getFoundCount();
@@ -867,6 +951,7 @@ function clearAll(){
   document.querySelectorAll("#wordList li").forEach(li => {
     li.classList.remove("found");
     delete li.dataset.hintLevel;
+    renderMenuWord(li);
   });
   document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
   localStorage.removeItem(progressStorageKey);
@@ -960,19 +1045,10 @@ document.addEventListener("dragstart", e => e.preventDefault());
 /* menu items + tips */
 document.querySelectorAll("#wordList li").forEach(li => {
   menuItems[li.id] = li;
+  renderMenuWord(li);
   li.addEventListener("contextmenu", e => {
     e.preventDefault();
-    let word = li.id.replace("menu-", "");
-    let regionId = areaRegionMap[word];
-    let area = findAreaByWord(word);
-    if(area){
-      centerViewOnArea(area);
-    }
-    if(regionId){
-      li.dataset.hintLevel = "1";
-      saveHints();
-      showRegionHint(regionId);
-    }
+    requestHint(li);
   });
 });
 
@@ -1065,6 +1141,7 @@ document.addEventListener("mouseup", () => {
 });
 
 window.addEventListener("load", function(){
+  document.querySelectorAll("#wordList li.hidden-word").forEach(renderMenuWord);
   initMobileMenuOptions();
   loadHints();
   loadProgress();

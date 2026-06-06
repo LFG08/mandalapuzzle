@@ -557,6 +557,7 @@ const foundBellSequence = ["G", "G", "A", "G", "C", "B", "G", "G", "A", "G", "D"
 
 let allowToggleOff = true;
 let rotation = 0;
+let completionShown = false;
 let isBootstrapping = true;
 
 const menuItems = {};
@@ -606,6 +607,17 @@ function updateCounter(){
   let found = getFoundCount();
 
   document.getElementById("counter").textContent = found + " / " + total;
+
+  if(isBootstrapping) return;
+
+  if(found === total && total > 0 && !completionShown){
+    completionShown = true;
+    setTimeout(function(){
+      alert("fim! 🎉🎉");
+    }, 200);
+  }else if(found < total){
+    completionShown = false;
+  }
 }
 
 function computeAreaRegion(coordsText){
@@ -907,6 +919,7 @@ function clearAll(){
   document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
   localStorage.removeItem(progressStorageKey);
   localStorage.removeItem(hintStorageKey);
+  completionShown = false;
   updateCounter();
 }
 

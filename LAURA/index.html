@@ -440,16 +440,20 @@ font-family:inherit;
   box-shadow:0 12px 28px rgba(0, 0, 0, 0.32), 0 0 24px rgba(255, 247, 189, 0.42);
 }
 
-.completion-footnote{
-  margin-top:20px;
-  padding-top:12px;
-  border-top:1px solid rgba(255, 255, 255, 0.18);
+.mandala-footnote{
+  width:var(--mandala-display-size);
+  box-sizing:border-box;
+  margin:0 0 34px;
+  padding:14px 18px 18px;
   color:rgba(238, 255, 222, 0.78);
-  font-size:0.72rem;
+  background:linear-gradient(90deg, rgba(0, 17, 33, 0.92), rgba(10, 55, 68, 0.78), rgba(0, 17, 33, 0.92));
+  border-top:1px solid rgba(255, 255, 255, 0.16);
+  font-family:'Times New Roman', Times, serif;
+  font-size:0.88rem;
   line-height:1.35;
 }
 
-.completion-footnote a{
+.mandala-footnote a{
   color:#fff7bd;
 }
 
@@ -603,18 +607,9 @@ font-family:inherit;
   <div class="completion-card">
     <span class="completion-sparkle" aria-hidden="true">✨</span>
     <h2 id="completionTitle">Fim! 🎉</h2>
-    <p>Parabéns, você encontrou todos os segredos da mandala da Laura.</p>
+    <p>Parabéns para você por mais um aniversário finalizado com sucesso 🥳 
+      Continue <s>sobrevivendo</s> assim!! 🎉</p>
     <button id="closeCompletionDialog" type="button">Fechar</button>
-    <div class="completion-footnote">
-      Hand bells: sounds by InspectorJ on Freesound, licensed under Attribution 4.0 —
-      <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">Low-C</a>,
-      <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">D</a>,
-      <a href="https://freesound.org/s/339812/" target="_blank" rel="noopener">E</a>,
-      <a href="https://freesound.org/s/339816/" target="_blank" rel="noopener">F</a>,
-      <a href="https://freesound.org/s/339818/" target="_blank" rel="noopener">G</a>,
-      <a href="https://freesound.org/s/339810/" target="_blank" rel="noopener">A</a>, and
-      <a href="https://freesound.org/s/339809/" target="_blank" rel="noopener">B</a>.
-    </div>
   </div>
 </dialog>
 
@@ -632,6 +627,17 @@ font-family:inherit;
 </div>
 
 </div>
+
+<footer class="mandala-footnote">
+  Hand bells: sounds by InspectorJ on Freesound, licensed under Attribution 4.0 —
+  <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">Low-C</a>,
+  <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">D</a>,
+  <a href="https://freesound.org/s/339812/" target="_blank" rel="noopener">E</a>,
+  <a href="https://freesound.org/s/339816/" target="_blank" rel="noopener">F</a>,
+  <a href="https://freesound.org/s/339818/" target="_blank" rel="noopener">G</a>,
+  <a href="https://freesound.org/s/339810/" target="_blank" rel="noopener">A</a>, and
+  <a href="https://freesound.org/s/339809/" target="_blank" rel="noopener">B</a>.
+</footer>
 
 <!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
 

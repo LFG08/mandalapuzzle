@@ -348,6 +348,111 @@ font-size:inherit;
 font-family:inherit;
 }
 
+
+/* ================= COMPLETION MESSAGE ================= */
+
+#completionDialog{
+  width:min(420px, calc(100vw - 32px));
+  padding:0;
+  border:none;
+  border-radius:24px;
+  color:#f8ffe8;
+  background:linear-gradient(145deg, rgba(4, 28, 47, 0.98), rgba(18, 72, 78, 0.96) 45%, rgba(48, 36, 78, 0.96));
+  box-shadow:0 26px 80px rgba(0, 0, 0, 0.55), 0 0 42px rgba(135, 255, 184, 0.22), inset 0 0 32px rgba(255, 255, 255, 0.08);
+  font-family:'Times New Roman', Times, serif;
+  overflow:hidden;
+}
+
+#completionDialog::backdrop{
+  background:radial-gradient(circle at center, rgba(119, 255, 188, 0.18), rgba(0, 8, 18, 0.78));
+  backdrop-filter:blur(4px);
+}
+
+.completion-card{
+  position:relative;
+  padding:32px 30px 24px;
+  text-align:center;
+  isolation:isolate;
+}
+
+.completion-card::before{
+  content:"";
+  position:absolute;
+  inset:-35%;
+  z-index:-1;
+  background:
+    radial-gradient(circle at 25% 20%, rgba(253, 229, 132, 0.45), transparent 20%),
+    radial-gradient(circle at 78% 18%, rgba(164, 255, 205, 0.34), transparent 18%),
+    radial-gradient(circle at 50% 100%, rgba(214, 153, 255, 0.26), transparent 26%);
+  animation:completionGlow 5s ease-in-out infinite alternate;
+}
+
+@keyframes completionGlow{
+  from{transform:rotate(0deg) scale(1);opacity:0.75;}
+  to{transform:rotate(8deg) scale(1.08);opacity:1;}
+}
+
+.completion-sparkle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:64px;
+  height:64px;
+  margin-bottom:12px;
+  border-radius:50%;
+  background:rgba(255, 245, 182, 0.14);
+  box-shadow:0 0 30px rgba(255, 235, 142, 0.45), inset 0 0 20px rgba(255, 255, 255, 0.16);
+  font-size:2rem;
+}
+
+.completion-card h2{
+  margin:0 0 8px;
+  color:#fff7bd;
+  font-size:2rem;
+  letter-spacing:0.03em;
+  text-shadow:0 0 16px rgba(255, 235, 142, 0.6);
+}
+
+.completion-card p{
+  margin:0 auto 18px;
+  max-width:28ch;
+  color:#e4ffd5;
+  font-size:1.08rem;
+  line-height:1.45;
+}
+
+#closeCompletionDialog{
+  border:1px solid rgba(255, 247, 189, 0.65);
+  border-radius:999px;
+  padding:9px 22px;
+  color:#092334;
+  background:linear-gradient(135deg, #fff7bd, #a7ffd2);
+  box-shadow:0 10px 24px rgba(0, 0, 0, 0.28), 0 0 18px rgba(167, 255, 210, 0.3);
+  cursor:pointer;
+  font-family:inherit;
+  font-size:1rem;
+  font-weight:bold;
+}
+
+#closeCompletionDialog:hover,
+#closeCompletionDialog:focus-visible{
+  transform:translateY(-1px);
+  box-shadow:0 12px 28px rgba(0, 0, 0, 0.32), 0 0 24px rgba(255, 247, 189, 0.42);
+}
+
+.completion-footnote{
+  margin-top:20px;
+  padding-top:12px;
+  border-top:1px solid rgba(255, 255, 255, 0.18);
+  color:rgba(238, 255, 222, 0.78);
+  font-size:0.72rem;
+  line-height:1.35;
+}
+
+.completion-footnote a{
+  color:#fff7bd;
+}
+
 @media (max-width: 900px) and (any-pointer: coarse){
   :root{
     --mandala-display-size:min(2048px, 100vw);
@@ -493,6 +598,26 @@ font-family:inherit;
 
 </div>
 
+
+<dialog id="completionDialog" aria-labelledby="completionTitle">
+  <div class="completion-card">
+    <span class="completion-sparkle" aria-hidden="true">✨</span>
+    <h2 id="completionTitle">Fim! 🎉</h2>
+    <p>Parabéns, você encontrou todos os segredos da mandala da Laura.</p>
+    <button id="closeCompletionDialog" type="button">Fechar</button>
+    <div class="completion-footnote">
+      Hand bells: sounds by InspectorJ on Freesound, licensed under Attribution 4.0 —
+      <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">Low-C</a>,
+      <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">D</a>,
+      <a href="https://freesound.org/s/339812/" target="_blank" rel="noopener">E</a>,
+      <a href="https://freesound.org/s/339816/" target="_blank" rel="noopener">F</a>,
+      <a href="https://freesound.org/s/339818/" target="_blank" rel="noopener">G</a>,
+      <a href="https://freesound.org/s/339810/" target="_blank" rel="noopener">A</a>, and
+      <a href="https://freesound.org/s/339809/" target="_blank" rel="noopener">B</a>.
+    </div>
+  </div>
+</dialog>
+
 <!-- ================= MANDALA ================= -->
 
 <div class="container">
@@ -557,6 +682,7 @@ const foundBellSequence = ["G", "G", "A", "G", "C", "B", "G", "G", "A", "G", "D"
 
 let allowToggleOff = true;
 let rotation = 0;
+let completionShown = false;
 let isBootstrapping = true;
 
 const menuItems = {};
@@ -600,12 +726,34 @@ function playBell(note){
   return audio.play().catch(() => {});
 }
 
+function showCompletionMessage(){
+  let dialog = document.getElementById("completionDialog");
+
+  if(!dialog || typeof dialog.showModal !== "function"){
+    alert("fim! 🎉🎉");
+    return;
+  }
+
+  if(!dialog.open){
+    dialog.showModal();
+  }
+}
+
 function updateCounter(){
   let puzzleWords = getPuzzleWords();
   let total = puzzleWords.length || document.querySelectorAll("#wordList li").length;
   let found = getFoundCount();
 
   document.getElementById("counter").textContent = found + " / " + total;
+
+  if(isBootstrapping) return;
+
+  if(found === total && total > 0 && !completionShown){
+    completionShown = true;
+    setTimeout(showCompletionMessage, 200);
+  }else if(found < total){
+    completionShown = false;
+  }
 }
 
 function computeAreaRegion(coordsText){
@@ -907,6 +1055,7 @@ function clearAll(){
   document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
   localStorage.removeItem(progressStorageKey);
   localStorage.removeItem(hintStorageKey);
+  completionShown = false;
   updateCounter();
 }
 
@@ -1009,6 +1158,19 @@ document.querySelectorAll("area").forEach(area => {
   if(!match) return;
   areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
 });
+
+
+let completionDialog = document.getElementById("completionDialog");
+let closeCompletionDialog = document.getElementById("closeCompletionDialog");
+
+if(closeCompletionDialog && completionDialog){
+  closeCompletionDialog.addEventListener("click", () => completionDialog.close());
+  completionDialog.addEventListener("click", e => {
+    if(e.target === completionDialog){
+      completionDialog.close();
+    }
+  });
+}
 
 toggleClickMode.onclick = function(){
   allowToggleOff = !allowToggleOff;

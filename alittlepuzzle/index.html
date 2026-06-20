@@ -35,7 +35,7 @@
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
     const SOURCE=1280,BOARD=1280,SCALE=BOARD/SOURCE,SNAP=82,CENTER_RADIUS=245,KEY="aLittleLifeJigsawProgressV3",TIP_KEY="aLittleLifeJigsawTipSeenV1",SOUND_KEY="aLittleLifeJigsawSoundV1";
-    const PIECE_IDS=Array.from({length:115},(_,i)=>i+1);
+    const PIECE_IDS=Array.from({length:113},(_,i)=>i+1);
     const PIECES=PIECE_IDS.map(id=>({id:String(id),src:`pieces-clean/${id}.png`}));
     const el={board:document.getElementById("board"),tray:document.getElementById("tray"),tpl:document.getElementById("tpl"),placed:document.getElementById("placed"),shuffle:document.getElementById("shuffle"),reset:document.getElementById("reset"),sound:document.getElementById("sound"),tip:document.getElementById("tip"),closeTip:document.getElementById("closeTip")};
     const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,sound:localStorage.getItem(SOUND_KEY)!=="off",audio:null};

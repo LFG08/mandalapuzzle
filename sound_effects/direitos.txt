@@ -1,5 +1,6 @@
-JIGSAW PIECE PLACEMENT:]
-766640__stavsounds__keyboard_tactile_9 : "Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0"
+JIGSAW PIECE PLACEMENT:
+766640__stavsounds__keyboard_tactile_9 : "Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0" - PLACEMENT
+766640__stavsounds__keyboard_tactile_2 : "Keyboard_Tactile_2 by StavSounds -- https://freesound.org/s/766632/ -- License: Creative Commons 0" - ROTATION
 
 
 OUTROS EFEITOS:

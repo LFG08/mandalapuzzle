@@ -261,24 +261,56 @@ box-shadow:0 4px 12px rgba(0,0,0,0.35);
 background:#5c2208;
 }
 
-.report-problem-link{
-position:fixed;
-right:16px;
-bottom:16px;
+.about-dialog{
+border:1px solid rgba(255,255,255,0.25);
+background:#3b1200;
+color:#f5e6d3;
+border-radius:18px;
+box-shadow:0 18px 50px rgba(0,0,0,0.65);
+padding:0;
+max-width:min(92vw, 520px);
+}
+
+.about-dialog::backdrop{
+background:rgba(0,0,0,0.55);
+}
+
+.about-content{
+background:#4a1a05;
+padding:22px;
+text-align:center;
+}
+
+.about-content h2{
+margin:0 0 14px 0;
+font-size:28px;
+font-weight:normal;
+}
+
+.about-content p{
+font-size:16px;
+line-height:1.5;
+margin:0 0 14px 0;
+}
+
+.about-content a{
+color:#f5e6d3;
+text-decoration:underline;
+}
+
+.about-close{
 font-family:inherit;
 font-size:14px;
-padding:8px 14px;
+padding:8px 18px;
 border:1px solid rgba(255,255,255,0.25);
 background:#2a0d02;
 color:#f5e6d3;
 border-radius:999px;
 cursor:pointer;
 box-shadow:0 4px 12px rgba(0,0,0,0.35);
-text-decoration:none;
-z-index:20;
 }
 
-.report-problem-link:hover{
+.about-close:hover{
 background:#5c2208;
 }
 @media (max-width: 1300px){
@@ -363,11 +395,12 @@ background:#5c2208;
     padding: 10px;
   }
 
-  .report-problem-link{
-    right:12px;
-    bottom:64px;
-    font-size:13px;
-    padding:10px 12px;
+  .about-content{
+    padding:18px;
+  }
+
+  .about-content h2{
+    font-size:24px;
   }
 }
 
@@ -719,15 +752,19 @@ data-total="138">
 <div class="bottom-actions">
   <button id="exportProgressButton" type="button">Exportar progresso</button>
   <button id="importProgressButton" type="button">Importar progresso</button>
+  <button id="aboutButton" type="button">Sobre</button>
   <input id="importProgressInput" type="file" accept="application/json" hidden>
 </div>
 
-<a
-  class="report-problem-link"
-  href="https://docs.google.com/forms/d/e/1FAIpQLSc6PRNDizGAgek9tvtiQlCt2LCjyD4RSMl0RobpZLTdSuIQwQ/viewform?usp=publish-editor"
-  target="_blank"
-  rel="noopener noreferrer"
->reportar um problema</a>
+<dialog id="aboutDialog" class="about-dialog">
+  <div class="about-content">
+    <h2>Sobre</h2>
+    <p>Disclaimer: Artes de minha autoria. HTML foi feito no GPT pois não sou dev e isso é apenar um hobby.</p>
+    <p>Outros nadas no Tumblr<br><a href="https://readingc33.tumblr.com/" target="_blank" rel="noopener noreferrer">https://readingc33.tumblr.com/</a></p>
+    <p>Contato: helpmandalapuzzle@gmail.com</p>
+    <button id="closeAboutButton" class="about-close" type="button">Fechar</button>
+  </div>
+</dialog>
   
 <script>
 
@@ -1455,6 +1492,9 @@ card.dataset.originalOrder = String(index);
 let exportButton = document.getElementById("exportProgressButton");
 let importButton = document.getElementById("importProgressButton");
 let importInput = document.getElementById("importProgressInput");
+let aboutButton = document.getElementById("aboutButton");
+let aboutDialog = document.getElementById("aboutDialog");
+let closeAboutButton = document.getElementById("closeAboutButton");
 
 if(exportButton){
 exportButton.addEventListener("click", exportProgress);
@@ -1465,6 +1505,28 @@ importButton.addEventListener("click", () => importInput.click());
 importInput.addEventListener("change", () => {
 importProgressFromFile(importInput.files && importInput.files[0]);
 importInput.value = "";
+});
+}
+
+if(aboutButton && aboutDialog){
+aboutButton.addEventListener("click", () => {
+if(typeof aboutDialog.showModal === "function"){
+aboutDialog.showModal();
+}else{
+aboutDialog.setAttribute("open", "");
+}
+});
+}
+
+if(closeAboutButton && aboutDialog){
+closeAboutButton.addEventListener("click", () => aboutDialog.close());
+}
+
+if(aboutDialog){
+aboutDialog.addEventListener("click", event => {
+if(event.target === aboutDialog){
+aboutDialog.close();
+}
 });
 }
 

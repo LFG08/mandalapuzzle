@@ -675,6 +675,7 @@ this.textContent=allowToggleOff
 
 /* ==== gabaritos ====*/
 let currentOverlay = "mandala_gabarito_1.png";
+let isBootstrapping = true;
 
 
 /* OVERLAY */
@@ -799,8 +800,10 @@ if(!isVisible){
 
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
-  const foundSound = new Audio(FOUND_SOUND_SRC);
-  foundSound.play().catch(() => {});
+  if(!isBootstrapping){
+    const foundSound = new Audio(FOUND_SOUND_SRC);
+    foundSound.play().catch(() => {});
+  }
 
 }else if(allowToggleOff){
 
@@ -826,6 +829,7 @@ found + " / " + total;
   /* PUZZLE COMPLETE MESSAGE */
 
 if(found === total && total > 0){
+if(isBootstrapping) return;
 
 setTimeout(function(){
 alert("fim! 🎉🎉");
@@ -890,6 +894,7 @@ overlaySelector.dispatchEvent(new Event("change"));
 /* load answers AFTER overlay is ready */
 loadProgress();
 loadHints();
+isBootstrapping = false;
 
 });
 
@@ -1001,6 +1006,7 @@ document.body.classList.remove("dragging");
 /* ===== savePuzzleProgress ===== */
 
 function saveProgress(){
+if(isBootstrapping) return;
 
 localStorage.setItem(
 "ajnaPuzzleProgress",

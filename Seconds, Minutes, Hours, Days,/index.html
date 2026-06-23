@@ -6,22 +6,22 @@
   <title>Seconds, Minutes, Hours, Days</title>
   <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
   <style>
-    :root{color-scheme:dark;--leaf:#e8f1e6;--leaf-soft:#9fc2a5;--panel:#112a1c;--panel-dark:#05110a;--line:#315d42}
+    :root{color-scheme:dark;--leaf:#e8f1e6;--leaf-soft:#9fc2a5;--panel:#112a1c;--panel-dark:#05110a;--line:#315d42;--gold:#d7a945;--gold-soft:#f2d784;--gold-deep:#7d5520}
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:var(--leaf);background:radial-gradient(circle at 48% 0,rgba(74,128,88,.2),transparent 34%),linear-gradient(180deg,#102419,#030906 76%)}
+    body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:var(--leaf);background:radial-gradient(circle at 50% 2%,rgba(215,169,69,.22),transparent 28%),radial-gradient(circle at 48% 0,rgba(74,128,88,.2),transparent 34%),linear-gradient(180deg,#102419,#030906 76%)}
     button{font:inherit}
     .app{width:min(1940px,calc(100vw - 28px));margin:auto;padding:22px 0 34px;display:grid;grid-template-columns:minmax(320px,720px) minmax(240px,320px);gap:18px;align-items:start;justify-content:center}
-    .stage,.panel{background:linear-gradient(180deg,rgba(17,42,28,.98),rgba(5,17,10,.98));border:1px solid var(--line);border-radius:24px;box-shadow:0 26px 60px rgba(0,0,0,.42)}
+    .stage,.panel{background:linear-gradient(180deg,rgba(42,33,15,.86),rgba(17,42,28,.98) 36%,rgba(5,17,10,.98));border:1px solid color-mix(in srgb,var(--line) 72%,var(--gold));border-radius:24px;box-shadow:0 26px 60px rgba(0,0,0,.42),0 0 28px rgba(215,169,69,.1)}
     .stage{position:sticky;top:18px;padding:18px;justify-self:center;width:100%;max-width:720px}
-    .mandala{position:relative;width:100%;aspect-ratio:1080/1920;overflow:hidden;background:#07150d;box-shadow:inset 0 0 0 1px rgba(222,242,224,.13)}
+    .mandala{position:relative;width:100%;aspect-ratio:1080/1920;overflow:hidden;background:#07150d;box-shadow:inset 0 0 0 1px rgba(242,215,132,.24),0 0 22px rgba(215,169,69,.12)}
     .mandala img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
     .base{z-index:1}.notes,.effect,.sparkles{pointer-events:none}.notes,.effect{--reveal-mask:radial-gradient(circle at -20% -20%,transparent 0,transparent 1px);-webkit-mask-image:var(--reveal-mask);mask-image:var(--reveal-mask);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
     .notes{z-index:2;opacity:.96;filter:drop-shadow(0 0 8px rgba(232,241,230,.26)) drop-shadow(0 0 18px rgba(109,169,119,.22));transition:filter .35s ease,opacity .35s ease}
     .effect{z-index:3;opacity:.58;mix-blend-mode:screen;filter:brightness(1.14) saturate(1.06) drop-shadow(0 0 12px rgba(232,241,230,.34));transition:opacity .35s ease,filter .35s ease}
-    .mandala.complete .notes{filter:drop-shadow(0 0 12px rgba(232,241,230,.45)) drop-shadow(0 0 30px rgba(109,169,119,.28))}.mandala.complete .effect{opacity:.72;animation:completeGlow 1.9s ease-in-out infinite alternate}
+    .mandala.complete .notes{animation:noteBreath 2.8s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(242,215,132,.5)) drop-shadow(0 0 30px rgba(109,169,119,.28))}.mandala.complete .effect{opacity:.76;animation:completeGlow 2.8s ease-in-out infinite}.mandala.music-playing .notes{animation:musicNotesPulse 1.35s ease-in-out infinite}.mandala.music-playing .effect{opacity:.9;animation:musicEffectFlash 1.35s ease-in-out infinite}
     .hotspots{position:absolute;inset:0;z-index:5;width:100%;height:100%;pointer-events:none}.note-button{fill:transparent;stroke:transparent;cursor:pointer;pointer-events:all;outline:none}.note-button:hover,.note-button:focus,.note-button.active,.note-button.solved{fill:transparent;stroke:transparent;filter:none;outline:none}
-    .panel{padding:14px}.title{margin:0 0 14px;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.18rem;line-height:1.1;color:#f3fff2}.subtitle{margin:0 0 16px;color:#cfe2ce;line-height:1.6;font-size:.94rem}.small{color:var(--leaf-soft);text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}.value{display:inline-block;margin-top:4px;color:#f3fff2}.actions{display:grid;gap:7px;margin-top:12px}.btn{display:block;width:100%;border:1px solid rgba(219,242,222,.22);border-radius:999px;padding:7px 10px;background:linear-gradient(180deg,#285a3a,#102b1c);color:#f3fff2;text-align:center;text-decoration:none;cursor:pointer}.btn:hover{filter:brightness(1.12)}.btn.primary{border-color:#d7d7d7;background:linear-gradient(180deg,#f1f1f1,#b8b8b8);color:#0b321f}.hint{margin-top:14px;color:#9fc2a5;font-size:.84rem;line-height:1.5}.credits{margin-top:12px;color:#9fc2a5;font-size:.72rem;line-height:1.4}.is-muted{opacity:.68}
-    @keyframes completeGlow{from{filter:brightness(1.08) saturate(1.02) drop-shadow(0 0 8px rgba(232,241,230,.3))}to{filter:brightness(1.28) saturate(1.14) drop-shadow(0 0 22px rgba(232,241,230,.55)) drop-shadow(0 0 42px rgba(109,169,119,.38))}}
+    .panel{padding:14px}.title{margin:0 0 14px;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.18rem;line-height:1.1;color:#f3fff2}.subtitle{margin:0 0 16px;color:#cfe2ce;line-height:1.6;font-size:.94rem}.small{color:var(--leaf-soft);text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}.value{display:inline-block;margin-top:4px;color:#f3fff2}.actions{display:grid;gap:7px;margin-top:12px}.btn{display:block;width:100%;border:1px solid rgba(219,242,222,.22);border-radius:999px;padding:7px 10px;background:linear-gradient(180deg,#285a3a,#102b1c);color:#f3fff2;text-align:center;text-decoration:none;cursor:pointer}.btn.gold{border-color:rgba(242,215,132,.82);background:linear-gradient(180deg,var(--gold-soft),var(--gold),var(--gold-deep));color:#1b1205;box-shadow:0 0 18px rgba(215,169,69,.2)}.btn:hover{filter:brightness(1.12)}.btn.primary{border-color:#d7d7d7;background:linear-gradient(180deg,#f1f1f1,#b8b8b8);color:#0b321f}.hint{margin-top:14px;color:#9fc2a5;font-size:.84rem;line-height:1.5}.credits{margin-top:12px;color:#9fc2a5;font-size:.72rem;line-height:1.4}.is-muted{opacity:.68}
+    @keyframes completeGlow{0%,100%{filter:brightness(1.04) saturate(1.04) drop-shadow(0 0 8px rgba(242,215,132,.3))}50%{filter:brightness(1.26) saturate(1.16) drop-shadow(0 0 22px rgba(242,215,132,.58)) drop-shadow(0 0 42px rgba(109,169,119,.34))}}@keyframes noteBreath{0%,100%{opacity:.82;filter:drop-shadow(0 0 8px rgba(242,215,132,.34)) drop-shadow(0 0 18px rgba(109,169,119,.2))}50%{opacity:1;filter:drop-shadow(0 0 18px rgba(242,215,132,.72)) drop-shadow(0 0 36px rgba(109,169,119,.34))}}@keyframes musicNotesPulse{0%,100%{opacity:.82;filter:brightness(1) drop-shadow(0 0 8px rgba(242,215,132,.36)) drop-shadow(0 0 18px rgba(109,169,119,.2))}44%{opacity:1;filter:brightness(1.42) drop-shadow(0 0 24px rgba(242,215,132,.82)) drop-shadow(0 0 46px rgba(109,169,119,.42))}58%{opacity:.9;filter:brightness(1.16) drop-shadow(0 0 14px rgba(242,215,132,.56))}}@keyframes musicEffectFlash{0%,100%{opacity:.58;filter:brightness(1.06) saturate(1.02) drop-shadow(0 0 8px rgba(242,215,132,.28))}42%{opacity:1;filter:brightness(1.78) saturate(1.28) drop-shadow(0 0 28px rgba(242,215,132,.86)) drop-shadow(0 0 56px rgba(255,240,178,.44))}62%{opacity:.78;filter:brightness(1.22) saturate(1.12) drop-shadow(0 0 18px rgba(242,215,132,.62))}}.tipOverlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:rgba(1,8,4,.78);backdrop-filter:blur(7px)}.tipOverlay[hidden]{display:none}.tipDialog{width:min(540px,100%);padding:28px;background:linear-gradient(180deg,#2a210f,#122d1d 34%,#07150d);border:1px solid rgba(242,215,132,.7);border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.62),0 0 34px rgba(215,169,69,.18)}.tipDialog h2{margin:0 0 13px;color:var(--gold-soft);font-size:1.45rem}.tipDialog p{margin:0 0 22px;color:#cfe2ce;line-height:1.6;font-size:1.04rem}.gateForm{display:grid;gap:14px}.gateLabel{display:flex;align-items:center;gap:10px;color:var(--gold-soft);font-size:1.2rem}.gateLabel input{min-width:0;flex:1;border:1px solid rgba(242,215,132,.72);border-radius:999px;padding:9px 12px;background:#07150d;color:#f3fff2;font:inherit;box-shadow:inset 0 0 14px rgba(215,169,69,.12)}.gateError{min-height:1.2em;margin:0;color:#f2d784;font-size:.92rem}
     @media(max-width:1080px){.app{grid-template-columns:1fr}.stage{position:static}.panel{order:-1}}
   </style>
 </head>
@@ -47,23 +47,24 @@
     </section>
     <aside class="panel">
       <h1 class="title">Seconds, Minutes, Hours, Days</h1>
-      <p class="subtitle">A small musical mandala. Play the hidden bell melody in order; each correct coordinate reveals only that clickable spot of the <em>notas</em> layer with a soft glow.</p>
       <div class="line"><span class="small">Sequência</span><br><strong id="count" class="value">0 / 14</strong></div>
       <div class="actions">
-        <button id="reset" class="btn primary" type="button">Reset</button>
-        <button id="sound" class="btn" type="button">Sound: On</button>
         <button id="menu" class="btn" type="button">Menu Principal</button>
+        <button id="about" class="btn gold" type="button">Sobre</button>
+        <button id="credits" class="btn gold" type="button">Créditos</button>
       </div>
-      <p class="hint">Play the 14-note melody in order: C - D - F - A - A - Bb - A - G - G - F - G - A - high C - Bb. A wrong note clears the lit coordinates.</p>
-      <div class="credits">Handbell sounds from the shared <code>sound_effects</code> folder. Final excerpt: <a href="https://commons.wikimedia.org/wiki/File:%22Ich_bin_der_Welt_abhanden_gekommen%22_from_R%C3%BCckert-Lieder_-_United_States_Navy_Band.ogg" target="_blank" rel="noopener">See page for author</a>, Public domain, via Wikimedia Commons. Correct coordinates stay invisible until clicked.</div>
     </aside>
   </main>
+  <div id="aboutDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" hidden><div class="tipDialog"><h2 id="aboutTitle">Sobre</h2><p>“[Willem] the lighting had been particularly golden, like beeswax (…) had been yellowish… like the skin of a late-fall apple. By contrast, Malcom’s world was bluish: his sterile, white-marble-countertopped office on Twenty-second Street… And Jude’s was graysh, but a silvery gray” - <cite>A Little Life</cite>, pages 276-277.</p><button id="closeAbout" class="btn gold" type="button">Fechar</button></div></div>
+  <div id="endDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-labelledby="endTitle" hidden><div class="tipDialog"><h2 id="endTitle">mais um fim...</h2><p>agora para greene street</p><button id="closeEnd" class="btn gold" type="button">Fechar</button></div></div>
+  <div id="creditsDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-labelledby="creditsTitle" hidden><div class="tipDialog creditsDialog"><h2 id="creditsTitle">Créditos</h2><p><strong>HAND BELLS:</strong></p><p>Hand Bells, Low-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339815/" target="_blank" rel="noopener">https://freesound.org/s/339815/</a> -- License: Attribution 4.0<br>Hand Bells, D, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339813/" target="_blank" rel="noopener">https://freesound.org/s/339813/</a> -- License: Attribution 4.0<br>Hand Bells, D#/Eb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339814/" target="_blank" rel="noopener">https://freesound.org/s/339814/</a> -- License: Attribution 4.0<br>Hand Bells, F, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339816/" target="_blank" rel="noopener">https://freesound.org/s/339816/</a> -- License: Attribution 4.0<br>Hand Bells, G, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339818/" target="_blank" rel="noopener">https://freesound.org/s/339818/</a> -- License: Attribution 4.0<br>Hand Bells, A, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339810/" target="_blank" rel="noopener">https://freesound.org/s/339810/</a> -- License: Attribution 4.0<br>Hand Bells, A#/Bb, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339811/" target="_blank" rel="noopener">https://freesound.org/s/339811/</a> -- License: Attribution 4.0<br>Hand Bells, High-C, Single.wav by InspectorJ -- <a href="https://freesound.org/s/339820/" target="_blank" rel="noopener">https://freesound.org/s/339820/</a> -- License: Attribution 4.0</p><p>Ich bin der Welt abhanden gekommen, Mahler, Public domain (<a href="https://commons.wikimedia.org/wiki/File:%22Ich_bin_der_Welt_abhanden_gekommen%22_from_R%C3%BCckert-Lieder_-_United_States_Navy_Band.ogg" target="_blank" rel="noopener">via Wikimedia Commons</a>).</p><button id="closeCredits" class="btn gold" type="button">Fechar</button></div></div>
+  <div id="gateDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden><div class="tipDialog"><h2 id="gateTitle">x=</h2><form id="gateForm" class="gateForm"><label class="gateLabel" for="gateAnswer">x=<input id="gateAnswer" name="gateAnswer" autocomplete="off" required></label><p id="gateError" class="gateError" aria-live="polite"></p><button class="btn gold" type="submit">Entrar</button></form></div></div>
   <script>
     const NOTE_SEQUENCE=["1","3","7","11","11","13","11","9","9","7","9","11","15","13"];
     const SOUND_BY_NOTE={
       "C":"../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
       "D":"../sound_effects/339813__inspectorj__hand-bells-D-single.wav",
-      "E":"../sound_effects/339812__inspectorj__hand-bells-e-single.wav",
+      "E":"../sound_effects/339814__inspectorj__hand-bells-Eb-single.wav",
       "F":"../sound_effects/339816__inspectorj__hand-bells-F-single.wav",
       "A":"../sound_effects/339810__inspectorj__hand-bells-A-single.wav",
       "Bb":"../sound_effects/339811__inspectorj__hand-bells-Bb-single.wav",
@@ -75,9 +76,10 @@
       {id:"1",note:"C",coords:[508,809,27]},{id:"3",note:"D",coords:[631,835,28]},{id:"5",note:"E",coords:[693,941,26]},{id:"7",note:"F",coords:[656,1063,27]},
       {id:"9",note:"G",coords:[542,1114,28]},{id:"11",note:"A",coords:[426,1064,28]},{id:"13",note:"Bb",coords:[388,944,29]},{id:"15",note:"high C",coords:[449,834,27]}
     ];
-    const mandala=document.getElementById("mandala"),hotspots=document.getElementById("hotspots"),count=document.getElementById("count"),soundBtn=document.getElementById("sound"),notesLayer=document.getElementById("notesLayer"),effectLayer=document.getElementById("effectLayer");
+    const mandala=document.getElementById("mandala"),hotspots=document.getElementById("hotspots"),count=document.getElementById("count"),notesLayer=document.getElementById("notesLayer"),effectLayer=document.getElementById("effectLayer"),aboutDialog=document.getElementById("aboutDialog"),endDialog=document.getElementById("endDialog"),creditsDialog=document.getElementById("creditsDialog"),gateDialog=document.getElementById("gateDialog"),gateForm=document.getElementById("gateForm"),gateAnswer=document.getElementById("gateAnswer"),gateError=document.getElementById("gateError");
     const FINAL_EXCERPT={src:"https://upload.wikimedia.org/wikipedia/commons/3/3b/%22Ich_bin_der_Welt_abhanden_gekommen%22_from_R%C3%BCckert-Lieder_-_United_States_Navy_Band.ogg",start:55,end:73};
-    const state={activeHotspots:new Set(),notesProgress:0,complete:false,muted:false,audio:new Map(),flashTimer:null,finalAudio:null,finalStopper:null};
+    const SAVE_KEY="secondsMinutesHoursDaysProgressV1",GATE_KEY="secondsMinutesHoursDaysGateV1";
+    const state={activeHotspots:new Set(),notesProgress:0,complete:false,audio:new Map(),flashTimer:null,finalAudio:null,finalStopper:null,finalFinished:null};
     POINTS.forEach(point=>{
       const [cx,cy,r]=point.coords;
       const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
@@ -87,9 +89,13 @@
       hotspots.appendChild(circle);
     });
     document.querySelectorAll("area").forEach(area=>area.addEventListener("click",event=>{event.preventDefault();const point=POINTS.find(item=>item.id===area.dataset.id||item.note===area.alt||item.note.replace(/\s+/g,"")===area.alt);if(point)toggleHotspot(point)}));
-    document.getElementById("reset").onclick=restart;
     document.getElementById("menu").onclick=()=>{window.location.href="../index.html"};
-    soundBtn.onclick=()=>{state.muted=!state.muted;if(state.muted)stopFinalExcerpt();soundBtn.textContent=`Sound: ${state.muted?"Off":"On"}`;soundBtn.classList.toggle("is-muted",state.muted)};
+    document.getElementById("about").onclick=()=>{aboutDialog.hidden=false;document.getElementById("closeAbout").focus()};
+    document.getElementById("closeAbout").onclick=()=>{aboutDialog.hidden=true;document.getElementById("about").focus()};
+    document.getElementById("credits").onclick=()=>{creditsDialog.hidden=false;document.getElementById("closeCredits").focus()};
+    document.getElementById("closeCredits").onclick=()=>{creditsDialog.hidden=true;document.getElementById("credits").focus()};
+    document.getElementById("closeEnd").onclick=()=>{endDialog.hidden=true;document.getElementById("menu").focus()};
+    gateForm.addEventListener("submit",event=>{event.preventDefault();if(gateAnswer.value.trim().toLowerCase()==="x"){localStorage.setItem(GATE_KEY,"solved");gateDialog.hidden=true;gateError.textContent=""}else{gateError.textContent="tente outra vez";gateAnswer.select()}});
     function toggleHotspot(point){
       if(state.complete)return;
       ring(SOUND_BY_NOTE[point.note]);
@@ -98,6 +104,7 @@
         state.notesProgress++;
         if(state.notesProgress===NOTE_SEQUENCE.length){
           state.complete=true;
+          state.activeHotspots=new Set(POINTS.map(item=>item.id));
           flash();
           playFinalExcerpt();
         }
@@ -106,29 +113,39 @@
         state.activeHotspots.clear();
       }
       sync();
+      saveProgress();
     }
-    function restart(){stopFinalExcerpt();state.activeHotspots.clear();state.notesProgress=0;state.complete=false;sync()}
-    function ring(src){if(state.muted||!src)return;let audio=state.audio.get(src);if(!audio){audio=new Audio(src);audio.preload="auto";state.audio.set(src,audio)}audio.pause();audio.currentTime=0;audio.volume=.72;audio.play().catch(()=>{})}
+    function ring(src){if(!src)return;let audio=state.audio.get(src);if(!audio){audio=new Audio(src);audio.preload="auto";state.audio.set(src,audio)}audio.pause();audio.currentTime=0;audio.volume=.72;audio.play().catch(()=>{})}
     function flash(){clearTimeout(state.flashTimer);mandala.classList.add("flash");state.flashTimer=setTimeout(()=>mandala.classList.remove("flash"),420)}
     function playFinalExcerpt(){
-      if(state.muted)return;
       stopFinalExcerpt();
+      mandala.classList.add("music-playing");
       const audio=state.finalAudio||new Audio(FINAL_EXCERPT.src);
       state.finalAudio=audio;
       audio.preload="auto";
       audio.volume=.72;
       audio.currentTime=FINAL_EXCERPT.start;
-      const stopAtEnd=()=>{if(audio.currentTime>=FINAL_EXCERPT.end)stopFinalExcerpt()};
+      const finish=()=>{stopFinalExcerpt();showEnd()};
+      const stopAtEnd=()=>{if(audio.currentTime>=FINAL_EXCERPT.end)finish()};
       audio.addEventListener("timeupdate",stopAtEnd);
+      audio.addEventListener("ended",finish,{once:true});
       state.finalStopper=stopAtEnd;
-      audio.play().catch(()=>{});
+      state.finalFinished=finish;
+      audio.play().catch(()=>{mandala.classList.remove("music-playing");showEnd()});
     }
     function stopFinalExcerpt(){
       if(!state.finalAudio)return;
       if(state.finalStopper)state.finalAudio.removeEventListener("timeupdate",state.finalStopper);
+      if(state.finalFinished)state.finalAudio.removeEventListener("ended",state.finalFinished);
       state.finalStopper=null;
+      state.finalFinished=null;
       state.finalAudio.pause();
+      mandala.classList.remove("music-playing");
     }
+    function showEnd(){endDialog.hidden=false;document.getElementById("closeEnd").focus()}
+    function saveProgress(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({notesProgress:state.notesProgress,activeHotspots:[...state.activeHotspots],complete:state.complete}))}catch{}}
+    function loadProgress(){try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(!saved)return;state.notesProgress=Number.isInteger(saved.notesProgress)?Math.max(0,Math.min(saved.notesProgress,NOTE_SEQUENCE.length)):0;state.activeHotspots=new Set(Array.isArray(saved.activeHotspots)?saved.activeHotspots.filter(id=>POINTS.some(point=>point.id===id)):[]);state.complete=Boolean(saved.complete);if(state.complete)state.activeHotspots=new Set(POINTS.map(point=>point.id))}catch{}}
+    function showGate(){if(localStorage.getItem(GATE_KEY)==="solved")return;gateDialog.hidden=false;requestAnimationFrame(()=>gateAnswer.focus())}
     function revealMask(){
       if(!state.activeHotspots.size)return "radial-gradient(circle at -20% -20%, transparent 0, transparent 1px)";
       return POINTS.filter(point=>state.activeHotspots.has(point.id)).map(point=>{
@@ -145,7 +162,9 @@
       count.textContent=`${state.notesProgress} / ${NOTE_SEQUENCE.length}`;
       document.querySelectorAll(".note-button").forEach(btn=>btn.classList.toggle("solved",state.activeHotspots.has(btn.dataset.id)));
     }
+    loadProgress();
     sync();
+    showGate();
   </script>
 </body>
 </html>

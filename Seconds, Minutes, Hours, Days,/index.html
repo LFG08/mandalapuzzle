@@ -37,12 +37,12 @@
       <map name="image-map">
         <area target="" alt="1" title="C" href="" coords="510,810,25" shape="circle">
         <area target="" alt="3" title="D" href="" coords="631,836,27" shape="circle">
-        <area target="" alt="5" title="F" href="" coords="693,945,24" shape="circle">
-        <area target="" alt="7" title="A" href="" coords="687,1007,24" shape="circle">
-        <area target="" alt="9" title="Bb" href="" coords="604,1101,26" shape="circle">
-        <area target="" alt="11" title="G" href="" coords="478,1102,24" shape="circle">
-        <area target="" alt="13" title="high C" href="" coords="426,1066,24" shape="circle">
-        <area target="" alt="15" title="Eb" href="" coords="386,944,24" shape="circle">
+        <area target="" alt="5" title="E" href="" coords="693,945,24" shape="circle">
+        <area target="" alt="7" title="F" href="" coords="687,1007,24" shape="circle">
+        <area target="" alt="9" title="G" href="" coords="604,1101,26" shape="circle">
+        <area target="" alt="11" title="A" href="" coords="478,1102,24" shape="circle">
+        <area target="" alt="13" title="Bb" href="" coords="426,1066,24" shape="circle">
+        <area target="" alt="15" title="high C" href="" coords="386,944,24" shape="circle">
       </map>
     </section>
     <aside class="panel">
@@ -59,10 +59,11 @@
     </aside>
   </main>
   <script>
-    const NOTE_SEQUENCE=["1","3","5","7","9","11","13","15"];
+    const NOTE_SEQUENCE=["1","3","7","11","11","13","11","9","9","7","9","11","15","13"];
     const SOUND_BY_NOTE={
       "C":"../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
       "D":"../sound_effects/339813__inspectorj__hand-bells-D-single.wav",
+      "E":"../sound_effects/339812__inspectorj__hand-bells-e-single.wav",
       "F":"../sound_effects/339816__inspectorj__hand-bells-F-single.wav",
       "A":"../sound_effects/339810__inspectorj__hand-bells-A-single.wav",
       "Bb":"../sound_effects/339811__inspectorj__hand-bells-Bb-single.wav",
@@ -71,8 +72,8 @@
       "high C":"../sound_effects/339820__inspectorj__hand-bells-high-c-single.wav"
     };
     const POINTS=[
-      {id:"1",note:"C",coords:[510,810,25]},{id:"3",note:"D",coords:[631,836,27]},{id:"5",note:"F",coords:[693,945,24]},{id:"7",note:"A",coords:[687,1007,24]},
-      {id:"9",note:"Bb",coords:[604,1101,26]},{id:"11",note:"G",coords:[478,1102,24]},{id:"13",note:"high C",coords:[426,1066,24]},{id:"15",note:"Eb",coords:[386,944,24]}
+      {id:"1",note:"C",coords:[510,810,25]},{id:"3",note:"D",coords:[631,836,27]},{id:"5",note:"E",coords:[693,945,24]},{id:"7",note:"F",coords:[687,1007,24]},
+      {id:"9",note:"G",coords:[604,1101,26]},{id:"11",note:"A",coords:[478,1102,24]},{id:"13",note:"Bb",coords:[426,1066,24]},{id:"15",note:"high C",coords:[386,944,24]}
     ];
     const mandala=document.getElementById("mandala"),hotspots=document.getElementById("hotspots"),count=document.getElementById("count"),soundBtn=document.getElementById("sound"),notesLayer=document.getElementById("notesLayer"),effectLayer=document.getElementById("effectLayer");
     const state={activeHotspots:new Set(),notesProgress:0,complete:false,muted:false,audio:new Map(),flashTimer:null};

@@ -54,18 +54,19 @@
     </section>
     <aside class="panel">
       <h1 class="title">Seconds, Minutes, Hours, Days</h1>
-      <p class="subtitle">A small musical mandala. Click the hidden coordinates to reveal fragments of the <em>notas</em> layer with a soft glow.</p>
-      <div class="line"><span class="small">Áreas reveladas</span><br><strong id="count" class="value">0 / 15</strong></div>
+      <p class="subtitle">A small musical mandala. Play the hidden bell melody in order; each correct coordinate reveals only that clickable spot of the <em>notas</em> layer with a soft glow.</p>
+      <div class="line"><span class="small">Sequência</span><br><strong id="count" class="value">0 / 14</strong></div>
       <div class="actions">
         <button id="reset" class="btn primary" type="button">Reset</button>
         <button id="sound" class="btn" type="button">Sound: On</button>
         <button id="menu" class="btn" type="button">Menu Principal</button>
       </div>
-      <p class="hint">Find each hidden coordinate to uncover the image. The clickable areas stay invisible.</p>
-      <div class="credits">Handbell sounds from the shared <code>sound_effects</code> folder.</div>
+      <p class="hint">Follow the melody: C - D - F - A - A - Bb - A - G - G - F - G - A - high C - Bb. A wrong note clears the lit coordinates.</p>
+      <div class="credits">Handbell sounds from the shared <code>sound_effects</code> folder. Correct coordinates stay invisible until clicked.</div>
     </aside>
   </main>
   <script>
+    const NOTE_SEQUENCE=["1","2","3","4","17","5","9","7","10","11","16","4","8","13"];
     const SOUND_BY_NOTE={
       "C":"../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
       "D":"../sound_effects/339813__inspectorj__hand-bells-D-single.wav",
@@ -80,45 +81,53 @@
       {id:"9",note:"A",coords:[604,1101,26]},{id:"10",note:"G",coords:[540,1114,23]},{id:"11",note:"F",coords:[478,1102,24]},{id:"13",note:"Bb",coords:[426,1066,24]},{id:"14",note:"C",coords:[394,1009,24]},{id:"15",note:"D",coords:[386,944,24]},{id:"16",note:"G",coords:[406,882,25]},{id:"17",note:"A",coords:[450,835,27]}
     ];
     const mandala=document.getElementById("mandala"),hotspots=document.getElementById("hotspots"),count=document.getElementById("count"),soundBtn=document.getElementById("sound"),notesLayer=document.getElementById("notesLayer"),effectLayer=document.getElementById("effectLayer");
-    const state={revealed:new Set(),complete:false,muted:false,audio:new Map(),flashTimer:null};
+    const state={activeHotspots:new Set(),notesProgress:0,complete:false,muted:false,audio:new Map(),flashTimer:null};
     POINTS.forEach(point=>{
       const [cx,cy,r]=point.coords;
       const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
-      circle.setAttribute("cx",cx);circle.setAttribute("cy",cy);circle.setAttribute("r",Math.max(r,34));circle.setAttribute("class","note-button");circle.setAttribute("tabindex","0");circle.setAttribute("role","button");circle.setAttribute("aria-label",`Nota ${point.note}`);circle.dataset.id=point.id;circle.dataset.note=point.note;
-      circle.addEventListener("click",()=>reveal(point));
-      circle.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();reveal(point)}});
+      circle.setAttribute("cx",cx);circle.setAttribute("cy",cy);circle.setAttribute("r",r);circle.setAttribute("class","note-button");circle.setAttribute("tabindex","0");circle.setAttribute("role","button");circle.setAttribute("aria-label",`Nota ${point.note}`);circle.dataset.id=point.id;circle.dataset.note=point.note;
+      circle.addEventListener("click",()=>toggleHotspot(point));
+      circle.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggleHotspot(point)}});
       hotspots.appendChild(circle);
     });
-    document.querySelectorAll("area").forEach(area=>area.addEventListener("click",event=>{event.preventDefault();const point=POINTS.find(item=>item.id===area.alt);if(point)reveal(point)}));
+    document.querySelectorAll("area").forEach(area=>area.addEventListener("click",event=>{event.preventDefault();const point=POINTS.find(item=>item.id===area.alt);if(point)toggleHotspot(point)}));
     document.getElementById("reset").onclick=restart;
     document.getElementById("menu").onclick=()=>{window.location.href="../index.html"};
     soundBtn.onclick=()=>{state.muted=!state.muted;soundBtn.textContent=`Sound: ${state.muted?"Off":"On"}`;soundBtn.classList.toggle("is-muted",state.muted)};
-    function reveal(point){
+    function toggleHotspot(point){
+      if(state.complete)return;
       ring(SOUND_BY_NOTE[point.note]);
-      state.revealed.add(point.id);
-      state.complete=state.revealed.size===POINTS.length;
-      if(state.complete)flash();
+      if(point.id===NOTE_SEQUENCE[state.notesProgress]){
+        state.activeHotspots.add(point.id);
+        state.notesProgress++;
+        if(state.notesProgress===NOTE_SEQUENCE.length){
+          state.complete=true;
+          flash();
+        }
+      }else{
+        state.notesProgress=0;
+        state.activeHotspots.clear();
+      }
       sync();
     }
-    function restart(){state.revealed.clear();state.complete=false;sync()}
+    function restart(){state.activeHotspots.clear();state.notesProgress=0;state.complete=false;sync()}
     function ring(src){if(state.muted||!src)return;let audio=state.audio.get(src);if(!audio){audio=new Audio(src);audio.preload="auto";state.audio.set(src,audio)}audio.pause();audio.currentTime=0;audio.volume=.72;audio.play().catch(()=>{})}
     function flash(){clearTimeout(state.flashTimer);mandala.classList.add("flash");state.flashTimer=setTimeout(()=>mandala.classList.remove("flash"),420)}
-    function revealMask(expand=0){
-      if(!state.revealed.size)return "radial-gradient(circle at -20% -20%, transparent 0, transparent 1px)";
-      return POINTS.filter(point=>state.revealed.has(point.id)).map(point=>{
+    function revealMask(){
+      if(!state.activeHotspots.size)return "radial-gradient(circle at -20% -20%, transparent 0, transparent 1px)";
+      return POINTS.filter(point=>state.activeHotspots.has(point.id)).map(point=>{
         const [cx,cy,r]=point.coords;
-        const soft=Math.max(r+expand,44+expand);
-        const edge=soft+30;
-        return `radial-gradient(circle at ${(cx/1080*100).toFixed(3)}% ${(cy/1920*100).toFixed(3)}%, #000 0 ${soft}px, rgba(0,0,0,.72) ${soft+10}px, transparent ${edge}px)`;
+        return `radial-gradient(circle at ${(cx/1080*100).toFixed(3)}% ${(cy/1920*100).toFixed(3)}%, #000 0 ${r}px, transparent ${r+.6}px)`;
       }).join(",");
     }
     function sync(){
       mandala.classList.toggle("complete",state.complete);
       if(!state.complete)mandala.classList.remove("flash");
-      notesLayer.style.setProperty("--reveal-mask",revealMask(0));
-      effectLayer.style.setProperty("--reveal-mask",revealMask(18));
-      count.textContent=`${state.revealed.size} / ${POINTS.length}`;
-      document.querySelectorAll(".note-button").forEach(btn=>btn.classList.toggle("solved",state.revealed.has(btn.dataset.id)));
+      const mask=revealMask();
+      notesLayer.style.setProperty("--reveal-mask",mask);
+      effectLayer.style.setProperty("--reveal-mask",mask);
+      count.textContent=`${state.notesProgress} / ${NOTE_SEQUENCE.length}`;
+      document.querySelectorAll(".note-button").forEach(btn=>btn.classList.toggle("solved",state.activeHotspots.has(btn.dataset.id)));
     }
     sync();
   </script>

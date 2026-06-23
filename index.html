@@ -566,6 +566,19 @@ data-total="50">
 <h2 class="menu-section-title">???</h2>
 <div class="grid">
 
+<a href="Seconds, Minutes, Hours, Days," class="card" id="secondsCard"
+data-key="secondsMinutesHoursDaysProgressV1"
+data-total="13">
+
+  <div class="thumb">
+    <img src="thumb_seconds.png" loading="lazy">
+  </div>
+
+  <div class="tags">#??? #alittlelife #seconds,minutes,hours,days,</div>
+  <div class="status"></div>
+
+</a>
+
 <a href="celtic" class="card" id="celticCard"
 data-celtic="true"
 data-total="40">
@@ -849,6 +862,18 @@ return {
 found,
 total: levelTwoStarted ? total : null
 };
+}
+
+function getSecondsStatus(total){
+try{
+let saved = JSON.parse(localStorage.getItem("secondsMinutesHoursDaysProgressV1") || "null");
+if(!saved) return { found: 0, total };
+if(saved.complete) return { found: total, total };
+let progress = Number.isInteger(saved.notesProgress) ? saved.notesProgress : 0;
+return { found: Math.max(0, Math.min(progress, total)), total };
+}catch{
+return { found: 0, total };
+}
 }
 
 function getLuciferStatus(total){
@@ -1565,6 +1590,18 @@ applyMenuOrdering();
 let updatedPercentage = updated.total > 0 ? (updated.found / updated.total) * 100 : 0;
 applyThumbBorder(card, updatedPercentage);
 });
+return;
+}
+
+if(card.id === "secondsCard"){
+let total = parseInt(card.dataset.total);
+if(Number.isNaN(total)) return;
+let statusEl = card.querySelector(".status");
+let secondsStatus = getSecondsStatus(total);
+setCardProgressMeta(card, secondsStatus.found, secondsStatus.total);
+renderStatus(statusEl, secondsStatus.found, secondsStatus.total);
+let percentage = secondsStatus.total > 0 ? (secondsStatus.found / secondsStatus.total) * 100 : 0;
+applyThumbBorder(card, percentage);
 return;
 }
 

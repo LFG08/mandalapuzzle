@@ -670,6 +670,7 @@ const defaultOverlay = "mandala_gabarito_1.png";
 const minMandalaZoom = 1;
 const maxMandalaZoom = 3;
 const mandalaZoomStep = 0.1;
+let isBootstrapping = true;
 
 const hintRegionMapCoords = [
 { id: 1, coords: [1, 2, 2046, 692] },
@@ -786,6 +787,7 @@ applyContainerTransform();
 
 /* load answers AFTER overlay is ready */
 loadProgress();
+isBootstrapping = false;
 });
 
 window.addEventListener("resize", () => {
@@ -1261,8 +1263,10 @@ if(shouldShow && !isVisible){
   if(menuWord){
     menuWord.classList.add("found");
   }
-  const foundSound = new Audio(FOUND_SOUND_SRC);
-  foundSound.play().catch(() => {});
+  if(!isBootstrapping){
+    const foundSound = new Audio(FOUND_SOUND_SRC);
+    foundSound.play().catch(() => {});
+  }
 
   if(menuWord && menuWord.classList.contains("hidden-word")){
     renderMenuWord(menuWord);
@@ -1297,6 +1301,7 @@ document.getElementById("counter").textContent =
 found + " / " + total;
 
 if(found === total && total > 0){
+if(isBootstrapping) return;
 
 setTimeout(function(){
 alert("fim! 🎉🎉");

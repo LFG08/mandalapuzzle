@@ -748,7 +748,6 @@ loadProgress();
 initMobileMenuOptions();
 applyMenuBounds();
 isBootstrapping = false;
-updateCounter();
 });
 
 
@@ -1265,8 +1264,10 @@ if(!isVisible){
   answerClips[word].classList.add("visible");
   menuWord.classList.add("found");
   menuWord.classList.remove("hint-revealed");
-  const foundSound = new Audio(FOUND_SOUND_SRC);
-  foundSound.play().catch(() => {});
+  if(!isBootstrapping){
+    const foundSound = new Audio(FOUND_SOUND_SRC);
+    foundSound.play().catch(() => {});
+  }
 
   if(menuWord.classList.contains("hidden-word")){
   finishGuessEdit(menuWord, false);

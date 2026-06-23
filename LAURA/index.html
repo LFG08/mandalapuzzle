@@ -310,6 +310,7 @@ display:none;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
+#toggleSound,
 #rotateMandala{
 
 border:none;
@@ -597,6 +598,7 @@ font-family:inherit;
   
 <button id="clearButton" onclick="confirmReset()">Reset</button>
 <button id="toggleClickMode">Desmarcar: ON</button>
+<button id="toggleSound">Som: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
 
 
@@ -690,6 +692,15 @@ let allowToggleOff = true;
 let rotation = 0;
 let completionShown = false;
 let isBootstrapping = true;
+const soundEnabledKey = "LAURA_soundEnabled";
+let soundEnabled = true;
+const toggleSound = document.getElementById("toggleSound");
+
+function updateSoundButton(){
+  if(toggleSound){
+    toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+  }
+}
 
 const menuItems = {};
 const answerClips = {};
@@ -1011,7 +1022,7 @@ function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=tr
   }
 
   let foundAfterToggle = getFoundCount();
-  if(wasJustFound && !isBootstrapping){
+  if(wasJustFound && soundEnabled && !isBootstrapping){
     let foundNote = foundBellSequence[foundAfterToggle - 1];
     if(foundNote){
       playBell(foundNote);
@@ -1183,6 +1194,14 @@ toggleClickMode.onclick = function(){
   this.textContent = allowToggleOff ? "Desmarcar: ON" : "Desmarcar: OFF";
 };
 
+if(toggleSound){
+  toggleSound.onclick = function(){
+    soundEnabled = !soundEnabled;
+    localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+    updateSoundButton();
+  };
+}
+
 toggleMenu.onclick = () => {
   wordMenu.classList.toggle("collapsed");
   applyMenuBounds();
@@ -1264,6 +1283,9 @@ window.addEventListener("load", function(){
   initMobileMenuOptions();
   loadHints();
   loadProgress();
+  let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
+  soundEnabled = savedSoundEnabled !== "0";
+  updateSoundButton();
   applyMenuBounds();
   isBootstrapping = false;
   updateCounter();

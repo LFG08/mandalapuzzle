@@ -555,6 +555,7 @@ const catSoundStartOffsets = {
 "../sound_effects/412017__skymary__cat-meow-short.wav": 0.5
 };
 let soundEnabled = true;
+let isBootstrapping = true;
 let activeCatSound = null;
 
 function clamp(value, min, max){
@@ -688,7 +689,7 @@ li.textContent = hintLevel >= 1 ? li.dataset.hidden : "?".repeat(li.dataset.hidd
 }
 
 function playRandomCatSound(){
-if(!soundEnabled || !catSoundFiles.length) return;
+if(isBootstrapping || !soundEnabled || !catSoundFiles.length) return;
 
 let soundPath = catSoundFiles[Math.floor(Math.random() * catSoundFiles.length)];
 let startOffset = catSoundStartOffsets[soundPath] || 0;
@@ -746,6 +747,7 @@ loadHints();
 let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
 soundEnabled = savedSoundEnabled !== "0";
 toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+isBootstrapping = false;
 });
 
 
@@ -946,6 +948,7 @@ found + " / " + total;
   /* PUZZLE COMPLETE MESSAGE */
 
 if(found === total && total > 0){
+if(isBootstrapping) return;
 
 setTimeout(function(){
 alert("fim! 🎉🎉");
@@ -1094,6 +1097,7 @@ document.body.classList.remove("dragging");
 /* ===== savePuzzleProgress ===== */
 
 function saveProgress(){
+if(isBootstrapping) return;
 
 localStorage.setItem(
 "gatosPuzzleProgress",

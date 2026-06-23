@@ -281,6 +281,7 @@ z-index:999;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
+#toggleSound,
 #rotateMandala{
 
 border:none;
@@ -462,6 +463,7 @@ font-family:inherit;
 
 <button id="clearButton" onclick="confirmReset()">Reset</button>
 <button id="toggleClickMode">Desmarcar: ON</button>
+<button id="toggleSound">Som: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
 
 <select id="overlaySelector">
@@ -675,6 +677,10 @@ overlaySelector.dispatchEvent(new Event("change"));
 /* load answers AFTER overlay is ready */
 loadProgress();
 loadHints();
+let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
+soundEnabled = savedSoundEnabled !== "0";
+updateSoundButton();
+isBootstrapping = false;
 });
 
 /* ===== toggle mode ===== */
@@ -689,6 +695,7 @@ this.textContent=allowToggleOff
 ? "Desmarcar: ON"
 : "Desmarcar: OFF";
 };
+
 
 /* OVERLAY */
 
@@ -767,6 +774,24 @@ tooltip.style.opacity = "0";
 
 const answerClips={};
 const FOUND_SOUND_SRC="../fundodomar/683102__florianreichelt__water-drop.mp3";
+const soundEnabledKey = "TARITS_soundEnabled";
+let soundEnabled = true;
+let isBootstrapping = true;
+const toggleSound = document.getElementById("toggleSound");
+
+function updateSoundButton(){
+if(toggleSound){
+toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+}
+}
+
+if(toggleSound){
+toggleSound.onclick = function(){
+soundEnabled = !soundEnabled;
+localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+updateSoundButton();
+};
+}
 
 function toggleAnswer(area,word){
 
@@ -799,8 +824,10 @@ if(!isVisible){
 
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
-  const foundSound = new Audio(FOUND_SOUND_SRC);
-  foundSound.play().catch(() => {});
+  if(soundEnabled && !isBootstrapping){
+    const foundSound = new Audio(FOUND_SOUND_SRC);
+    foundSound.play().catch(() => {});
+  }
 
 }else if(allowToggleOff){
 
@@ -825,6 +852,7 @@ found + " / " + total;
   /* PUZZLE COMPLETE MESSAGE */
 
 if(found === total && total > 0){
+if(isBootstrapping) return;
 
 setTimeout(function(){
 alert("fim! 🎉🎉");
@@ -832,7 +860,6 @@ alert("fim! 🎉🎉");
 }
 }
 
-window.addEventListener("load", updateCounter);
 /* SAVE PROGRESS */
 
 function loadProgress(){
@@ -1093,6 +1120,7 @@ document.body.classList.remove("dragging");
 /* ===== savePuzzleProgress ===== */
 
 function saveProgress(){
+if(isBootstrapping) return;
 
 localStorage.setItem(
 "TARITSPuzzleProgress",

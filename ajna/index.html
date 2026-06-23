@@ -293,6 +293,7 @@ z-index:999;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
+#toggleSound,
 #rotateMandala{
 
 border:none;
@@ -341,6 +342,7 @@ cursor:pointer;
     </span>
   </span>
   <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleSound">Som: ON</button>
 </div>
 
 </span>
@@ -766,6 +768,24 @@ tooltip.style.opacity = "0";
 
 const answerClips={};
 const FOUND_SOUND_SRC="../celtic/819418__robinhood76__13819-star-twinkle-ding.wav";
+const soundEnabledKey = "AJNA_soundEnabled";
+let soundEnabled = true;
+const toggleSound = document.getElementById("toggleSound");
+
+function updateSoundButton(){
+if(toggleSound){
+toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+}
+}
+
+if(toggleSound){
+toggleSound.onclick = function(){
+soundEnabled = !soundEnabled;
+localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+updateSoundButton();
+};
+}
+
 
 function toggleAnswer(area,word){
 
@@ -800,7 +820,7 @@ if(!isVisible){
 
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
-  if(!isBootstrapping){
+  if(soundEnabled && !isBootstrapping){
     const foundSound = new Audio(FOUND_SOUND_SRC);
     foundSound.play().catch(() => {});
   }
@@ -894,6 +914,9 @@ overlaySelector.dispatchEvent(new Event("change"));
 /* load answers AFTER overlay is ready */
 loadProgress();
 loadHints();
+let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
+soundEnabled = savedSoundEnabled !== "0";
+updateSoundButton();
 isBootstrapping = false;
 
 });

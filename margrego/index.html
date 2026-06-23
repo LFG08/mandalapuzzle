@@ -337,6 +337,7 @@ z-index:999;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
+#toggleSound,
 #rotateMandala{
 
 border:none;
@@ -545,6 +546,7 @@ font-family:inherit;
 
 <button id="clearButton" onclick="confirmReset()">Reset</button>
 <button id="toggleClickMode">Desmarcar: ON</button>
+<button id="toggleSound">Som: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
 
 <select id="overlaySelector">
@@ -763,6 +765,7 @@ this.textContent=allowToggleOff
 ? "Desmarcar: ON"
 : "Desmarcar: OFF";
 };
+
 
 //* OVERLAY */
 
@@ -1229,6 +1232,24 @@ if(touchHintTimer){
 
 const answerClips={};
 const FOUND_SOUND_SRC="../fundodomar/683102__florianreichelt__water-drop.mp3";
+const soundEnabledKey = "MAR_soundEnabled";
+let soundEnabled = true;
+const toggleSound = document.getElementById("toggleSound");
+
+function updateSoundButton(){
+if(toggleSound){
+toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+}
+}
+
+if(toggleSound){
+toggleSound.onclick = function(){
+soundEnabled = !soundEnabled;
+localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+updateSoundButton();
+};
+}
+
 
 function toggleAnswer(area,word){
 
@@ -1264,7 +1285,7 @@ if(!isVisible){
   answerClips[word].classList.add("visible");
   menuWord.classList.add("found");
   menuWord.classList.remove("hint-revealed");
-  if(!isBootstrapping){
+  if(soundEnabled && !isBootstrapping){
     const foundSound = new Audio(FOUND_SOUND_SRC);
     foundSound.play().catch(() => {});
   }

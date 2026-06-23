@@ -335,6 +335,7 @@ z-index:999;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
+#toggleSound,
 #rotateMandala{
 
 border:none;
@@ -551,6 +552,7 @@ font-family:inherit;
 
 <button id="clearButton" onclick="confirmReset()">Reset</button>
 <button id="toggleClickMode">Desmarcar: ON</button>
+<button id="toggleSound">Som: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
 
 <select id="overlaySelector">
@@ -787,6 +789,9 @@ applyContainerTransform();
 
 /* load answers AFTER overlay is ready */
 loadProgress();
+let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
+soundEnabled = savedSoundEnabled !== "0";
+updateSoundButton();
 isBootstrapping = false;
 });
 
@@ -832,6 +837,7 @@ this.textContent=allowToggleOff
 ? "Desmarcar: ON"
 : "Desmarcar: OFF";
 };
+
 
 /* OVERLAY */
 
@@ -1224,6 +1230,24 @@ applyHint(item, nextHint, wordForHint);
 
 const answerClips={};
 const FOUND_SOUND_SRC="../celtic/819418__robinhood76__13819-star-twinkle-ding.wav";
+const soundEnabledKey = "GOYA_soundEnabled";
+let soundEnabled = true;
+const toggleSound = document.getElementById("toggleSound");
+
+function updateSoundButton(){
+if(toggleSound){
+toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+}
+}
+
+if(toggleSound){
+toggleSound.onclick = function(){
+soundEnabled = !soundEnabled;
+localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+updateSoundButton();
+};
+}
+
 
 function toggleAnswer(area,word,options={}){
 
@@ -1263,7 +1287,7 @@ if(shouldShow && !isVisible){
   if(menuWord){
     menuWord.classList.add("found");
   }
-  if(!isBootstrapping){
+  if(soundEnabled && !isBootstrapping){
     const foundSound = new Audio(FOUND_SOUND_SRC);
     foundSound.play().catch(() => {});
   }

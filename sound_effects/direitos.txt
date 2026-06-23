@@ -23,6 +23,7 @@ Hand Bells, F, Single.wav by InspectorJ -- https://freesound.org/s/339816/ -- Li
 Hand Bells, G, Single.wav by InspectorJ -- https://freesound.org/s/339818/ -- License: Attribution 4.0
 Hand Bells, A, Single.wav by InspectorJ -- https://freesound.org/s/339810/ -- License: Attribution 4.0
 Hand Bells, A#/Bb, Single.wav by InspectorJ -- https://freesound.org/s/339811/ -- License: Attribution 4.0
+Hand Bells, High-C, Single.wav by InspectorJ -- https://freesound.org/s/339820/ -- License: Attribution 4.0
 
 
 AMBIANCE: 

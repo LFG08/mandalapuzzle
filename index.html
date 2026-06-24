@@ -576,7 +576,7 @@ data-total="14">
 
   <div class="tags">#alittlelife #seconds,minutes,hours,days, 
    <span class="tag locked-tag"
-        data-unlock="14"
+        data-unlock="1"
         data-real="#puzzlemusical">#???</span>
     
   </div>
@@ -1605,6 +1605,7 @@ let statusEl = card.querySelector(".status");
 let secondsStatus = getSecondsStatus(total);
 setCardProgressMeta(card, secondsStatus.found, secondsStatus.total);
 renderStatus(statusEl, secondsStatus.found, secondsStatus.total);
+updateLockedTags(card, secondsStatus.found);
 let percentage = secondsStatus.total > 0 ? (secondsStatus.found / secondsStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
 return;

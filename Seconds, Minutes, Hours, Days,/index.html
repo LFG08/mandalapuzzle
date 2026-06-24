@@ -80,8 +80,8 @@
     ];
     const mandala=document.getElementById("mandala"),hotspots=document.getElementById("hotspots"),count=document.getElementById("count"),subtitle=document.getElementById("subtitle"),notesLayer=document.getElementById("notesLayer"),effectLayer=document.getElementById("effectLayer"),aboutDialog=document.getElementById("aboutDialog"),endDialog=document.getElementById("endDialog"),creditsDialog=document.getElementById("creditsDialog"),gateDialog=document.getElementById("gateDialog"),gateForm=document.getElementById("gateForm"),gateAnswer=document.getElementById("gateAnswer"),gateError=document.getElementById("gateError");
     const FINAL_EXCERPT={src:"https://upload.wikimedia.org/wikipedia/commons/3/3b/%22Ich_bin_der_Welt_abhanden_gekommen%22_from_R%C3%BCckert-Lieder_-_United_States_Navy_Band.ogg",start:55,end:74};
-    const SAVE_KEY="secondsMinutesHoursDaysProgressV1",GATE_KEY="secondsMinutesHoursDaysGateV1",HINT_KEY="secondsMinutesHoursDaysHintsV1";
-    const state={activeHotspots:new Set(),notesProgress:0,complete:false,hintsRemaining:3,audio:new Map(),flashTimer:null,finalAudio:null,finalStopper:null,finalFinished:null};
+    const SAVE_KEY="secondsMinutesHoursDaysProgressV1",GATE_KEY="secondsMinutesHoursDaysGateV1",HINT_KEY="secondsMinutesHoursDaysHintsV2",INITIAL_HINTS=3;
+    const state={activeHotspots:new Set(),notesProgress:0,complete:false,hintsRemaining:INITIAL_HINTS,audio:new Map(),flashTimer:null,finalAudio:null,finalStopper:null,finalFinished:null};
     POINTS.forEach(point=>{
       const [cx,cy,r]=point.coords;
       const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
@@ -149,11 +149,11 @@
     function setCompletedSubtitle(){subtitle.textContent="greene street"}
     function saveProgress(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({notesProgress:state.notesProgress,activeHotspots:[...state.activeHotspots],complete:state.complete}))}catch{}}
     function loadProgress(){try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(!saved)return;state.notesProgress=Number.isInteger(saved.notesProgress)?Math.max(0,Math.min(saved.notesProgress,NOTE_SEQUENCE.length)):0;state.activeHotspots=new Set(Array.isArray(saved.activeHotspots)?saved.activeHotspots.filter(id=>POINTS.some(point=>point.id===id)):[]);state.complete=Boolean(saved.complete);if(state.complete){state.activeHotspots=new Set(POINTS.map(point=>point.id));setCompletedSubtitle()}}catch{}}
-    function loadHints(){const saved=Number(localStorage.getItem(HINT_KEY));state.hintsRemaining=Number.isInteger(saved)?Math.max(0,Math.min(saved,3)):3}
+    function loadHints(){const saved=Number(localStorage.getItem(HINT_KEY));state.hintsRemaining=Number.isInteger(saved)?Math.max(0,Math.min(saved,INITIAL_HINTS)):INITIAL_HINTS}
     function saveHints(){localStorage.setItem(HINT_KEY,String(state.hintsRemaining))}
     function updateHintButton(){const button=document.getElementById("hints");button.textContent=`Dicas - ${state.hintsRemaining}`;button.disabled=state.hintsRemaining<=0;button.classList.toggle("is-muted",state.hintsRemaining<=0)}
     function pulseHint(elements){elements.forEach(el=>el.classList.add("hint-shine"));setTimeout(()=>elements.forEach(el=>el.classList.remove("hint-shine")),5200)}
-    function useHint(){if(state.hintsRemaining<=0)return;const hintNumber=4-state.hintsRemaining;state.hintsRemaining--;saveHints();updateHintButton();if(hintNumber===1){pulseHint([...document.querySelectorAll(".btn,.note-button")])}else if(hintNumber===2){pulseHint([subtitle])}else{pulseHint([document.getElementById("credits"),document.getElementById("closeCredits")])}}
+    function useHint(){if(state.hintsRemaining<=0)return;const hintNumber=INITIAL_HINTS+1-state.hintsRemaining;state.hintsRemaining--;saveHints();updateHintButton();if(hintNumber===1){pulseHint([...document.querySelectorAll(".btn,.note-button")])}else if(hintNumber===2){pulseHint([subtitle])}else{pulseHint([document.getElementById("credits"),document.getElementById("closeCredits")])}}
     function showGate(){if(localStorage.getItem(GATE_KEY)==="solved")return;gateDialog.hidden=false;requestAnimationFrame(()=>gateAnswer.focus())}
     function revealMask(){
       if(!state.activeHotspots.size)return "radial-gradient(circle at -20% -20%, transparent 0, transparent 1px)";

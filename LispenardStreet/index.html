@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Lispenard Street</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preload" as="image" href="mandala_greene.webp">
+<link rel="preload" as="image" href="gabarito_greene.webp">
+<style>
+:root{--mandala-display-width:3072px;--mandala-display-height:3072px;--menu-width:260px;}
+*{box-sizing:border-box} body{margin:0;background:#11100d;color:#f5e6d3;font-family:"Times New Roman",Times,serif;overflow:auto;cursor:grab;user-select:none}body.dragging{cursor:grabbing}
+.container{position:relative;width:var(--mandala-display-width);height:var(--mandala-display-height);contain:layout paint;transition:transform .25s ease;}
+.container>img{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height)}
+#answersOverlay{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height);pointer-events:none;z-index:3}.answerClip{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height);background:url("gabarito_greene.webp") 0 0/var(--mandala-display-width) var(--mandala-display-height) no-repeat;opacity:0;filter:brightness(1) drop-shadow(0 0 0 rgba(255,231,139,0));transition:opacity .16s linear}.answerClip.visible{opacity:1;animation:answerShine 1.35s ease-in-out infinite}@keyframes answerShine{0%,100%{filter:brightness(1.1) saturate(1.04) drop-shadow(0 0 8px rgba(255,231,139,.42))}50%{filter:brightness(1.7) saturate(1.16) drop-shadow(0 0 24px rgba(255,231,139,.95)) drop-shadow(0 0 46px rgba(255,255,210,.38))}}
+#wordMenu{position:fixed;top:120px;left:30px;width:var(--menu-width);max-height:70vh;background:rgba(0,0,0,.82);border:1px solid #fff;color:#fff;display:flex;flex-direction:column;z-index:20;overflow:visible}#menuHeader{display:flex;align-items:center;justify-content:space-between;gap:6px;touch-action:none}.title{white-space:nowrap;margin:8px;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis}.menu-actions{flex-shrink:0}.info-btn,.menu-btn,#toggleMenu{display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:0;background:#ccc;color:#000;font-size:11px;line-height:16px;padding:0;margin-right:4px;cursor:pointer;text-decoration:none}.menu-btn{font-size:9px}.info-wrapper{position:relative;display:inline-flex}.tooltip{position:absolute;top:calc(100% + 6px);left:auto;right:0;min-width:210px;max-width:min(330px,80vw);padding:8px 10px;border-radius:6px;background:rgba(0,0,0,.94);color:#fff;font-size:12px;line-height:1.35;white-space:normal;opacity:0;visibility:hidden;pointer-events:none;transition:.18s;z-index:9999}.info-wrapper:hover .tooltip,.info-wrapper:focus-within .tooltip{opacity:1;visibility:visible;pointer-events:auto}
+#wordList{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;list-style:none;margin:0;padding:8px;line-height:1.4}#wordList li{padding:4px 0;overflow-wrap:anywhere;word-break:break-word;cursor:pointer}#wordList li.hidden-word::before{content:attr(data-hidden);letter-spacing:normal;color:#f5e6d3}#wordList li.hidden-word::after{content:"";display:none}#wordList.spoilers-on li.hidden-word::before{content:attr(data-mask);letter-spacing:.08em;color:#c8beb0}#wordList.spoilers-on li.hidden-word::after{content:attr(data-def);display:block;margin-top:2px;color:#c9bba6;font-size:.82em;line-height:1.25;letter-spacing:normal}#wordList li.found::before{content:attr(data-hidden);letter-spacing:normal;color:#f5e6d3;text-decoration:line-through;opacity:.62}#wordList li.found::after{content:"";display:none}#wordList.spoilers-on li.found::before{content:attr(data-mask);letter-spacing:.08em;color:#c8beb0;text-decoration:line-through;opacity:.72}#wordList.spoilers-on li.found::after{content:attr(data-def);display:block;margin-top:2px;color:#c9bba6;font-size:.82em;line-height:1.25}#wordList li:focus{outline:1px dashed rgba(255,255,255,.45);outline-offset:2px}.collapsed #wordList{display:none}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle{border:0;border-top:1px solid #fff;background:rgba(0,0,0,.42);color:#fff;padding:8px;font-family:inherit;cursor:pointer;width:100%}
+.tipOverlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}.tipOverlay[hidden]{display:none}.tipDialog{width:min(540px,100%);padding:28px;background:linear-gradient(180deg,#2b2115,#120f0b);border:1px solid rgba(245,230,211,.78);border-radius:22px;box-shadow:0 28px 80px rgba(0,0,0,.62)}.tipDialog h2{margin:0 0 13px;color:#fff0c2}.tipDialog p{margin:0 0 20px;line-height:1.55}.gateForm{display:grid;gap:12px}.gateLabel{display:flex;align-items:center;gap:10px}.gateLabel input{min-width:0;flex:1;border:1px solid rgba(245,230,211,.72);border-radius:999px;padding:8px 12px;background:#080706;color:#fff;font:inherit}.gateError{min-height:1.2em;margin:0;color:#fff0c2}.btn{border:1px solid rgba(245,230,211,.78);border-radius:999px;background:#f5e6d3;color:#120f0b;padding:8px 12px;font:inherit;cursor:pointer}
+@media(max-width:900px) and (any-pointer:coarse){#wordMenu{top:8px;left:8px;width:min(500px,calc(100vw - 16px));font-size:1rem}.tooltip{right:0}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle{font-size:1rem;padding:12px 8px}}
+</style>
+</head>
+<body>
+<div id="wordMenu">
+  <div id="menuHeader"><span class="title">Lispenard Street</span><div class="title menu-actions"><span id="counter"></span><span class="info-wrapper"><button class="info-btn" type="button">?</button><span class="tooltip">Como jogar: encontre as palavras e figuras escondidas. Clique no item do menu para registrar seu palpite. Quando acertar, o desenho correspondente brilha no gabarito.</span></span><a class="menu-btn" href="/">☰</a><button id="toggleMenu" type="button">–</button></div></div>
+  <ul id="wordList"></ul>
+  <button id="clearButton" type="button">Reset</button>
+  <button id="toggleClickMode" type="button">Desmarcar: ON</button>
+  <button id="rotateMandala" type="button">Rotate (0°)</button>
+  <button id="spoilersToggle" type="button">Spoilers: Off</button>
+</div>
+<div class="container" id="mandalaContainer"><img src="mandala_greene.webp" usemap="#image-map" width="3072" height="3072" decoding="async" fetchpriority="high" alt="Lispenard Street mandala"><div id="answersOverlay"></div></div>
+<div id="gateDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-label="Password"><div class="tipDialog"><form id="gateForm" class="gateForm"><p>“His beautiful apartment, he thinks, where he has always been safe... where he was meant to always feel human and whole”</p><label class="gateLabel" for="gateAnswer">Resposta<input id="gateAnswer" name="gateAnswer" autocomplete="off" required></label><p id="gateError" class="gateError" aria-live="polite"></p><button class="btn" type="submit">Entrar</button></form></div></div>
+<map name="image-map">
+    <area target="" alt="Jude" title="Jude" href="" coords="1549,1506,1547,1525,1568,1525,1587,1520,1576,1495" shape="poly">
+    <area target="" alt="Willem" title="Willem" href="" coords="1397,1398,1406,1428,1468,1400,1449,1387" shape="poly">
+    <area target="" alt="x=x" title="x=x" href="" coords="1441,1718,1441,1734,1509,1756,1517,1745" shape="poly">
+    <area target="" alt="JB" title="JB" href="" coords="1574,1184,1568,1208,1609,1219,1606,1192" shape="poly">
+    <area target="" alt="New Zeland" title="New Zeland" href="" coords="2241,1245,2212,1240,2195,1267,2190,1289,2203,1300,2195,1322,2193,1349,2198,1379,2222,1400,2252,1409,2279,1425,2304,1428,2323,1422,2345,1395,2334,1376,2307,1368,2277,1365,2253,1354,2266,1335,2272,1308,2266,1283,2255,1264" shape="poly">
+    <area target="" alt="The Axiom of Equality" title="The Axiom of Equality" href="" coords="1669,2336,1683,2326,1699,2323,1705,2296,1707,2271,1737,2277,1759,2274,1791,2293,1819,2282,1846,2285,1848,2304,1881,2312,1914,2339,1927,2353,1943,2369,1957,2388,1971,2412,1984,2434,2003,2459,2009,2480,1992,2499,1957,2505,1927,2502,1930,2480,1933,2437,1897,2423,1859,2426,1818,2434,1799,2412,1780,2380,1742,2371,1712,2388,1674,2374" shape="poly">
+    <area target="" alt="Malcom" title="Malcom" href="" coords="1178,2025,1188,2038,1172,2068,1137,2052,1102,2040,1118,2033,1150,2022" shape="poly">
+    <area target="" alt="Andy" title="Andy" href="" coords="1457,1241,1492,1252,1495,1279,1446,1257" shape="poly">
+    <area target="" alt="Harold" title="Harold" href="" coords="2032,1964,2060,1977,2100,1932,2076,1916" shape="poly">
+    <area target="" alt="The Postman" title="The Postman" href="" coords="1188,2528,1210,2547,1245,2563,1218,2588,1188,2566,1175,2550" shape="poly">
+    <area target="" alt="Hyenas" title="Hyenas" href="" coords="2445,2724,2467,2748,2518,2716,2515,2675" shape="poly">
+    <area target="" alt="Theory" title="Theory" href="" coords="2627,2808,2689,2814,2697,2843,2613,2833" shape="poly">
+    <area target="" alt="Ribbons" title="Ribbons" href="" coords="600,2938,659,2925,659,2954,600,2960" shape="poly">
+    <area target="" alt="Lucky" title="Lucky" href="" coords="648,2316,632,2350,586,2328,591,2309" shape="poly">
+    <area target="" alt="Richard" title="Richard" href="" coords="648,1859,635,1869,654,1897,681,1905,695,1883,670,1880" shape="poly">
+</map>
+<script>
+document.addEventListener("dragstart",e=>e.preventDefault());
+const STORAGE_KEY="lispenardStreetProgressV1", GATE_KEY="lispenardStreetGateV1", SPOILER_KEY="lispenardStreetSpoilersV1";
+const wordList=document.getElementById("wordList"), answersOverlay=document.getElementById("answersOverlay"), counter=document.getElementById("counter"), menu=document.getElementById("wordMenu");
+const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)==="on"};
+const normalize=value=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const DEFINITIONS={
+  "Lucky":"But you know, I've been ????? all my life",
+  "Fine":"I will always be ????",
+  "Dying":"Oh, ????? he said dismissively. We're all ?????. He just knew his ---- would come sooner than he had planned. But that doesn't mean they weren't Happy Years, that it wasn't a happy life",
+  "Cancer":"He feels his past is a ??????, one he should have treated long ago but instead ignored",
+  "Brother Luke":"but wasn't something about that kindness that made him resemble ??????? ????",
+  "Theory":"he chose to believe the ?????? that made his life less complicated",
+  "Ribbons":"Fucking --- yourself to ??????? for all I care",
+  "Price":"He knew it was the ????? of enjoying life, that if he was to be alert to the things he now found pleasure in, he would have to accept its cost as well",
+  "Used":"born and left and found and ????",
+  "Life":"???? would happen to him, and he would have to answer it, just like the rest of them"
+};
+const areas=[...document.querySelectorAll('map[name="image-map"] area')].filter(area=>area.coords && area.alt).map(area=>({name:area.alt,coords:area.coords.split(",").map(Number),area}));
+function maskFor(name){return "•".repeat(Math.max(4,name.length));}
+function clipPath(coords){const points=[];for(let i=0;i<coords.length;i+=2)points.push(`${(coords[i]/3072*100).toFixed(4)}% ${(coords[i+1]/3072*100).toFixed(4)}%`);return `polygon(${points.join(",")})`;}
+function makeId(name){return "item-"+normalize(name).replace(/ /g,"-");}
+areas.forEach(item=>{const li=document.createElement("li");li.id=makeId(item.name);li.className="hidden-word";li.dataset.hidden=item.name;li.dataset.def=DEFINITIONS[item.name]||"";li.dataset.mask=maskFor(item.name);li.tabIndex=0;li.addEventListener("click",()=>guess(item.name));li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();guess(item.name)}});wordList.appendChild(li);const clip=document.createElement("div");clip.className="answerClip";clip.id="answer-"+makeId(item.name);clip.style.clipPath=clipPath(item.coords);clip.style.webkitClipPath=clip.style.clipPath;answersOverlay.appendChild(clip);item.area.addEventListener("click",e=>{e.preventDefault();guess(item.name)});});
+function guess(name){if(state.found.has(name) && state.deselect){state.found.delete(name);sync();save();return;}const answer=prompt("Palpite:","");if(answer===null)return;if(normalize(answer)===normalize(name)){state.found.add(name);sync();save();}else{alert("tente outra vez");}}
+function sync(){wordList.classList.toggle("spoilers-on",state.spoilers);document.getElementById("spoilersToggle").textContent=`Spoilers: ${state.spoilers?"On":"Off"}`;areas.forEach(item=>{document.getElementById(makeId(item.name)).classList.toggle("found",state.found.has(item.name));document.getElementById("answer-"+makeId(item.name)).classList.toggle("visible",state.found.has(item.name));});counter.textContent=`${state.found.size} / ${areas.length}`;document.getElementById("toggleClickMode").textContent=`Desmarcar: ${state.deselect?"ON":"OFF"}`;document.querySelector(".container").style.transform=`rotate(${state.rotation}deg)`;}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify([...state.found]));}
+document.getElementById("clearButton").onclick=()=>{if(confirm("Resetar progresso?")){state.found.clear();save();sync();}};
+document.getElementById("toggleClickMode").onclick=()=>{state.deselect=!state.deselect;sync();};
+document.getElementById("rotateMandala").onclick=()=>{state.rotation=(state.rotation+90)%360;document.getElementById("rotateMandala").textContent=`Rotate (${state.rotation}°)`;sync();};
+document.getElementById("spoilersToggle").onclick=()=>{state.spoilers=!state.spoilers;localStorage.setItem(SPOILER_KEY,state.spoilers?"on":"off");sync();};
+document.getElementById("toggleMenu").onclick=()=>{menu.classList.toggle("collapsed");document.getElementById("toggleMenu").textContent=menu.classList.contains("collapsed")?"+":"–";};
+(function dragMenu(){let active=false,dx=0,dy=0;document.getElementById("menuHeader").addEventListener("pointerdown",e=>{if(e.target.closest("button,a"))return;active=true;dx=e.clientX-menu.offsetLeft;dy=e.clientY-menu.offsetTop;menu.setPointerCapture?.(e.pointerId);});document.addEventListener("pointermove",e=>{if(!active)return;menu.style.left=Math.max(0,e.clientX-dx)+"px";menu.style.top=Math.max(0,e.clientY-dy)+"px";});document.addEventListener("pointerup",()=>active=false);})();
+(function panPage(){let down=false,sx=0,sy=0,sl=0,st=0;document.addEventListener("pointerdown",e=>{if(e.target.closest("#wordMenu")||e.target.closest("area"))return;down=true;sx=e.clientX;sy=e.clientY;sl=scrollX;st=scrollY;document.body.classList.add("dragging")});document.addEventListener("pointermove",e=>{if(!down)return;scrollTo(sl-(e.clientX-sx),st-(e.clientY-sy));});document.addEventListener("pointerup",()=>{down=false;document.body.classList.remove("dragging")});})();
+const gateDialog=document.getElementById("gateDialog"), gateForm=document.getElementById("gateForm"), gateAnswer=document.getElementById("gateAnswer"), gateError=document.getElementById("gateError");
+gateForm.addEventListener("submit",e=>{e.preventDefault();if(normalize(gateAnswer.value)==="greene street"){localStorage.setItem(GATE_KEY,"solved");gateDialog.hidden=true;gateError.textContent="";}else{gateError.textContent="tente outra vez";gateAnswer.select();}});
+if(localStorage.getItem(GATE_KEY)==="solved")gateDialog.hidden=true;else requestAnimationFrame(()=>gateAnswer.focus());
+sync();
+</script>
+</body>
+</html>

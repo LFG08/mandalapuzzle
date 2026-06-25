@@ -14,7 +14,7 @@
 .container>img{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height)}
 #answersOverlay{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height);pointer-events:none;z-index:3}.answerClip{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height);background:url("gabarito_greene.webp") 0 0/var(--mandala-display-width) var(--mandala-display-height) no-repeat;opacity:0;filter:brightness(1) drop-shadow(0 0 0 rgba(255,231,139,0));transition:opacity .16s linear}.answerClip.visible{opacity:1;animation:answerShine 1.35s ease-in-out infinite}@keyframes answerShine{0%,100%{filter:brightness(1.1) saturate(1.04) drop-shadow(0 0 8px rgba(255,231,139,.42))}50%{filter:brightness(1.7) saturate(1.16) drop-shadow(0 0 24px rgba(255,231,139,.95)) drop-shadow(0 0 46px rgba(255,255,210,.38))}}
 #wordMenu{position:fixed;top:120px;left:30px;width:var(--menu-width);max-height:70vh;background:rgba(0,0,0,.82);border:1px solid #fff;color:#fff;display:flex;flex-direction:column;z-index:20;overflow:visible}#menuHeader{display:flex;align-items:center;justify-content:space-between;gap:6px;touch-action:none}.title{white-space:nowrap;margin:8px;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis}.menu-actions{flex-shrink:0}.info-btn,.menu-btn,#toggleMenu{display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:0;background:#ccc;color:#000;font-size:11px;line-height:16px;padding:0;margin-right:4px;cursor:pointer;text-decoration:none}.menu-btn{font-size:9px}.info-wrapper{position:relative;display:inline-flex}.tooltip{position:absolute;top:calc(100% + 6px);left:auto;right:0;min-width:210px;max-width:min(330px,80vw);padding:8px 10px;border-radius:6px;background:rgba(0,0,0,.94);color:#fff;font-size:12px;line-height:1.35;white-space:normal;opacity:0;visibility:hidden;pointer-events:none;transition:.18s;z-index:9999}.info-wrapper:hover .tooltip,.info-wrapper:focus-within .tooltip{opacity:1;visibility:visible;pointer-events:auto}
-#wordList{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;list-style:none;margin:0;padding:8px;line-height:1.4}#wordList li{padding:4px 0;overflow-wrap:anywhere;word-break:break-word;cursor:pointer}#wordList li.hidden-word::before{content:attr(data-hidden);letter-spacing:normal;color:#f5e6d3}#wordList li.hidden-word::after{content:"";display:none}#wordList.spoilers-on li.hidden-word::before{content:attr(data-mask);letter-spacing:.08em;color:#c8beb0}#wordList.spoilers-on li.hidden-word::after{content:attr(data-def);display:block;margin-top:2px;color:#c9bba6;font-size:.82em;line-height:1.25;letter-spacing:normal}#wordList li.found::before{content:attr(data-hidden);letter-spacing:normal;color:#f5e6d3;text-decoration:line-through;opacity:.62}#wordList li.found::after{content:"";display:none}#wordList.spoilers-on li.found::before{content:attr(data-mask);letter-spacing:.08em;color:#c8beb0;text-decoration:line-through;opacity:.72}#wordList.spoilers-on li.found::after{content:attr(data-def);display:block;margin-top:2px;color:#c9bba6;font-size:.82em;line-height:1.25}#wordList li:focus{outline:1px dashed rgba(255,255,255,.45);outline-offset:2px}.collapsed #wordList{display:none}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle{border:0;border-top:1px solid #fff;background:rgba(0,0,0,.42);color:#fff;padding:8px;font-family:inherit;cursor:pointer;width:100%}
+#wordList{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;list-style:none;margin:0;padding:8px;line-height:1.4}#wordList li{padding:4px 0;overflow-wrap:anywhere;word-break:break-word;cursor:text}#wordList li[data-editing="true"]{background:rgba(255,255,255,.12);outline:1px dashed rgba(255,255,255,.45)}#wordList.spoilers-on li.hidden-word:not(.found)::after{content:attr(data-def);display:block;margin-top:2px;color:#c9bba6;font-size:.82em;line-height:1.25}.found{text-decoration:line-through;opacity:.62}.collapsed #wordList{display:none}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle{border:0;border-top:1px solid #fff;background:rgba(0,0,0,.42);color:#fff;padding:8px;font-family:inherit;cursor:pointer;width:100%}
 .tipOverlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}.tipOverlay[hidden]{display:none}.tipDialog{width:min(540px,100%);padding:28px;background:linear-gradient(180deg,#2b2115,#120f0b);border:1px solid rgba(245,230,211,.78);border-radius:22px;box-shadow:0 28px 80px rgba(0,0,0,.62)}.tipDialog h2{margin:0 0 13px;color:#fff0c2}.tipDialog p{margin:0 0 20px;line-height:1.55}.gateForm{display:grid;gap:12px}.gateLabel{display:flex;align-items:center;gap:10px}.gateLabel input{min-width:0;flex:1;border:1px solid rgba(245,230,211,.72);border-radius:999px;padding:8px 12px;background:#080706;color:#fff;font:inherit}.gateError{min-height:1.2em;margin:0;color:#fff0c2}.btn{border:1px solid rgba(245,230,211,.78);border-radius:999px;background:#f5e6d3;color:#120f0b;padding:8px 12px;font:inherit;cursor:pointer}
 @media(max-width:900px) and (any-pointer:coarse){#wordMenu{top:8px;left:8px;width:min(500px,calc(100vw - 16px));font-size:1rem}.tooltip{right:0}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle{font-size:1rem;padding:12px 8px}}
 </style>
@@ -49,9 +49,9 @@
 </map>
 <script>
 document.addEventListener("dragstart",e=>e.preventDefault());
-const STORAGE_KEY="lispenardStreetProgressV1", GATE_KEY="lispenardStreetGateV1", SPOILER_KEY="lispenardStreetSpoilersV1";
+const STORAGE_KEY="lispenardStreetProgressV1", GUESS_KEY="lispenardStreetGuessesV1", GATE_KEY="lispenardStreetGateV1", SPOILER_KEY="lispenardStreetSpoilersV1";
 const wordList=document.getElementById("wordList"), answersOverlay=document.getElementById("answersOverlay"), counter=document.getElementById("counter"), menu=document.getElementById("wordMenu");
-const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)==="on"};
+const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), guesses:JSON.parse(localStorage.getItem(GUESS_KEY)||"{}"), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)==="on"};
 const normalize=value=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
 const DEFINITIONS={
   "Lucky":"But you know, I've been ????? all my life",
@@ -66,14 +66,52 @@ const DEFINITIONS={
   "Life":"???? would happen to him, and he would have to answer it, just like the rest of them"
 };
 const areas=[...document.querySelectorAll('map[name="image-map"] area')].filter(area=>area.coords && area.alt).map(area=>({name:area.alt,coords:area.coords.split(",").map(Number),area}));
-function maskFor(name){return "•".repeat(Math.max(4,name.length));}
+function maskFor(name){return "?".repeat(Array.from(name).length);}
 function clipPath(coords){const points=[];for(let i=0;i<coords.length;i+=2)points.push(`${(coords[i]/3072*100).toFixed(4)}% ${(coords[i+1]/3072*100).toFixed(4)}%`);return `polygon(${points.join(",")})`;}
 function makeId(name){return "item-"+normalize(name).replace(/ /g,"-");}
-areas.forEach(item=>{const li=document.createElement("li");li.id=makeId(item.name);li.className="hidden-word";li.dataset.hidden=item.name;li.dataset.def=DEFINITIONS[item.name]||"";li.dataset.mask=maskFor(item.name);li.tabIndex=0;li.addEventListener("click",()=>guess(item.name));li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();guess(item.name)}});wordList.appendChild(li);const clip=document.createElement("div");clip.className="answerClip";clip.id="answer-"+makeId(item.name);clip.style.clipPath=clipPath(item.coords);clip.style.webkitClipPath=clip.style.clipPath;answersOverlay.appendChild(clip);item.area.addEventListener("click",e=>{e.preventDefault();guess(item.name)});});
-function guess(name){if(state.found.has(name) && state.deselect){state.found.delete(name);sync();save();return;}const answer=prompt("Palpite:","");if(answer===null)return;if(normalize(answer)===normalize(name)){state.found.add(name);sync();save();}else{alert("tente outra vez");}}
-function sync(){wordList.classList.toggle("spoilers-on",state.spoilers);document.getElementById("spoilersToggle").textContent=`Spoilers: ${state.spoilers?"On":"Off"}`;areas.forEach(item=>{document.getElementById(makeId(item.name)).classList.toggle("found",state.found.has(item.name));document.getElementById("answer-"+makeId(item.name)).classList.toggle("visible",state.found.has(item.name));});counter.textContent=`${state.found.size} / ${areas.length}`;document.getElementById("toggleClickMode").textContent=`Desmarcar: ${state.deselect?"ON":"OFF"}`;document.querySelector(".container").style.transform=`rotate(${state.rotation}deg)`;}
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify([...state.found]));}
-document.getElementById("clearButton").onclick=()=>{if(confirm("Resetar progresso?")){state.found.clear();save();sync();}};
+function trimGuess(text,name){return Array.from((text||"").replace(/\r?\n/g,"")).slice(0,Array.from(name).length).join("");}
+areas.forEach(item=>{
+  const li=document.createElement("li");
+  li.id=makeId(item.name);
+  li.className="hidden-word";
+  li.dataset.hidden=item.name;
+  li.dataset.def=DEFINITIONS[item.name]||"";
+  li.dataset.mask=maskFor(item.name);
+  li.tabIndex=0;
+  li.addEventListener("click",()=>startGuessEdit(li));
+  li.addEventListener("keydown",event=>{if(event.key==="Enter"&&li.contentEditable!=="true"){event.preventDefault();startGuessEdit(li)}});
+  li.addEventListener("input",()=>{if(li.contentEditable!=="true")return;const trimmed=trimGuess(li.textContent,item.name);if(li.textContent!==trimmed){li.textContent=trimmed;placeCaretAtEnd(li);}});
+  li.addEventListener("blur",()=>finishGuessEdit(li));
+  wordList.appendChild(li);
+  const clip=document.createElement("div");
+  clip.className="answerClip";
+  clip.id="answer-"+makeId(item.name);
+  clip.style.clipPath=clipPath(item.coords);
+  clip.style.webkitClipPath=clip.style.clipPath;
+  answersOverlay.appendChild(clip);
+  item.area.addEventListener("click",event=>{event.preventDefault();toggleAnswer(item.name);});
+});
+function placeCaretAtEnd(element){const range=document.createRange();const selection=window.getSelection();range.selectNodeContents(element);range.collapse(false);selection.removeAllRanges();selection.addRange(range);}
+function startGuessEdit(li){if(li.classList.contains("found"))return;li.contentEditable="true";li.dataset.editing="true";li.textContent=state.guesses[li.id]||"";li.focus();placeCaretAtEnd(li);}
+function finishGuessEdit(li,saveGuess=true){if(li.contentEditable!=="true")return;if(saveGuess){const guess=trimGuess(li.textContent,li.dataset.hidden);if(guess)state.guesses[li.id]=guess;else delete state.guesses[li.id];saveGuesses();}li.contentEditable="false";delete li.dataset.editing;renderMenuItem(li);}
+function renderMenuItem(li){if(li.classList.contains("found")){li.textContent=li.dataset.hidden;return;}li.textContent=state.spoilers?(state.guesses[li.id]||li.dataset.mask):li.dataset.hidden;}
+function toggleAnswer(name){
+  if(state.found.has(name)){if(!state.deselect)return;state.found.delete(name);}
+  else state.found.add(name);
+  sync();
+  saveProgress();
+}
+function sync(){
+  wordList.classList.toggle("spoilers-on",state.spoilers);
+  document.getElementById("spoilersToggle").textContent=`Spoilers: ${state.spoilers?"On":"Off"}`;
+  areas.forEach(item=>{const li=document.getElementById(makeId(item.name));li.classList.toggle("found",state.found.has(item.name));if(li.contentEditable!=="true")renderMenuItem(li);document.getElementById("answer-"+makeId(item.name)).classList.toggle("visible",state.found.has(item.name));});
+  counter.textContent=`${state.found.size} / ${areas.length}`;
+  document.getElementById("toggleClickMode").textContent=`Desmarcar: ${state.deselect?"ON":"OFF"}`;
+  document.querySelector(".container").style.transform=`rotate(${state.rotation}deg)`;
+}
+function saveProgress(){localStorage.setItem(STORAGE_KEY,JSON.stringify([...state.found]));}
+function saveGuesses(){localStorage.setItem(GUESS_KEY,JSON.stringify(state.guesses));}
+document.getElementById("clearButton").onclick=()=>{if(confirm("Resetar progresso?")){state.found.clear();state.guesses={};saveProgress();saveGuesses();sync();}};
 document.getElementById("toggleClickMode").onclick=()=>{state.deselect=!state.deselect;sync();};
 document.getElementById("rotateMandala").onclick=()=>{state.rotation=(state.rotation+90)%360;document.getElementById("rotateMandala").textContent=`Rotate (${state.rotation}°)`;sync();};
 document.getElementById("spoilersToggle").onclick=()=>{state.spoilers=!state.spoilers;localStorage.setItem(SPOILER_KEY,state.spoilers?"on":"off");sync();};

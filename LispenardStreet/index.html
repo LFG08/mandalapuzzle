@@ -86,6 +86,7 @@
 document.addEventListener("dragstart",e=>e.preventDefault());
 const STORAGE_KEY="lispenardStreetProgressV1", GUESS_KEY="lispenardStreetGuessesV1", HINT_KEY="lispenardStreetHintsV1", GATE_KEY="lispenardStreetGateV1", SPOILER_KEY="lispenardStreetSpoilersV1", SPOILER_ALERT_KEY="lispenardStreetSpoilerAlertV1", MENU_ZOOM_KEY="lispenardStreetMenuZoomV1", MANDALA_ZOOM_KEY="lispenardStreetMandalaZoomV1";
 const wordList=document.getElementById("wordList"), answersOverlay=document.getElementById("answersOverlay"), counter=document.getElementById("counter"), menu=document.getElementById("wordMenu"), tooltip=document.getElementById("wordTooltip");
+const MANDALA_WIDTH=3072, MANDALA_HEIGHT=3072;
 const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), guesses:JSON.parse(localStorage.getItem(GUESS_KEY)||"{}"), hints:JSON.parse(localStorage.getItem(HINT_KEY)||"{}"), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)!=="off", menuZoom:Number(localStorage.getItem(MENU_ZOOM_KEY)||1)||1, mandalaZoom:Number(localStorage.getItem(MANDALA_ZOOM_KEY)||1)||1, audio:new Map(), endDismissed:false};
 const BELL_SEQUENCE=["C","D","F","A","A","Bb","A","G","G","F","G","A","highC","Bb"];
 const BELL_SOUNDS={
@@ -139,7 +140,12 @@ const DEFINITIONS={
   "Willem":"the lighting had been particularly golden, like beeswax (…) had been yellowish… like the skin of a late-fall apple.",
   "x=x":"Math is one thing, nothing else is that deductive"
 };
-const areas=[...document.querySelectorAll('map[name="image-map"] area')].filter(area=>area.coords && area.alt).map(area=>{area.removeAttribute("title");area.removeAttribute("href");area.style.cursor="grab";return {name:area.alt,coords:area.coords.split(",").map(Number),area};});
+const areas=[...document.querySelectorAll('map[name="image-map"] area')].filter(area=>area.coords && area.alt).map(area=>{area.removeAttribute("title");area.removeAttribute("href");area.style.cursor="grab";const coords=area.coords.split(",").map(Number);return {name:area.alt,coords,area};});
+function syncImageMapCoords(){
+  const scaleX=(MANDALA_WIDTH*state.mandalaZoom)/MANDALA_WIDTH;
+  const scaleY=(MANDALA_HEIGHT*state.mandalaZoom)/MANDALA_HEIGHT;
+  areas.forEach(item=>{item.area.coords=item.coords.map((coord,index)=>String(Math.round(coord*(index%2?scaleY:scaleX)))).join(",");});
+}
 function maskFor(name){return "?".repeat(Array.from(name).length);}
 function clipPath(coords,expand=1){
   const points=[];
@@ -272,6 +278,7 @@ function sync(){
   document.getElementById("toggleClickMode").textContent=`Desmarcar: ${state.deselect?"ON":"OFF"}`;
   document.documentElement.style.setProperty("--menu-zoom",state.menuZoom);
   document.documentElement.style.setProperty("--mandala-zoom",state.mandalaZoom);
+  syncImageMapCoords();
   document.querySelector(".container").style.transform=`rotate(${state.rotation}deg)`;
   updateEndDialog();
 }

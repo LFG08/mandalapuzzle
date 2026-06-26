@@ -280,8 +280,10 @@ function saveGuesses(){localStorage.setItem(GUESS_KEY,JSON.stringify(state.guess
 document.getElementById("clearButton").onclick=()=>{if(confirm("Resetar progresso?")){state.found.clear();state.guesses={};state.hints={};saveProgress();saveGuesses();saveHints();document.querySelectorAll("#wordList li").forEach(li=>{delete li.dataset.hintLevel;li.classList.remove("hint-revealed");});sync();}};
 document.getElementById("toggleClickMode").onclick=()=>{state.deselect=!state.deselect;sync();};
 document.getElementById("rotateMandala").onclick=()=>{state.rotation=(state.rotation+90)%360;document.getElementById("rotateMandala").textContent=`Rotate (${state.rotation}°)`;sync();};
-document.getElementById("zoomMandala").onclick=()=>{state.mandalaZoom=state.mandalaZoom>=1.5?.75:Number((state.mandalaZoom+.25).toFixed(2));localStorage.setItem(MANDALA_ZOOM_KEY,state.mandalaZoom);sync();};
-document.getElementById("zoomMenuWords").onclick=()=>{state.menuWordZoom=state.menuWordZoom>=1.75?.75:Number((state.menuWordZoom+.25).toFixed(2));localStorage.setItem(MENU_ZOOM_KEY,state.menuWordZoom);sync();};
+const zoomMandalaButton=document.getElementById("zoomMandala");
+if(zoomMandalaButton){zoomMandalaButton.onclick=()=>{state.mandalaZoom=state.mandalaZoom>=1.5?.75:Number((state.mandalaZoom+.25).toFixed(2));localStorage.setItem(MANDALA_ZOOM_KEY,state.mandalaZoom);sync();};}
+const zoomMenuWordsButton=document.getElementById("zoomMenuWords");
+if(zoomMenuWordsButton){zoomMenuWordsButton.onclick=()=>{state.menuZoom=state.menuZoom>=1.75?.75:Number((state.menuZoom+.25).toFixed(2));localStorage.setItem(MENU_ZOOM_KEY,state.menuZoom);sync();};}
 document.getElementById("spoilersToggle").onclick=()=>{state.spoilers=!state.spoilers;localStorage.setItem(SPOILER_KEY,state.spoilers?"on":"off");sync();};
 
 function clampZoom(value,min,max){return Math.min(max,Math.max(min,Number(value.toFixed(2))));}
@@ -301,7 +303,7 @@ function setMenuZoom(nextZoom){
   sync();
 }
 document.addEventListener("wheel",event=>{
-  if(event.ctrlKey||event.target.closest(".tipOverlay"))return;
+  if(event.target.closest(".tipOverlay"))return;
   if(event.target.closest("#wordMenu")){
     if(!event.target.closest("#menuHeader"))return;
     event.preventDefault();

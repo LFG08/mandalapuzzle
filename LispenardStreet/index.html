@@ -21,13 +21,15 @@
 </head>
 <body>
 <div id="wordMenu">
-  <div id="menuHeader"><span class="title">Greene Street</span><div class="title menu-actions"><span id="counter"></span><span class="info-wrapper"><button class="info-btn" type="button">i</button><span class="tooltip">Greene Street — elementos escondidos inspirados em A Little Life.</span></span><a class="menu-btn" href="/">☰</a><button id="toggleMenu" type="button">–</button></div></div>
+  <div id="menuHeader"><span class="title">Greene Street</span><div class="title menu-actions"><span id="counter"></span><span class="info-wrapper"><button class="info-btn" type="button">?</button><span class="tooltip">Como jogar: Encontre as (P)alavras e (F)iguras escondidas. Utilize o menu para registrar o seu palpite. Em caso de acerto, o menu revela o nome do elemento escondido.
+      Para dicas, clique com o botão direito do mouse no menu. 
+      1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!</span></span><a class="menu-btn" href="/">☰</a><button id="toggleMenu" type="button">–</button></div></div>
   <ul id="wordList"></ul>
   <div id="wordTooltip"></div>
   <button id="clearButton" type="button">Reset</button>
   <button id="toggleClickMode" type="button">Desmarcar: ON</button>
   <button id="rotateMandala" type="button">Rotate (0°)</button>
-  <button id="spoilersToggle" type="button">Spoilers: Off</button>
+  <button id="spoilersToggle" type="button">Spoilers: On</button>
 </div>
 <div class="container" id="mandalaContainer"><img src="mandala_greene.webp" usemap="#image-map" width="3072" height="3072" decoding="async" fetchpriority="high" alt="Lispenard Street mandala"><div id="answersOverlay"><div id="regionHint-1" class="hint-region" style="left:0;top:0;width:1024px;height:1024px"></div><div id="regionHint-2" class="hint-region" style="left:1024px;top:0;width:1024px;height:1024px"></div><div id="regionHint-3" class="hint-region" style="left:2048px;top:0;width:1024px;height:1024px"></div><div id="regionHint-4" class="hint-region" style="left:0;top:1024px;width:1024px;height:1024px"></div><div id="regionHint-5" class="hint-region" style="left:1024px;top:1024px;width:1024px;height:1024px"></div><div id="regionHint-6" class="hint-region" style="left:2048px;top:1024px;width:1024px;height:1024px"></div><div id="regionHint-7" class="hint-region" style="left:0;top:2048px;width:1024px;height:1024px"></div><div id="regionHint-8" class="hint-region" style="left:1024px;top:2048px;width:1024px;height:1024px"></div><div id="regionHint-9" class="hint-region" style="left:2048px;top:2048px;width:1024px;height:1024px"></div></div></div>
 <div id="gateDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-label="Password"><div class="tipDialog"><form id="gateForm" class="gateForm"><p>“His beautiful apartment, he thinks, where he has always been safe... where he was meant to always feel human and whole”</p><label class="gateLabel" for="gateAnswer"><input id="gateAnswer" name="gateAnswer" autocomplete="off" aria-label="Resposta" required></label><p id="gateError" class="gateError" aria-live="polite"></p><button class="btn" type="submit">Entrar</button></form></div></div>
@@ -82,7 +84,7 @@
 document.addEventListener("dragstart",e=>e.preventDefault());
 const STORAGE_KEY="lispenardStreetProgressV1", GUESS_KEY="lispenardStreetGuessesV1", HINT_KEY="lispenardStreetHintsV1", GATE_KEY="lispenardStreetGateV1", SPOILER_KEY="lispenardStreetSpoilersV1", SPOILER_ALERT_KEY="lispenardStreetSpoilerAlertV1";
 const wordList=document.getElementById("wordList"), answersOverlay=document.getElementById("answersOverlay"), counter=document.getElementById("counter"), menu=document.getElementById("wordMenu"), tooltip=document.getElementById("wordTooltip");
-const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), guesses:JSON.parse(localStorage.getItem(GUESS_KEY)||"{}"), hints:JSON.parse(localStorage.getItem(HINT_KEY)||"{}"), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)==="on", audio:new Map(), endDismissed:false};
+const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), guesses:JSON.parse(localStorage.getItem(GUESS_KEY)||"{}"), hints:JSON.parse(localStorage.getItem(HINT_KEY)||"{}"), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)!=="off", audio:new Map(), endDismissed:false}; 
 const BELL_SEQUENCE=["C","D","F","A","A","Bb","A","G","G","F","G","A","highC","Bb"];
 const BELL_SOUNDS={
   C:"../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
@@ -166,7 +168,7 @@ areas.forEach(item=>{
   li.addEventListener("keydown",event=>{if(event.key==="Enter"&&li.contentEditable!=="true"){event.preventDefault();startGuessEdit(li)}});
   li.addEventListener("input",()=>{if(li.contentEditable!=="true")return;const trimmed=trimGuess(li.textContent,item.name);if(li.textContent!==trimmed){li.textContent=trimmed;placeCaretAtEnd(li);}});
   li.addEventListener("blur",()=>finishGuessEdit(li));
-  li.addEventListener("mouseenter",()=>{if(li.dataset.def)showTooltip(li.dataset.def);});
+  li.addEventListener("mouseenter",()=>{if(!state.spoilers&&li.dataset.def)showTooltip(li.dataset.def);});
   li.addEventListener("mousemove",moveTooltip);
   li.addEventListener("mouseleave",hideTooltip);
   wordList.appendChild(li);
@@ -195,8 +197,8 @@ function renderMenuItem(li){
   if(li.classList.contains("found")){li.textContent=li.dataset.hidden;return;}
   const hintLevel=Number(li.dataset.hintLevel||0);
   li.classList.toggle("hint-revealed",hintLevel>=1);
-  if(state.spoilers||hintLevel>=1){li.textContent=li.dataset.hidden;return;}
-  li.textContent=state.guesses[li.id]||li.dataset.mask;
+  if(!state.spoilers||hintLevel>=1){li.textContent=li.dataset.hidden;return;}
+  li.textContent=li.dataset.def||state.guesses[li.id]||li.dataset.mask;
 }
 function saveHints(){localStorage.setItem(HINT_KEY,JSON.stringify(state.hints));}
 function showTooltip(text){tooltip.textContent=text;tooltip.style.opacity="1";}

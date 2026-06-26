@@ -100,6 +100,23 @@ body.dragging{
 cursor:grabbing;
 }
 
+.mandala-footnote{
+width:var(--mandala-display-size);
+box-sizing:border-box;
+margin:0 0 34px;
+padding:12px 18px 16px;
+color:#f7ead9;
+background:rgba(0,0,0,0.32);
+border-top:1px solid rgba(255,255,255,0.38);
+font-family:Times New Roman, Times, serif;
+font-size:0.88rem;
+line-height:1.35;
+}
+
+.mandala-footnote a{
+color:#ffe678;
+}
+
 /* ================= MENU ================= */
 
 #wordMenu{
@@ -425,6 +442,10 @@ cursor:pointer;
   <div id="regionHint-6" class="hint-region" style="left:1px;top:83.3335%;width:4093px;height:16.6665%;"></div>
 
 </div>
+
+<footer class="mandala-footnote">
+Oud motifs by tarane468 on <a href="https://freesound.org/" target="_blank" rel="noopener">Freesound</a>, licensed under Creative Commons 0 — <a href="https://freesound.org/s/550876/" target="_blank" rel="noopener">#1 Oud Motif D1</a>, <a href="https://freesound.org/s/550877/" target="_blank" rel="noopener">#7 Oud Motif D3</a>, and <a href="https://freesound.org/s/550878/" target="_blank" rel="noopener">#6 Oud Motif A2</a>.
+</footer>
 
 <!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
 
@@ -899,7 +920,31 @@ tooltip.style.opacity = "0";
 
 const answerClips={};
 
-function toggleAnswer(area,word){
+const foundSoundSources = [
+  "../sound_effects/550876__tarane468__1-oud-motif-d1.wav",
+  "../sound_effects/550877__tarane468__7-oud-motif-d3.wav",
+  "../sound_effects/550878__tarane468__6-oud-motif-a2.wav"
+];
+let foundSoundQueue = [];
+
+function refillFoundSoundQueue(){
+foundSoundQueue = foundSoundSources.slice();
+for(let i = foundSoundQueue.length - 1; i > 0; i--){
+  const j = Math.floor(Math.random() * (i + 1));
+  [foundSoundQueue[i], foundSoundQueue[j]] = [foundSoundQueue[j], foundSoundQueue[i]];
+}
+}
+
+function playFoundSound(){
+if(!foundSoundQueue.length){
+  refillFoundSoundQueue();
+}
+const sound = new Audio(foundSoundQueue.pop());
+sound.volume = 0.72;
+sound.play().catch(() => {});
+}
+
+function toggleAnswer(area,word,silent){
 
 if(!area.coords) return;
 
@@ -935,6 +980,10 @@ if(!isVisible){
   if(menuWord.classList.contains("hidden-word")){
   menuWord.textContent = menuWord.dataset.hidden;
  }
+
+  if(!silent){
+    playFoundSound();
+  }
 }
 
 else if(allowToggleOff){
@@ -990,7 +1039,7 @@ if(area){
 if(!answerClips[word] ||
    !answerClips[word].classList.contains("visible")){
 
-toggleAnswer(area, word);
+toggleAnswer(area, word, true);
 }
 }
 });

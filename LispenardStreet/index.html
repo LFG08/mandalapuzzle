@@ -28,6 +28,8 @@
   <button id="clearButton" type="button">Reset</button>
   <button id="toggleClickMode" type="button">Desmarcar: ON</button>
   <button id="rotateMandala" type="button">Rotate (0°)</button>
+  <button id="zoomMandala" type="button">Mandala Zoom: 100%</button>
+  <button id="zoomMenuWords" type="button">Menu Words: 100%</button>
   <button id="spoilersToggle" type="button">Spoilers: On</button>
 </div>
 <div id="wordTooltip" role="tooltip" aria-hidden="true"></div>
@@ -280,6 +282,8 @@ function saveGuesses(){localStorage.setItem(GUESS_KEY,JSON.stringify(state.guess
 document.getElementById("clearButton").onclick=()=>{if(confirm("Resetar progresso?")){state.found.clear();state.guesses={};state.hints={};saveProgress();saveGuesses();saveHints();document.querySelectorAll("#wordList li").forEach(li=>{delete li.dataset.hintLevel;li.classList.remove("hint-revealed");});sync();}};
 document.getElementById("toggleClickMode").onclick=()=>{state.deselect=!state.deselect;sync();};
 document.getElementById("rotateMandala").onclick=()=>{state.rotation=(state.rotation+90)%360;document.getElementById("rotateMandala").textContent=`Rotate (${state.rotation}°)`;sync();};
+document.getElementById("zoomMandala").onclick=()=>{state.mandalaZoom=state.mandalaZoom>=1.5?.75:Number((state.mandalaZoom+.25).toFixed(2));localStorage.setItem(MANDALA_ZOOM_KEY,state.mandalaZoom);sync();};
+document.getElementById("zoomMenuWords").onclick=()=>{state.menuWordZoom=state.menuWordZoom>=1.75?.75:Number((state.menuWordZoom+.25).toFixed(2));localStorage.setItem(MENU_ZOOM_KEY,state.menuWordZoom);sync();};
 document.getElementById("spoilersToggle").onclick=()=>{state.spoilers=!state.spoilers;localStorage.setItem(SPOILER_KEY,state.spoilers?"on":"off");sync();};
 
 function clampZoom(value,min,max){return Math.min(max,Math.max(min,Number(value.toFixed(2))));}

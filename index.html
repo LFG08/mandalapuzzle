@@ -547,6 +547,23 @@ data-total="34">
   
 </a>
 
+<a href="LispenardStreet" class="card"
+data-key="lispenardStreetProgressV1"
+data-total="39">
+
+  <div class="thumb">
+    <img src="thumb_lispenard.png" loading="lazy">
+  </div>
+
+  <div class="tags">#caça-palavras #caça-elementos #alittlelife #lispenardstreet
+    <span class="tag locked-tag"
+          data-unlock-storage="lispenardStreetGateV1"
+          data-real="#greenestreet">#???</span>
+  </div>
+  <div class="status"></div>
+
+</a>
+
 <a href="rotadeseda" class="card"
 data-key="silkPuzzleProgress"
 data-total="50">
@@ -789,11 +806,15 @@ function updateLockedTags(scope, foundCount, unlockFlags){
 let root = scope || document;
 root.querySelectorAll(".locked-tag").forEach(tag => {
 let unlockByStage = tag.dataset.unlockStage;
+let unlockByStorage = tag.dataset.unlockStorage;
 let unlockedByStage = unlockByStage
 ? Boolean(unlockFlags && unlockFlags[unlockByStage])
 : null;
+let unlockedByStorage = unlockByStorage
+? localStorage.getItem(unlockByStorage) === "solved"
+: null;
 let unlockAt = Number(tag.dataset.unlock || 0);
-let isUnlocked = unlockByStage ? unlockedByStage : foundCount >= unlockAt;
+let isUnlocked = unlockByStorage ? unlockedByStorage : (unlockByStage ? unlockedByStage : foundCount >= unlockAt);
 
 if(isUnlocked){
 tag.textContent = tag.dataset.real || tag.textContent;
@@ -1771,6 +1792,7 @@ let statusEl = card.querySelector(".status");
 let found = getStoredProgressCount(key);
 setCardProgressMeta(card, found, total);
 renderStatus(statusEl, found, total);
+updateLockedTags(card, found);
 
 let percentage = total > 0 ? (found / total) * 100 : 0;
 applyThumbBorder(card, percentage);

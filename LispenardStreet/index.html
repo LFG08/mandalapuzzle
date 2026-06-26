@@ -13,7 +13,7 @@
 .container{position:relative;width:var(--mandala-display-width);height:var(--mandala-display-height);contain:layout;overflow:visible;transition:transform .25s ease;}
 .container>img{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height)}
 #answersOverlay{position:absolute;inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height);pointer-events:none;z-index:3}.hint-region{position:absolute;z-index:4;border:8px solid rgba(255,230,120,0);box-shadow:0 0 0 rgba(255,230,120,0);opacity:0;transition:opacity .2s ease,border-color .2s ease,box-shadow .2s ease}.hint-region.active{opacity:1;border-color:rgba(255,230,120,.95);box-shadow:0 0 34px rgba(255,230,120,.95),inset 0 0 24px rgba(255,230,120,.42);animation:hintPulse .9s ease-in-out 2}@keyframes hintPulse{0%,100%{transform:scale(1)}50%{transform:scale(.996)}}.answerGlow,.answerClip{position:absolute;opacity:0;transition:opacity .16s linear}.answerGlow{z-index:0;border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,246,162,.9) 0%,rgba(255,224,83,.58) 28%,rgba(255,179,34,.22) 48%,rgba(255,179,34,0) 62%);filter:blur(7px) saturate(1.12);mix-blend-mode:screen;will-change:filter,opacity}.answerClip{inset:0;width:var(--mandala-display-width);height:var(--mandala-display-height);background:url("gabarito_greene.webp") 0 0/var(--mandala-display-width) var(--mandala-display-height) no-repeat;z-index:1;filter:brightness(1)}.answerGlow.visible{opacity:.16}.answerClip.visible{opacity:1;filter:brightness(1.08) saturate(1.03)}
-#wordMenu{position:fixed;top:120px;left:30px;width:var(--menu-width);max-height:70vh;background:rgba(0,0,0,.82);border:1px solid #fff;color:#fff;display:flex;flex-direction:column;z-index:20;overflow:visible}#menuHeader{display:flex;align-items:center;justify-content:space-between;gap:6px;touch-action:none}.title{white-space:nowrap;margin:8px;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis}.menu-actions{flex-shrink:0;overflow:visible}.info-btn,.menu-btn,#toggleMenu{display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:0;background:#ccc;color:#000;font-size:11px;line-height:16px;padding:0;margin-right:4px;cursor:pointer;text-decoration:none}.menu-btn{font-size:9px}.info-wrapper{position:relative;display:inline-flex;align-items:center;justify-content:center}.info-wrapper .info-btn{touch-action:manipulation}.tooltip{position:absolute;top:calc(100% + 6px);right:0;min-width:180px;max-width:min(320px,80vw);padding:8px 10px;border-radius:6px;background:rgba(0,0,0,.92);color:#fff;font-size:12px;line-height:1.35;white-space:normal;overflow-wrap:break-word;word-break:break-word;box-sizing:border-box;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease;z-index:9999}.tooltip.help-tooltip{width:max-content;max-width:min(320px,80vw)}.info-wrapper:hover .tooltip,.info-wrapper:focus-within .tooltip,.info-wrapper.active .tooltip{opacity:1;visibility:visible;pointer-events:auto}
+#wordMenu{position:fixed;top:120px;left:30px;width:var(--menu-width);max-height:70vh;background:rgba(0,0,0,.82);border:1px solid #fff;color:#fff;display:flex;flex-direction:column;z-index:20;overflow:visible}#menuHeader{display:flex;align-items:center;justify-content:space-between;gap:6px;touch-action:none}.title{white-space:nowrap;margin:8px;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis}.menu-actions{flex-shrink:0;overflow:visible}.info-btn,.menu-btn,#toggleMenu{display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:0;background:#ccc;color:#000;font-size:11px;line-height:16px;padding:0;margin-right:4px;cursor:pointer;text-decoration:none}.menu-btn{font-size:9px}.info-wrapper{position:relative;display:inline-flex;align-items:center;justify-content:center}.info-wrapper .info-btn{touch-action:manipulation}.tooltip{position:absolute;top:calc(100% + 6px);right:0;min-width:180px;max-width:min(320px,80vw);padding:8px 10px;border-radius:6px;background:rgba(0,0,0,.92);color:#fff;font-size:12px;line-height:1.35;white-space:normal;overflow-wrap:break-word;word-break:break-word;box-sizing:border-box;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease;z-index:9999}.tooltip.help-tooltip{width:max-content;min-width:240px;max-width:min(380px,80vw)}.info-wrapper:hover .tooltip,.info-wrapper:focus-within .tooltip,.info-wrapper.active .tooltip{opacity:1;visibility:visible;pointer-events:auto}
 #wordList{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;list-style:none;margin:0;padding:8px;line-height:1.4}#wordList li{padding:4px 0;overflow-wrap:anywhere;word-break:break-word;cursor:text}#wordList li[data-editing="true"]{background:rgba(255,255,255,.12);outline:1px dashed rgba(255,255,255,.45)}.found{text-decoration:line-through;opacity:.62}.hint-revealed{color:#fff0a6;text-shadow:0 0 8px rgba(255,231,139,.35)}.collapsed #wordList{display:none}#wordTooltip{position:fixed;background:rgba(0,0,0,.86);color:#f5e6d3;padding:6px 10px;font-size:12px;font-family:Georgia,serif;border:1px solid #f5e6d3;pointer-events:none;opacity:0;transition:opacity .15s;z-index:999}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle{border:0;border-top:1px solid #fff;background:rgba(0,0,0,.42);color:#fff;padding:8px;font-family:inherit;cursor:pointer;width:100%}
 .tipOverlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:18px;background:rgba(5,12,10,.72);backdrop-filter:blur(5px)}.tipOverlay[hidden]{display:none}.tipDialog{width:min(430px,100%);padding:22px;background:linear-gradient(145deg,rgba(31,42,34,.96),rgba(12,18,15,.96));border:1px solid rgba(190,174,130,.82);border-radius:17px;box-shadow:0 18px 54px rgba(0,0,0,.58),inset 0 0 32px rgba(94,114,82,.16)}.tipDialog h2{margin:0 0 14px;color:#eadcb7;font-size:1.4rem;text-align:center;letter-spacing:.08em}.tipDialog p{margin:0 0 16px;line-height:1.5;color:#f1e8cf}.spoilerExample{margin:0 0 16px;padding:10px 12px;border:1px solid rgba(218,205,166,.42);border-radius:10px;background:rgba(4,8,7,.42);cursor:pointer}.spoilerExample p{margin:0 0 8px}.spoilerExample p:last-child{margin-bottom:0}.gateForm{display:grid;gap:11px}.gateLabel{display:block}.gateLabel input{width:100%;min-width:0;border:1px solid rgba(218,205,166,.82);border-radius:999px;padding:8px 12px;background:rgba(4,8,7,.82);color:#f7f0dc;font:inherit;outline:none}.gateLabel input:focus{box-shadow:0 0 0 2px rgba(127,146,99,.42)}.gateError{min-height:1.1em;margin:0;color:#eadcb7}.btn{border:1px solid rgba(218,205,166,.78);border-radius:999px;background:#e8dac0;color:#142019;padding:8px 12px;font:inherit;cursor:pointer}
 @media(max-width:900px) and (any-pointer:coarse){#wordMenu{top:8px;left:8px;width:min(500px,calc(100vw - 16px));font-size:1rem}.tooltip{right:0}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle{font-size:1rem;padding:12px 8px}}
@@ -21,16 +21,16 @@
 </head>
 <body>
 <div id="wordMenu">
-  <div id="menuHeader"><span class="title">Greene Street</span><div class="title menu-actions"><span id="counter"></span><span class="info-wrapper"><button class="info-btn" type="button">?</button><span class="tooltip">Como jogar: Encontre as (P)alavras e (F)iguras escondidas. Utilize o menu para registrar o seu palpite. Em caso de acerto, o menu revela o nome do elemento escondido.
+  <div id="menuHeader"><span class="title">Greene Street</span><div class="title menu-actions"><span id="counter"></span><span class="info-wrapper"><button class="info-btn" type="button">?</button><span class="tooltip help-tooltip">Como jogar: Encontre as (P)alavras e (F)iguras escondidas. Utilize o menu para registrar o seu palpite. Em caso de acerto, o menu revela o nome do elemento escondido.
       Para dicas, clique com o botão direito do mouse no menu. 
       1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!</span></span><a class="menu-btn" href="/">☰</a><button id="toggleMenu" type="button">–</button></div></div>
   <ul id="wordList"></ul>
-  <div id="wordTooltip"></div>
   <button id="clearButton" type="button">Reset</button>
   <button id="toggleClickMode" type="button">Desmarcar: ON</button>
   <button id="rotateMandala" type="button">Rotate (0°)</button>
   <button id="spoilersToggle" type="button">Spoilers: On</button>
 </div>
+<div id="wordTooltip" role="tooltip" aria-hidden="true"></div>
 <div class="container" id="mandalaContainer"><img src="mandala_greene.webp" usemap="#image-map" width="3072" height="3072" decoding="async" fetchpriority="high" alt="Lispenard Street mandala"><div id="answersOverlay"><div id="regionHint-1" class="hint-region" style="left:0;top:0;width:1024px;height:1024px"></div><div id="regionHint-2" class="hint-region" style="left:1024px;top:0;width:1024px;height:1024px"></div><div id="regionHint-3" class="hint-region" style="left:2048px;top:0;width:1024px;height:1024px"></div><div id="regionHint-4" class="hint-region" style="left:0;top:1024px;width:1024px;height:1024px"></div><div id="regionHint-5" class="hint-region" style="left:1024px;top:1024px;width:1024px;height:1024px"></div><div id="regionHint-6" class="hint-region" style="left:2048px;top:1024px;width:1024px;height:1024px"></div><div id="regionHint-7" class="hint-region" style="left:0;top:2048px;width:1024px;height:1024px"></div><div id="regionHint-8" class="hint-region" style="left:1024px;top:2048px;width:1024px;height:1024px"></div><div id="regionHint-9" class="hint-region" style="left:2048px;top:2048px;width:1024px;height:1024px"></div></div></div>
 <div id="gateDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-label="Password"><div class="tipDialog"><form id="gateForm" class="gateForm"><p>“His beautiful apartment, he thinks, where he has always been safe... where he was meant to always feel human and whole”</p><label class="gateLabel" for="gateAnswer"><input id="gateAnswer" name="gateAnswer" autocomplete="off" aria-label="Resposta" required></label><p id="gateError" class="gateError" aria-live="polite"></p><button class="btn" type="submit">Entrar</button></form></div></div>
 <div id="spoilerAlertDialog" class="tipOverlay" role="dialog" aria-modal="true" aria-labelledby="spoilerAlertTitle" hidden><div class="tipDialog"><h2 id="spoilerAlertTitle"> 
@@ -161,14 +161,14 @@ areas.forEach(item=>{
   li.dataset.hidden=item.name;
   li.dataset.def=DEFINITIONS[item.name]||"";
   li.dataset.mask=maskFor(item.name);
-  li.dataset.hintLevel=String(Math.min(Number(state.hints[li.id]||0),2));
+  li.dataset.hintLevel=String(Number(state.hints[li.id]||0));
   li.tabIndex=0;
   li.addEventListener("click",event=>{if(event.button!==0)return;startGuessEdit(li);});
   li.addEventListener("contextmenu",event=>{event.preventDefault();requestHint(li);});
   li.addEventListener("keydown",event=>{if(event.key==="Enter"&&li.contentEditable!=="true"){event.preventDefault();startGuessEdit(li)}});
   li.addEventListener("input",()=>{if(li.contentEditable!=="true")return;const trimmed=trimGuess(li.textContent,item.name);if(li.textContent!==trimmed){li.textContent=trimmed;placeCaretAtEnd(li);}});
   li.addEventListener("blur",()=>finishGuessEdit(li));
-  li.addEventListener("mouseenter",()=>{if(!state.spoilers&&li.dataset.def)showTooltip(li.dataset.def);});
+  li.addEventListener("mouseenter",()=>{if(state.spoilers&&li.dataset.def)showTooltip(li.dataset.def);});
   li.addEventListener("mousemove",moveTooltip);
   li.addEventListener("mouseleave",hideTooltip);
   wordList.appendChild(li);
@@ -198,12 +198,12 @@ function renderMenuItem(li){
   const hintLevel=Number(li.dataset.hintLevel||0);
   li.classList.toggle("hint-revealed",hintLevel>=1);
   if(!state.spoilers||hintLevel>=1){li.textContent=li.dataset.hidden;return;}
-  li.textContent=li.dataset.def||state.guesses[li.id]||li.dataset.mask;
+  li.textContent=state.guesses[li.id]||li.dataset.mask;
 }
 function saveHints(){localStorage.setItem(HINT_KEY,JSON.stringify(state.hints));}
-function showTooltip(text){tooltip.textContent=text;tooltip.style.opacity="1";}
+function showTooltip(text){tooltip.textContent=text;tooltip.setAttribute("aria-hidden","false");tooltip.style.opacity="1";}
 function moveTooltip(event){tooltip.style.left=(event.clientX+10)+"px";tooltip.style.top=(event.clientY+10)+"px";}
-function hideTooltip(){tooltip.style.opacity="0";}
+function hideTooltip(){tooltip.style.opacity="0";tooltip.setAttribute("aria-hidden","true");}
 function getAreaBounds(item){const xs=[],ys=[];for(let i=0;i<item.coords.length;i+=2){xs.push(item.coords[i]);ys.push(item.coords[i+1]);}return {minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};}
 function getRegionForItem(item){const b=getAreaBounds(item),cx=(b.minX+b.maxX)/2,cy=(b.minY+b.maxY)/2,col=Math.min(2,Math.max(0,Math.floor(cx/1024))),row=Math.min(2,Math.max(0,Math.floor(cy/1024)));return {id:row*3+col+1,minX:col*1024,maxX:(col+1)*1024,minY:row*1024,maxY:(row+1)*1024};}
 let activeRegionHintTimeout=null;
@@ -220,14 +220,14 @@ function requestHint(li){
   if(li.classList.contains("found"))return;
   finishGuessEdit(li);
   const currentHint=Number(li.dataset.hintLevel||0);
-  if(currentHint>=2){alert("Esse elemento já recebeu todas as dicas.");return;}
-  const nextHint=currentHint+1;
-  if(!confirm("Deseja a "+nextHint+"° dica?"))return;
-  li.dataset.hintLevel=String(nextHint);
-  state.hints[li.id]=nextHint;
+  const effectiveHint=(!state.spoilers&&currentHint===0)?2:currentHint+1;
+  const storedHint=(!state.spoilers&&currentHint===0)?1:effectiveHint;
+  if(!confirm("Deseja a "+effectiveHint+"° dica?"))return;
+  li.dataset.hintLevel=String(storedHint);
+  state.hints[li.id]=storedHint;
   renderMenuItem(li);
   saveHints();
-  if(nextHint>=2){const item=areas.find(areaItem=>areaItem.name===li.dataset.hidden);if(item){const region=getRegionForItem(item);flashRegionHint(region);centerViewOnRegion(region);}}
+  if(effectiveHint>=2){const item=areas.find(areaItem=>areaItem.name===li.dataset.hidden);if(item){const region=getRegionForItem(item);flashRegionHint(region);centerViewOnRegion(region);}}
 }
 function playBellForFoundIndex(index){
   const note=BELL_SEQUENCE[index % BELL_SEQUENCE.length];

@@ -29,7 +29,7 @@
   <main class="app">
     <section class="stage" aria-label="Musical mandala puzzle">
       <div id="mandala" class="mandala">
-        <img class="base" src="mandala.png" usemap="#image-map" alt="Mandala puzzle background" width="1080" height="1920">
+        <img class="base" src="mandala.png" alt="Mandala puzzle background" width="1080" height="1920">
         <img id="notesLayer" class="notes" src="notas.png" alt="" aria-hidden="true" width="1080" height="1920">
         <img id="effectLayer" class="effect" src="efeito.png" alt="" aria-hidden="true" width="1080" height="1920">
         <svg id="hotspots" class="hotspots" viewBox="0 0 1080 1920" aria-label="Clickable notes"></svg>
@@ -90,7 +90,6 @@
       circle.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggleHotspot(point)}});
       hotspots.appendChild(circle);
     });
-    document.querySelectorAll("area").forEach(area=>area.addEventListener("click",event=>{event.preventDefault();const point=POINTS.find(item=>item.id===area.dataset.id||item.note===area.alt||item.note.replace(/\s+/g,"")===area.alt);if(point)toggleHotspot(point)}));
     document.getElementById("menu").onclick=()=>{window.location.href="../index.html"};
     document.getElementById("about").onclick=()=>{aboutDialog.hidden=false;document.getElementById("closeAbout").focus()};
     document.getElementById("closeAbout").onclick=()=>{aboutDialog.hidden=true;document.getElementById("about").focus()};

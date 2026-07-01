@@ -629,6 +629,44 @@ areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
 
 const answerClips={};
 
+const harpSoundBaseSrc = "../sound_effects/ConcertHarp-SFZ+FLAC-20200702/samples/";
+// Concert Harp samples from FreePats: https://freepats.zenvoid.org/OrchestralStrings/harp.html
+const foundHarpSequence = [
+  { sample: "G3_f1.flac", semitones: 1 },  // Ab3
+  { sample: "B3_f1.flac", semitones: -1 }, // Bb3
+  { sample: "D4_mf1.flac", semitones: -1 }, // Db4
+  { sample: "D4_mf1.flac", semitones: 1 },  // Eb4
+  { sample: "F4_f1.flac", semitones: 0 },  // F4
+  { sample: "D4_mf1.flac", semitones: 1 },  // Eb4
+  { sample: "D4_mf1.flac", semitones: -1 }, // Db4
+  { sample: "B3_f1.flac", semitones: -1 }, // Bb3
+  { sample: "D4_mf1.flac", semitones: -1 }, // Db4
+  { sample: "B3_f1.flac", semitones: -1 }, // Bb3
+  { sample: "G3_f1.flac", semitones: 1 },  // Ab3
+  { sample: "B3_f1.flac", semitones: -1 }, // Bb3
+  { sample: "G3_f1.flac", semitones: 1 },  // Ab3
+  { sample: "F4_f1.flac", semitones: -12 },// F3
+  { sample: "E3_f1.flac", semitones: -1 }, // Eb3
+  { sample: "C3_f2.flac", semitones: 1 },  // Db3
+  { sample: "B3_f1.flac", semitones: -1 }, // Bb3
+  { sample: "G3_f1.flac", semitones: 1 },  // Ab3
+  { sample: "B3_f1.flac", semitones: -1 }, // Bb3
+  { sample: "D4_mf1.flac", semitones: -1 }, // Db4
+  { sample: "D4_mf1.flac", semitones: 1 },  // Eb4
+  { sample: "D4_mf1.flac", semitones: 0 }   // D4
+];
+let isLoadingProgress = false;
+
+function playFoundHarpSound(foundIndex){
+  if(isLoadingProgress) return;
+  const note = foundHarpSequence[foundIndex % foundHarpSequence.length];
+  if(!note) return;
+  const sound = new Audio(harpSoundBaseSrc + note.sample);
+  sound.playbackRate = Math.pow(2, note.semitones / 12);
+  sound.volume = 0.7;
+  sound.play().catch(() => {});
+}
+
 function toggleAnswer(area,word){
 
 if(!area.coords) return;
@@ -658,8 +696,10 @@ let isVisible = answerClips[word].classList.contains("visible");
 
 if(!isVisible){
 
+  const foundIndex = document.querySelectorAll("#wordList li.found").length;
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
+  playFoundHarpSound(foundIndex);
 
 }else if(allowToggleOff){
 
@@ -701,6 +741,7 @@ if(!saved) return;
 
 let words = JSON.parse(saved);
 
+isLoadingProgress = true;
 words.forEach(word => {
 
 let area = document.querySelector(
@@ -717,6 +758,7 @@ toggleAnswer(area, word);
 }
 }
 });
+isLoadingProgress = false;
 }
 
 /* ===== reset ===== */

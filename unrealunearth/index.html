@@ -659,29 +659,31 @@ const concertHarpRegions = [
   { sample: "F7_f1.flac", keycenter: 101, lokey: 100, hikey: 101, tune: 0 }
 ];
 
+// Extracted in note-on order from sound_effects/FIRSTTIME.MID, which stores the
+// melody on a single MIDI track. Each newly found word advances one note.
 const foundHarpSequence = [
-  { midi: 56, name: "Ab3" },
-  { midi: 58, name: "Bb3" },
-  { midi: 61, name: "Db4" },
-  { midi: 63, name: "Eb4" },
-  { midi: 65, name: "F4" },
-  { midi: 63, name: "Eb4" },
-  { midi: 61, name: "Db4" },
-  { midi: 58, name: "Bb3" },
-  { midi: 61, name: "Db4" },
-  { midi: 58, name: "Bb3" },
-  { midi: 56, name: "Ab3" },
-  { midi: 58, name: "Bb3" },
-  { midi: 56, name: "Ab3" },
+  { midi: 44, name: "Ab2" },
+  { midi: 46, name: "Bb2" },
+  { midi: 49, name: "Db3" },
+  { midi: 51, name: "Eb3" },
   { midi: 53, name: "F3" },
   { midi: 51, name: "Eb3" },
   { midi: 49, name: "Db3" },
-  { midi: 58, name: "Bb3" },
-  { midi: 56, name: "Ab3" },
-  { midi: 58, name: "Bb3" },
-  { midi: 61, name: "Db4" },
-  { midi: 63, name: "Eb4" },
-  { midi: 62, name: "D4" }
+  { midi: 46, name: "Bb2" },
+  { midi: 49, name: "Db3" },
+  { midi: 46, name: "Bb2" },
+  { midi: 44, name: "Ab2" },
+  { midi: 46, name: "Bb2" },
+  { midi: 44, name: "Ab2" },
+  { midi: 41, name: "F2" },
+  { midi: 39, name: "Eb2" },
+  { midi: 37, name: "Db2" },
+  { midi: 46, name: "Bb2" },
+  { midi: 44, name: "Ab2" },
+  { midi: 46, name: "Bb2" },
+  { midi: 49, name: "Db3" },
+  { midi: 51, name: "Eb3" },
+  { midi: 49, name: "Db3" }
 ];
 
 function getConcertHarpRegion(midi){

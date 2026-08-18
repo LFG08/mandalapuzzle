@@ -337,6 +337,7 @@ function isMenuScrollbarInteraction(event){
   return event.clientX>=rect.right-scrollbarWidth;
 }
 function menuResizeEdges(event){
+  if(menu.classList.contains("collapsed")||event.target.closest?.("button,a"))return "";
   if(isMenuScrollbarInteraction(event))return "";
   const rect=menu.getBoundingClientRect();
   return `${event.clientY-rect.top<=MENU_RESIZE_MARGIN?"n":event.clientY>=rect.bottom-MENU_RESIZE_MARGIN?"s":""}${event.clientX-rect.left<=MENU_RESIZE_MARGIN?"w":event.clientX>=rect.right-MENU_RESIZE_MARGIN?"e":""}`;

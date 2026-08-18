@@ -981,11 +981,12 @@ let bounds = getMandalaBoundsInViewport();
 if(!bounds) return { left: targetLeft, top: targetTop };
 
 let maxLeft = Math.max(bounds.left, bounds.right - menu.offsetWidth);
-let maxTop = Math.max(bounds.top, bounds.bottom - menu.offsetHeight);
+let topEdge = Math.max(bounds.top, 0);
+let maxTop = Math.max(topEdge, bounds.bottom - menu.offsetHeight);
 
 return {
   left: clamp(targetLeft, bounds.left, maxLeft),
-  top: clamp(targetTop, bounds.top, maxTop)
+  top: clamp(targetTop, topEdge, maxTop)
 };
 }
 
@@ -1028,7 +1029,7 @@ offsetY=clientY-menu.offsetTop;
 function moveMenuDrag(clientX, clientY){
 if(!dragging) return;
 let targetLeft = clientX - offsetX;
-let targetTop = clientY - offsetY;
+let targetTop = Math.max(clientY - offsetY, 0);
 if(isMobileViewport()){
   let clamped = clampMenuToMandala(targetLeft, targetTop);
   menu.style.left = clamped.left + "px";

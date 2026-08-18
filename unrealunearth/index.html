@@ -826,21 +826,41 @@ localStorage.removeItem("unrealPuzzleProgress");
 let menu=wordMenu;
 let header=menuHeader;
 
-let offsetX,offsetY,dragging=false;
+let offsetX,offsetY,dragging=false,dragPointerId=null;
 
-header.onmousedown=e=>{
+header.addEventListener("pointerdown", e=>{
+if(e.target.closest("button, a, input, select")) return;
 dragging=true;
+dragPointerId=e.pointerId;
 offsetX=e.clientX-menu.offsetLeft;
 offsetY=e.clientY-menu.offsetTop;
-};
+header.setPointerCapture?.(e.pointerId);
+});
 
-document.onmousemove=e=>{
+document.addEventListener("pointermove", e=>{
 if(!dragging) return;
-menu.style.left=(e.clientX-offsetX)+"px";
-menu.style.top=(e.clientY-offsetY)+"px";
-};
+if(dragPointerId !== null && e.pointerId !== dragPointerId) return;
 
-document.onmouseup=()=>dragging=false;
+let maxLeft=Math.max(0,window.innerWidth-menu.offsetWidth);
+let maxTop=Math.max(0,window.innerHeight-menu.offsetHeight);
+let nextLeft=Math.min(Math.max(e.clientX-offsetX,0),maxLeft);
+let nextTop=Math.min(Math.max(e.clientY-offsetY,0),maxTop);
+
+menu.style.left=nextLeft+"px";
+menu.style.top=nextTop+"px";
+menu.style.right="auto";
+menu.style.bottom="auto";
+});
+
+function stopMenuDrag(e){
+if(!dragging) return;
+if(e && dragPointerId !== null && e.pointerId !== dragPointerId) return;
+dragging=false;
+dragPointerId=null;
+}
+
+document.addEventListener("pointerup",stopMenuDrag);
+document.addEventListener("pointercancel",stopMenuDrag);
 
 /* ===== collapse menu ===== */
 

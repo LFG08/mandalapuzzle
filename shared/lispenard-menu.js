@@ -102,7 +102,10 @@
   const resizeMargin = 10;
   let resize = null;
   function resizeEdges(event) {
-    if (menu.classList.contains("collapsed") || event.target.closest("button, a, select")) return "";
+    // Leave the word list (including its native scrollbar) to the browser. Treating
+    // a scrollbar press as an east-edge resize hides the scrollbar while the user
+    // is trying to scroll it.
+    if (menu.classList.contains("collapsed") || event.target.closest("#wordList, button, a, select")) return "";
     const rect = menu.getBoundingClientRect();
     return `${event.clientY - rect.top <= resizeMargin ? "n" : event.clientY >= rect.bottom - resizeMargin ? "s" : ""}${event.clientX - rect.left <= resizeMargin ? "w" : event.clientX >= rect.right - resizeMargin ? "e" : ""}`;
   }

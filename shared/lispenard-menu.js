@@ -1,0 +1,107 @@
+(function () {
+  const menu = document.getElementById("wordMenu");
+  const container = document.querySelector(".container");
+  const toggle = document.getElementById("toggleMenu");
+  if (!menu || !container) return;
+
+  const prefix = `${location.pathname.replace(/\W+/g, "_")}_`;
+  let menuZoom = Number(localStorage.getItem(prefix + "menuZoom")) || 1;
+  let mandalaZoom = Number(localStorage.getItem(prefix + "mandalaZoom")) || 1;
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, Number(value.toFixed(2))));
+  }
+
+  function syncMenuZoom() {
+    document.documentElement.style.setProperty("--menu-zoom", menuZoom);
+  }
+
+  function syncMandalaZoom(nextZoom, event) {
+    const oldZoom = mandalaZoom;
+    const newZoom = clamp(nextZoom, .5, 2.5);
+    if (newZoom === oldZoom) return;
+
+    const anchorX = event ? event.clientX : innerWidth / 2;
+    const anchorY = event ? event.clientY : innerHeight / 2;
+    const rect = container.getBoundingClientRect();
+    const contentX = (scrollX + anchorX - (scrollX + rect.left)) / oldZoom;
+    const contentY = (scrollY + anchorY - (scrollY + rect.top)) / oldZoom;
+
+    mandalaZoom = newZoom;
+    container.style.zoom = mandalaZoom;
+    localStorage.setItem(prefix + "mandalaZoom", mandalaZoom);
+
+    scrollTo(
+      scrollX + rect.left + contentX * newZoom - anchorX,
+      scrollY + rect.top + contentY * newZoom - anchorY
+    );
+  }
+
+  syncMenuZoom();
+  container.style.zoom = mandalaZoom;
+
+  window.addEventListener("load", function () {
+    menu.classList.remove("mobile-pinned", "pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right");
+    menu.style.right = "auto";
+    menu.style.bottom = "auto";
+  });
+
+  document.addEventListener("wheel", function (event) {
+    if (event.target.closest(".tipOverlay")) return;
+    event.preventDefault();
+    if (event.target.closest("#wordMenu")) {
+      menuZoom = clamp(menuZoom + (event.deltaY < 0 ? .1 : -.1), .75, 1.8);
+      localStorage.setItem(prefix + "menuZoom", menuZoom);
+      syncMenuZoom();
+      return;
+    }
+    syncMandalaZoom(mandalaZoom * (event.deltaY < 0 ? 1.1 : .9), event);
+  }, { passive: false });
+
+  if (toggle) {
+    function syncToggle() {
+      const collapsed = menu.classList.contains("collapsed");
+      toggle.textContent = collapsed ? "+" : "–";
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.setAttribute("aria-label", collapsed ? "Expandir menu" : "Minimizar menu");
+      toggle.title = collapsed ? "Expandir menu" : "Minimizar menu";
+    }
+    toggle.addEventListener("click", function () { requestAnimationFrame(syncToggle); });
+    syncToggle();
+  }
+
+  const resizeMargin = 10;
+  let resize = null;
+  function resizeEdges(event) {
+    if (menu.classList.contains("collapsed") || event.target.closest("button, a, select")) return "";
+    const rect = menu.getBoundingClientRect();
+    return `${event.clientY - rect.top <= resizeMargin ? "n" : event.clientY >= rect.bottom - resizeMargin ? "s" : ""}${event.clientX - rect.left <= resizeMargin ? "w" : event.clientX >= rect.right - resizeMargin ? "e" : ""}`;
+  }
+  menu.addEventListener("pointerdown", function (event) {
+    const edges = resizeEdges(event);
+    if (!edges) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = menu.getBoundingClientRect();
+    resize = { edges, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+    menu.style.maxHeight = "none";
+    menu.setPointerCapture?.(event.pointerId);
+  }, true);
+  document.addEventListener("pointermove", function (event) {
+    if (!resize) return;
+    const dx = event.clientX - resize.x;
+    const dy = event.clientY - resize.y;
+    let { left, top, width, height } = resize;
+    if (resize.edges.includes("e")) width = Math.max(190, resize.width + dx);
+    if (resize.edges.includes("s")) height = Math.max(120, resize.height + dy);
+    if (resize.edges.includes("w")) { left = Math.min(resize.left + dx, resize.left + resize.width - 190); width = resize.width + resize.left - left; }
+    if (resize.edges.includes("n")) { top = Math.min(resize.top + dy, resize.top + resize.height - 120); height = resize.height + resize.top - top; }
+    menu.style.left = `${Math.max(0, left)}px`;
+    menu.style.top = `${Math.max(0, top)}px`;
+    menu.style.width = `${width}px`;
+    menu.style.height = `${height}px`;
+  });
+  function stopResize() { resize = null; }
+  document.addEventListener("pointerup", stopResize);
+  document.addEventListener("pointercancel", stopResize);
+}());

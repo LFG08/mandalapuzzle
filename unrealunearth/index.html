@@ -250,7 +250,8 @@ display:none;
 #overlaySelector,
 #clearButton,
 #toggleClickMode,
-#rotateMandala{
+#rotateMandala,
+#soundButton{
 
 border:none;
 border-top:1px solid white;
@@ -264,6 +265,21 @@ cursor:pointer;
 width:100%;
 box-sizing:border-box;
 
+}
+
+/* ================= CREDITS ================= */
+
+.sound-credits{
+width:2048px;
+box-sizing:border-box;
+padding:28px 24px 36px;
+color:rgba(255,255,255,0.82);
+font:14px/1.5 'Times New Roman', Times, serif;
+text-align:center;
+}
+
+.sound-credits a{
+color:#f0c28b;
 }
 
 </style>
@@ -333,6 +349,7 @@ box-sizing:border-box;
 
 <button id="clearButton" onclick="confirmReset()">Reset</button>
 <button id="toggleClickMode">Desmarcar: ON</button>
+<button id="soundButton" type="button" aria-pressed="true">Som: ON</button>
 <button id="rotateMandala">Rotate (0°)</button>
 
 <select id="overlaySelector">
@@ -354,6 +371,16 @@ box-sizing:border-box;
 <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
 
 </div>
+
+<footer class="sound-credits">
+Som: <cite>Concert Harp</cite>, montado por
+<a href="mailto:roberto@zenvoid.org">roberto@zenvoid.org</a> para o
+<a href="https://freepats.zenvoid.org/" target="_blank" rel="noopener noreferrer">FreePats</a>,
+com amostras da
+<a href="https://vis.versilstudios.com/vcsl.html" target="_blank" rel="noopener noreferrer">Versilian Community Sample Library</a>,
+interpretadas por K. Smith. Disponibilizado sob
+<a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="license noopener noreferrer">CC0 1.0</a>.
+</footer>
 
 <!-- ================= IMAGE MAP ================= -->
 
@@ -629,81 +656,86 @@ areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
 
 const answerClips={};
 
-const harpSoundBaseSrc = "/sound_effects/ConcertHarp-SFZ+FLAC-20200702/samples/";
-// Concert Harp samples from FreePats: https://freepats.zenvoid.org/OrchestralStrings/harp.html
-// Region data is mirrored from sound_effects/ConcertHarp-SFZ+FLAC-20200702/ConcertHarp-20200702.sfz.
-// The SFZ file defines the original sample pitch, key range, and small cent tuning corrections;
-// applying those values here keeps transposed notes in tune instead of relying on ad-hoc semitone offsets.
-const concertHarpRegions = [
-  { sample: "E1_f1.flac", keycenter: 28, lokey: 28, hikey: 29, tune: 22 },
-  { sample: "G1_f1.flac", keycenter: 31, lokey: 30, hikey: 33, tune: 20 },
-  { sample: "B1_f1.flac", keycenter: 35, lokey: 34, hikey: 36, tune: 10 },
-  { sample: "D2_f1.flac", keycenter: 38, lokey: 37, hikey: 39, tune: 2 },
-  { sample: "F2_f1.flac", keycenter: 41, lokey: 40, hikey: 43, tune: 4 },
-  { sample: "A2_f1.flac", keycenter: 45, lokey: 44, hikey: 46, tune: -1 },
-  { sample: "C3_f2.flac", keycenter: 48, lokey: 47, hikey: 50, tune: 0 },
-  { sample: "E3_f1.flac", keycenter: 52, lokey: 51, hikey: 53, tune: -3 },
-  { sample: "G3_f1.flac", keycenter: 55, lokey: 54, hikey: 57, tune: -3 },
-  { sample: "B3_f1.flac", keycenter: 59, lokey: 58, hikey: 61, tune: 1 },
-  { sample: "D4_mf1.flac", keycenter: 62, lokey: 61, hikey: 63, tune: 7 },
-  { sample: "F4_f1.flac", keycenter: 65, lokey: 63, hikey: 68, tune: 0 },
-  { sample: "C5_f1.flac", keycenter: 72, lokey: 69, hikey: 74, tune: 3 },
-  { sample: "E5_f1.flac", keycenter: 76, lokey: 75, hikey: 77, tune: 6 },
-  { sample: "G5_f1.flac", keycenter: 79, lokey: 78, hikey: 81, tune: 6 },
-  { sample: "B5_f1.flac", keycenter: 83, lokey: 82, hikey: 84, tune: 3 },
-  { sample: "D6_f1.flac", keycenter: 86, lokey: 85, hikey: 87, tune: 8 },
-  { sample: "F6_f1.flac", keycenter: 89, lokey: 88, hikey: 91, tune: 0 },
-  { sample: "A6_f1.flac", keycenter: 93, lokey: 92, hikey: 94, tune: 0 },
-  { sample: "B6_f1.flac", keycenter: 95, lokey: 95, hikey: 96, tune: 0 },
-  { sample: "D7_f1.flac", keycenter: 98, lokey: 97, hikey: 99, tune: 0 },
-  { sample: "F7_f1.flac", keycenter: 101, lokey: 100, hikey: 101, tune: 0 }
-];
+const soundStorageKey = "UNREAL_soundEnabled";
+const soundButton = document.getElementById("soundButton");
+const noteAudioUrl = "/sound_effects/ConcertHarp-SFZ+FLAC-20200702/blue_notes_first_15s.mp3";
+const numberOfNotes = 22;
+let soundEnabled = localStorage.getItem(soundStorageKey) !== "false";
+let audioContext;
+let noteBuffer;
+let noteStarts=[];
 
-// Extracted in note-on order from sound_effects/FIRSTTIME.MID, which stores the
-// melody on a single MIDI track. Each newly found word advances one note.
-const foundHarpSequence = [
-  { midi: 44, name: "Ab2" },
-  { midi: 46, name: "Bb2" },
-  { midi: 49, name: "Db3" },
-  { midi: 51, name: "Eb3" },
-  { midi: 53, name: "F3" },
-  { midi: 51, name: "Eb3" },
-  { midi: 49, name: "Db3" },
-  { midi: 46, name: "Bb2" },
-  { midi: 49, name: "Db3" },
-  { midi: 46, name: "Bb2" },
-  { midi: 44, name: "Ab2" },
-  { midi: 46, name: "Bb2" },
-  { midi: 44, name: "Ab2" },
-  { midi: 41, name: "F2" },
-  { midi: 39, name: "Eb2" },
-  { midi: 37, name: "Db2" },
-  { midi: 46, name: "Bb2" },
-  { midi: 44, name: "Ab2" },
-  { midi: 46, name: "Bb2" },
-  { midi: 49, name: "Db3" },
-  { midi: 51, name: "Eb3" },
-  { midi: 49, name: "Db3" }
-];
-
-function getConcertHarpRegion(midi){
-  return concertHarpRegions.find(region => midi >= region.lokey && midi <= region.hikey)
-    || concertHarpRegions.reduce((closest, region) => {
-      return Math.abs(region.keycenter - midi) < Math.abs(closest.keycenter - midi) ? region : closest;
-    });
+function updateSoundButton(){
+  soundButton.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+  soundButton.setAttribute("aria-pressed", String(soundEnabled));
 }
+
+// Locate the 22 attacks in the supplied recording. This lets every discovery
+// play the next original MP3 note rather than a separately synthesized pitch.
+function findNoteStarts(buffer){
+  const data=buffer.getChannelData(0);
+  const step=Math.max(1, Math.floor(buffer.sampleRate * 0.01));
+  const envelope=[];
+  for(let start=0;start<data.length;start+=step){
+    let energy=0;
+    const end=Math.min(start+step, data.length);
+    for(let i=start;i<end;i++) energy+=data[i]*data[i];
+    envelope.push(Math.sqrt(energy/(end-start)));
+  }
+
+  const candidates=[];
+  for(let i=6;i<envelope.length-2;i++){
+    const rise=envelope[i]-Math.min(...envelope.slice(i-6,i));
+    if(rise>0 && rise>=envelope[i+1]-Math.min(...envelope.slice(i-5,i+1))){
+      candidates.push({time:i*step/buffer.sampleRate, strength:rise});
+    }
+  }
+
+  const selected=[];
+  candidates.sort((a,b)=>b.strength-a.strength).forEach(candidate=>{
+    if(selected.length<numberOfNotes && selected.every(note=>Math.abs(note.time-candidate.time)>0.2)){
+      selected.push(candidate);
+    }
+  });
+  return selected.sort((a,b)=>a.time-b.time).map(note=>Math.max(0,note.time-0.025));
+}
+
+async function loadNoteAudio(){
+  if(noteBuffer) return;
+  audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+  const response=await fetch(noteAudioUrl);
+  if(!response.ok) throw new Error("Não foi possível carregar o som da harpa.");
+  noteBuffer=await audioContext.decodeAudioData(await response.arrayBuffer());
+  noteStarts=findNoteStarts(noteBuffer);
+}
+
+updateSoundButton();
+loadNoteAudio().catch(()=>{});
+
+soundButton.addEventListener("click",()=>{
+  soundEnabled=!soundEnabled;
+  localStorage.setItem(soundStorageKey,String(soundEnabled));
+  updateSoundButton();
+  if(soundEnabled) loadNoteAudio().catch(()=>{});
+});
 
 let isLoadingProgress = false;
 
 function playFoundHarpSound(foundIndex){
-  if(isLoadingProgress) return;
-  const note = foundHarpSequence[foundIndex % foundHarpSequence.length];
-  if(!note) return;
-  const region = getConcertHarpRegion(note.midi);
-  const sound = new Audio(harpSoundBaseSrc + region.sample);
-  sound.playbackRate = Math.pow(2, (note.midi - region.keycenter - (region.tune || 0) / 100) / 12);
-  sound.volume = 0.7;
-  sound.play().catch(() => {});
+  if(isLoadingProgress || !soundEnabled || !noteBuffer || !noteStarts.length) return;
+  audioContext.resume();
+  const noteIndex=foundIndex%noteStarts.length;
+  const start=noteStarts[noteIndex];
+  const end=noteStarts[noteIndex+1] || noteBuffer.duration;
+  const duration=Math.max(0.1,end-start);
+  const source=audioContext.createBufferSource();
+  const gain=audioContext.createGain();
+  source.buffer=noteBuffer;
+  gain.gain.setValueAtTime(0.7,audioContext.currentTime);
+  gain.gain.setValueAtTime(0.7,audioContext.currentTime+Math.max(0,duration-0.04));
+  gain.gain.linearRampToValueAtTime(0,audioContext.currentTime+duration);
+  source.connect(gain).connect(audioContext.destination);
+  source.start(0,start,duration);
 }
 
 function toggleAnswer(area,word){

@@ -28,6 +28,8 @@
 #menuHeader > .title:first-child {
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #menuHeader .title,
@@ -44,6 +46,63 @@
 #menuHeader .title:last-child {
   flex: 0 0 auto;
   overflow: visible;
+}
+
+#menuHeader > .title.title--compact { font-size: .88em; }
+
+#menuHeader > .title.title--wrap {
+  align-self: stretch;
+  white-space: normal;
+  line-height: 1.05;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.info-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-wrapper .info-btn { touch-action: manipulation; }
+
+.info-wrapper .tooltip {
+  top: calc(100% + 6px);
+  left: calc(100% + 6px);
+  right: auto;
+  width: auto;
+  min-width: 180px;
+  max-width: min(320px, 80vw);
+  margin-top: 0;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, .92);
+  color: #fff;
+  font-size: inherit;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .18s ease, visibility .18s ease;
+  z-index: 9999;
+}
+
+.info-wrapper .tooltip.help-tooltip {
+  width: max-content;
+  min-width: 240px;
+  max-width: min(380px, 80vw);
+}
+
+.info-wrapper:hover .tooltip,
+.info-wrapper:focus-within .tooltip,
+.info-wrapper.active .tooltip {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .info-btn,

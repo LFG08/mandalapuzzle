@@ -70,6 +70,35 @@
     syncToggle();
   }
 
+  const infoWrappers = Array.from(menu.querySelectorAll(".info-wrapper"));
+  function closeInfoTooltips(exceptWrapper) {
+    infoWrappers.forEach(function (wrapper) {
+      if (wrapper !== exceptWrapper) {
+        wrapper.classList.remove("active");
+        wrapper.querySelector(".info-btn")?.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+  infoWrappers.forEach(function (wrapper) {
+    const button = wrapper.querySelector(".info-btn");
+    if (!button) return;
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      const willOpen = !wrapper.classList.contains("active");
+      closeInfoTooltips();
+      wrapper.classList.toggle("active", willOpen);
+      button.setAttribute("aria-expanded", String(willOpen));
+    });
+  });
+  document.addEventListener("click", function (event) {
+    if (event.target.closest(".info-wrapper")) return;
+    closeInfoTooltips();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeInfoTooltips();
+  });
+
   const resizeMargin = 10;
   let resize = null;
   function resizeEdges(event) {

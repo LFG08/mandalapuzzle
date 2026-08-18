@@ -154,7 +154,11 @@
   max-height: none;
 }
 
-#wordMenu.collapsed > :not(#menuHeader) { display: none !important; }
+/* A minimized menu remains useful as a compact checklist: keep the header and
+   word list visible, and remove only the puzzle control buttons. */
+#wordMenu.collapsed > #wordList { display: block !important; }
+#wordMenu.collapsed > button,
+#wordMenu.collapsed > select { display: none !important; }
 #mobileMenuOptions { display: none !important; }
 #wordMenu.mobile-pinned,
 #wordMenu.pinned-bottom-collapsed,

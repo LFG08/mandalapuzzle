@@ -373,12 +373,10 @@ color:#f0c28b;
 </div>
 
 <footer class="sound-credits">
-Som: <cite>Concert Harp</cite>, montado por
-<a href="mailto:roberto@zenvoid.org">roberto@zenvoid.org</a> para o
-<a href="https://freepats.zenvoid.org/" target="_blank" rel="noopener noreferrer">FreePats</a>,
-com amostras da
-<a href="https://vis.versilstudios.com/vcsl.html" target="_blank" rel="noopener noreferrer">Versilian Community Sample Library</a>,
-interpretadas por K. Smith. Disponibilizado sob
+Som: <cite>SYS_Ominous_Jingle</cite>, por
+<a href="https://freesound.org/people/MirMaximus/" target="_blank" rel="noopener noreferrer">MirMaximus</a>,
+disponível no
+<a href="https://freesound.org/s/865579/" target="_blank" rel="noopener noreferrer">Freesound</a> sob a licença
 <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="license noopener noreferrer">CC0 1.0</a>.
 </footer>
 
@@ -658,84 +656,45 @@ const answerClips={};
 
 const soundStorageKey = "UNREAL_soundEnabled";
 const soundButton = document.getElementById("soundButton");
-const noteAudioUrl = "/sound_effects/ConcertHarp-SFZ+FLAC-20200702/blue_notes_first_15s.mp3";
-const numberOfNotes = 22;
+const soundEffectUrl = "/sound_effects/865579__mirmaximus__sys_ominous_jingle.wav";
 let soundEnabled = localStorage.getItem(soundStorageKey) !== "false";
 let audioContext;
-let noteBuffer;
-let noteStarts=[];
+let soundEffectBuffer;
 
 function updateSoundButton(){
   soundButton.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
   soundButton.setAttribute("aria-pressed", String(soundEnabled));
 }
 
-// Locate the 22 attacks in the supplied recording. This lets every discovery
-// play the next original MP3 note rather than a separately synthesized pitch.
-function findNoteStarts(buffer){
-  const data=buffer.getChannelData(0);
-  const step=Math.max(1, Math.floor(buffer.sampleRate * 0.01));
-  const envelope=[];
-  for(let start=0;start<data.length;start+=step){
-    let energy=0;
-    const end=Math.min(start+step, data.length);
-    for(let i=start;i<end;i++) energy+=data[i]*data[i];
-    envelope.push(Math.sqrt(energy/(end-start)));
-  }
-
-  const candidates=[];
-  for(let i=6;i<envelope.length-2;i++){
-    const rise=envelope[i]-Math.min(...envelope.slice(i-6,i));
-    if(rise>0 && rise>=envelope[i+1]-Math.min(...envelope.slice(i-5,i+1))){
-      candidates.push({time:i*step/buffer.sampleRate, strength:rise});
-    }
-  }
-
-  const selected=[];
-  candidates.sort((a,b)=>b.strength-a.strength).forEach(candidate=>{
-    if(selected.length<numberOfNotes && selected.every(note=>Math.abs(note.time-candidate.time)>0.2)){
-      selected.push(candidate);
-    }
-  });
-  return selected.sort((a,b)=>a.time-b.time).map(note=>Math.max(0,note.time-0.025));
-}
-
-async function loadNoteAudio(){
-  if(noteBuffer) return;
+async function loadSoundEffect(){
+  if(soundEffectBuffer) return;
   audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-  const response=await fetch(noteAudioUrl);
-  if(!response.ok) throw new Error("Não foi possível carregar o som da harpa.");
-  noteBuffer=await audioContext.decodeAudioData(await response.arrayBuffer());
-  noteStarts=findNoteStarts(noteBuffer);
+  const response=await fetch(soundEffectUrl);
+  if(!response.ok) throw new Error("Não foi possível carregar o efeito sonoro.");
+  soundEffectBuffer=await audioContext.decodeAudioData(await response.arrayBuffer());
 }
 
 updateSoundButton();
-loadNoteAudio().catch(()=>{});
+loadSoundEffect().catch(()=>{});
 
 soundButton.addEventListener("click",()=>{
   soundEnabled=!soundEnabled;
   localStorage.setItem(soundStorageKey,String(soundEnabled));
   updateSoundButton();
-  if(soundEnabled) loadNoteAudio().catch(()=>{});
+  if(soundEnabled) loadSoundEffect().catch(()=>{});
 });
 
 let isLoadingProgress = false;
 
-function playFoundHarpSound(foundIndex){
-  if(isLoadingProgress || !soundEnabled || !noteBuffer || !noteStarts.length) return;
+function playFoundSound(){
+  if(isLoadingProgress || !soundEnabled || !soundEffectBuffer) return;
   audioContext.resume();
-  const noteIndex=foundIndex%noteStarts.length;
-  const start=noteStarts[noteIndex];
-  const end=noteStarts[noteIndex+1] || noteBuffer.duration;
-  const duration=Math.max(0.1,end-start);
   const source=audioContext.createBufferSource();
   const gain=audioContext.createGain();
-  source.buffer=noteBuffer;
+  source.buffer=soundEffectBuffer;
   gain.gain.setValueAtTime(0.7,audioContext.currentTime);
-  gain.gain.setValueAtTime(0.7,audioContext.currentTime+Math.max(0,duration-0.04));
-  gain.gain.linearRampToValueAtTime(0,audioContext.currentTime+duration);
   source.connect(gain).connect(audioContext.destination);
-  source.start(0,start,duration);
+  source.start();
 }
 
 function toggleAnswer(area,word){
@@ -767,10 +726,9 @@ let isVisible = answerClips[word].classList.contains("visible");
 
 if(!isVisible){
 
-  const foundIndex = document.querySelectorAll("#wordList li.found").length;
   answerClips[word].classList.add("visible");
   menuItems["menu-"+word].classList.add("found");
-  playFoundHarpSound(foundIndex);
+  playFoundSound();
 
 }else if(allowToggleOff){
 

@@ -320,7 +320,46 @@ document.addEventListener("wheel",event=>{
   setMandalaZoom(state.mandalaZoom*(event.deltaY<0?1.1:.9),event);
 },{passive:false});
 document.getElementById("toggleMenu").onclick=()=>{menu.classList.toggle("collapsed");document.getElementById("toggleMenu").textContent=menu.classList.contains("collapsed")?"+":"–";};
-(function dragMenu(){let active=false,dx=0,dy=0;document.getElementById("menuHeader").addEventListener("pointerdown",e=>{if(e.target.closest("button,a"))return;active=true;dx=e.clientX-menu.offsetLeft;dy=e.clientY-menu.offsetTop;menu.setPointerCapture?.(e.pointerId);});document.addEventListener("pointermove",e=>{if(!active)return;menu.style.left=Math.max(0,e.clientX-dx)+"px";menu.style.top=Math.max(0,e.clientY-dy)+"px";});document.addEventListener("pointerup",()=>active=false);})();
+const MENU_RESIZE_MARGIN=10;
+function menuResizeEdges(event){
+  const rect=menu.getBoundingClientRect();
+  return `${event.clientY-rect.top<=MENU_RESIZE_MARGIN?"n":event.clientY>=rect.bottom-MENU_RESIZE_MARGIN?"s":""}${event.clientX-rect.left<=MENU_RESIZE_MARGIN?"w":event.clientX>=rect.right-MENU_RESIZE_MARGIN?"e":""}`;
+}
+(function resizeMenu(){
+  let resize=null;
+  function showResizeCursor(edges){menu.className=menu.className.replace(/\bresize-\S+/g,"").trim();if(edges)menu.classList.add(`resize-${edges}`);}
+  menu.addEventListener("pointermove",event=>{if(!resize)showResizeCursor(menuResizeEdges(event));});
+  menu.addEventListener("pointerleave",()=>{if(!resize)showResizeCursor("");});
+  menu.addEventListener("pointerdown",event=>{
+    const edges=menuResizeEdges(event);
+    if(!edges)return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect=menu.getBoundingClientRect();
+    resize={edges,startX:event.clientX,startY:event.clientY,left:rect.left,top:rect.top,width:rect.width,height:rect.height};
+    menu.style.maxHeight="none";
+    menu.setPointerCapture?.(event.pointerId);
+    showResizeCursor(edges);
+  },true);
+  document.addEventListener("pointermove",event=>{
+    if(!resize)return;
+    const dx=event.clientX-resize.startX,dy=event.clientY-resize.startY;
+    const minWidth=190,minHeight=120;
+    let left=resize.left,top=resize.top,width=resize.width,height=resize.height;
+    if(resize.edges.includes("e"))width=Math.min(innerWidth-left,Math.max(minWidth,resize.width+dx));
+    if(resize.edges.includes("s"))height=Math.min(innerHeight-top,Math.max(minHeight,resize.height+dy));
+    if(resize.edges.includes("w")){left=Math.max(0,Math.min(resize.left+dx,resize.left+resize.width-minWidth));width=resize.width+(resize.left-left);}
+    if(resize.edges.includes("n")){top=Math.max(0,Math.min(resize.top+dy,resize.top+resize.height-minHeight));height=resize.height+(resize.top-top);}
+    menu.style.left=`${left}px`;
+    menu.style.top=`${top}px`;
+    menu.style.width=`${width}px`;
+    menu.style.height=`${height}px`;
+  });
+  function finishResize(){if(!resize)return;resize=null;showResizeCursor("");}
+  document.addEventListener("pointerup",finishResize);
+  document.addEventListener("pointercancel",finishResize);
+})();
+(function dragMenu(){let active=false,dx=0,dy=0;document.getElementById("menuHeader").addEventListener("pointerdown",e=>{if(e.target.closest("button,a")||menuResizeEdges(e))return;active=true;dx=e.clientX-menu.offsetLeft;dy=e.clientY-menu.offsetTop;menu.setPointerCapture?.(e.pointerId);});document.addEventListener("pointermove",e=>{if(!active)return;menu.style.left=Math.max(0,e.clientX-dx)+"px";menu.style.top=Math.max(0,e.clientY-dy)+"px";});document.addEventListener("pointerup",()=>active=false);})();
 (function panPage(){let down=false,sx=0,sy=0,sl=0,st=0;document.addEventListener("pointerdown",e=>{if(e.target.closest("#wordMenu")||e.target.closest("area"))return;down=true;sx=e.clientX;sy=e.clientY;sl=scrollX;st=scrollY;document.body.classList.add("dragging")});document.addEventListener("pointermove",e=>{if(!down)return;scrollTo(sl-(e.clientX-sx),st-(e.clientY-sy));});document.addEventListener("pointerup",()=>{down=false;document.body.classList.remove("dragging")});})();
 const gateDialog=document.getElementById("gateDialog"), gateForm=document.getElementById("gateForm"), gateAnswer=document.getElementById("gateAnswer"), gateError=document.getElementById("gateError"), spoilerAlertDialog=document.getElementById("spoilerAlertDialog"), spoilerExample=document.getElementById("spoilerExample"), endDialog=document.getElementById("endDialog");
 function showSpoilerAlert(){if(localStorage.getItem(SPOILER_ALERT_KEY)==="seen")return;spoilerAlertDialog.hidden=false;}

@@ -1,0 +1,115 @@
+:root {
+  --menu-width: 260px;
+  --menu-zoom: 1;
+}
+
+/* Shared puzzle controls: keep the legacy games visually and behaviorally aligned
+   with the Lispenard Street menu. */
+#wordMenu {
+  width: calc(var(--menu-width) * var(--menu-zoom));
+  min-width: 0;
+  max-height: 70vh;
+  overflow: visible;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, .82);
+  font-size: calc(1rem * var(--menu-zoom));
+}
+
+#menuHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0;
+  border-bottom: 0;
+  touch-action: none;
+}
+
+#menuHeader > .title:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#menuHeader .title,
+#menuHeader .right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 8px;
+  white-space: nowrap;
+}
+
+#menuHeader .right,
+#menuHeader .title:last-child {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.info-btn,
+.menu-btn,
+#toggleMenu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(16px * var(--menu-zoom));
+  min-width: calc(16px * var(--menu-zoom));
+  height: calc(16px * var(--menu-zoom));
+  padding: 0;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: #ccc;
+  color: #000;
+  font-size: calc(11px * var(--menu-zoom));
+  line-height: calc(16px * var(--menu-zoom));
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.menu-btn { font-size: calc(9px * var(--menu-zoom)); }
+
+#wordList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-size: inherit;
+}
+
+#wordMenu > button,
+#wordMenu > select {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #fff;
+  background: rgba(0, 0, 0, .42);
+  color: #fff;
+  padding: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+#wordMenu.collapsed {
+  width: calc(var(--menu-width) * var(--menu-zoom));
+  height: auto !important;
+  max-height: none;
+}
+
+#wordMenu.collapsed > :not(#menuHeader) { display: none !important; }
+#mobileMenuOptions { display: none !important; }
+#wordMenu.mobile-pinned,
+#wordMenu.pinned-bottom-collapsed,
+#wordMenu.pinned-top-left,
+#wordMenu.pinned-top-right {
+  right: auto !important;
+  bottom: auto !important;
+}
+
+@media (max-width: 900px) and (any-pointer: coarse) {
+  #wordMenu {
+    top: 8px;
+    left: 8px;
+    width: min(calc(500px * var(--menu-zoom)), calc(100vw - 16px));
+    font-size: calc(1rem * var(--menu-zoom));
+  }
+}

@@ -99,6 +99,22 @@
     if (event.key === "Escape") closeInfoTooltips();
   });
 
+  const navigationKeys = {
+    a: [-1, 0],
+    s: [0, 1],
+    w: [0, -1],
+    d: [1, 0]
+  };
+  document.addEventListener("keydown", function (event) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target.closest("input, textarea, select, [contenteditable='true']")) return;
+    const direction = navigationKeys[event.key.toLowerCase()];
+    if (!direction) return;
+    event.preventDefault();
+    const step = 80;
+    window.scrollBy(direction[0] * step, direction[1] * step);
+  });
+
   const resizeMargin = 10;
   let resize = null;
   function resizeEdges(event) {

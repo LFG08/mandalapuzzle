@@ -154,7 +154,8 @@
   max-height: none;
 }
 
-#wordMenu.collapsed > :not(#menuHeader) { display: none !important; }
+/* Minimize only the checklist; keep the menu controls available. */
+#wordMenu.collapsed > #wordList { display: none !important; }
 #mobileMenuOptions { display: none !important; }
 #wordMenu.mobile-pinned,
 #wordMenu.pinned-bottom-collapsed,

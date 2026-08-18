@@ -395,6 +395,8 @@ font-family:inherit;
 
 </style>
 
+<link rel="stylesheet" href="../completion-popup.css">
+<style>:root{--completion-surface:#103800;--completion-accent:#35dc52;--completion-button-text:#071507;}</style>
 </head>
 
 <body>
@@ -610,7 +612,7 @@ function updateCounter(){
   if(found === total && total > 0 && !completionShown){
     completionShown = true;
     setTimeout(function(){
-      alert("fim! 🎉🎉");
+      showCompletionPopup();
     }, 200);
   }else if(found < total){
     completionShown = false;
@@ -1025,5 +1027,6 @@ window.addEventListener("resize", () => {
 <script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
 <script>imageMapResize();</script>
 
+<script src="../completion-popup.js"></script>
 </body>
 </html>

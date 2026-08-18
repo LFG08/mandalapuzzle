@@ -321,6 +321,8 @@ cursor:pointer;
 
 </style>
 
+<link rel="stylesheet" href="../completion-popup.css">
+<style>:root{--completion-surface:#07221e;--completion-accent:#36c9b5;--completion-button-text:#031411;}</style>
 </head>
 
 <body>
@@ -1120,7 +1122,7 @@ found + " / " + totalWords;
 if(found === totalWords && totalWords > 0){
 
 setTimeout(function(){
-alert("fim! 🎉🎉");
+showCompletionPopup();
 },200);
 }
 }
@@ -1301,5 +1303,6 @@ JSON.stringify(Object.keys(answerClips)
 <script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
 <script>imageMapResize();</script>
 
+<script src="../completion-popup.js"></script>
 </body>
 </html>

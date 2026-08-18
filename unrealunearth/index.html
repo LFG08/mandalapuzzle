@@ -286,6 +286,8 @@ color:#f0c28b;
 </style>
 <link rel="stylesheet" href="../shared/lispenard-menu.css">
 
+<link rel="stylesheet" href="../completion-popup.css">
+<style>:root{--completion-surface:#381500;--completion-accent:#e66a22;--completion-button-text:#fff;}</style>
 </head>
 
 <body>
@@ -757,7 +759,7 @@ found + " / " + total;
 if(found === total && total > 0){
 
 setTimeout(function(){
-alert("fim! 🎉🎉");
+showCompletionPopup();
 },200);
 }
 }
@@ -936,5 +938,6 @@ JSON.stringify(Object.keys(answerClips)
 
 
 <script src="../shared/lispenard-menu.js"></script>
+<script src="../completion-popup.js"></script>
 </body>
 </html>

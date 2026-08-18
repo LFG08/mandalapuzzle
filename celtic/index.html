@@ -471,6 +471,8 @@ font:14px/1.2 "Times New Roman", Times, serif;
 cursor:pointer;
 }
 </style>
+<link rel="stylesheet" href="../completion-popup.css">
+<style>:root{--completion-surface:#194200;--completion-accent:#bada55;--completion-button-text:#091b04;}</style>
 </head>
 <body>
 <div id="wordMenu">
@@ -1692,7 +1694,7 @@ setTimeout(playLevelCompleteTransition, 220);
 }
 }else{
 setTimeout(() => {
-alert("fim!");
+showCompletionPopup();
 }, 200);
 }
 }
@@ -1876,5 +1878,6 @@ renderLevel();
 </script>
 <script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
 <script>imageMapResize();</script>
+<script src="../completion-popup.js"></script>
 </body>
 </html>

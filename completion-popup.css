@@ -1,0 +1,73 @@
+.completion-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 220ms ease, visibility 220ms ease;
+}
+
+.completion-popup.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.completion-popup__card {
+  position: relative;
+  width: min(430px, 100%);
+  overflow: hidden;
+  padding: 38px 32px 30px;
+  border: 2px solid var(--completion-accent, #f6d365);
+  border-radius: 24px;
+  color: var(--completion-text, #fff);
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--completion-accent, #f6d365) 34%, transparent), transparent 58%),
+    var(--completion-surface, #102c35);
+  box-shadow: 0 0 34px color-mix(in srgb, var(--completion-accent, #f6d365) 35%, transparent), 0 24px 70px rgba(0, 0, 0, 0.65);
+  transform: translateY(18px) scale(0.94);
+  transition: transform 260ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.completion-popup.is-visible .completion-popup__card { transform: translateY(0) scale(1); }
+
+.completion-popup__sparkles {
+  color: var(--completion-accent, #f6d365);
+  font-size: 1.35rem;
+  letter-spacing: .65rem;
+  margin-right: -.65rem;
+  text-shadow: 0 0 14px currentColor;
+}
+
+.completion-popup__title {
+  margin: 12px 0 8px;
+  color: var(--completion-accent, #f6d365);
+  font: 700 clamp(1.8rem, 7vw, 2.5rem)/1.05 Georgia, serif;
+}
+
+.completion-popup__message { margin: 0 0 24px; font: 1rem/1.55 Arial, sans-serif; opacity: .92; }
+
+.completion-popup__button {
+  min-width: 150px;
+  padding: 11px 24px;
+  border: 1px solid color-mix(in srgb, var(--completion-accent, #f6d365) 72%, white);
+  border-radius: 999px;
+  color: var(--completion-button-text, #111);
+  background: var(--completion-accent, #f6d365);
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--completion-accent, #f6d365) 30%, transparent);
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.completion-popup__button:hover { filter: brightness(1.12); transform: translateY(-2px); }
+.completion-popup__button:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .completion-popup, .completion-popup__card, .completion-popup__button { transition: none; }
+}

@@ -298,6 +298,8 @@ cursor:pointer;
 
 </style>
 
+<link rel="stylesheet" href="../completion-popup.css">
+<style>:root{--completion-surface:#5f1d03;--completion-accent:#f1a24b;--completion-button-text:#251006;}</style>
 </head>
 
 <body>
@@ -951,7 +953,7 @@ if(found === total && total > 0){
 if(isBootstrapping) return;
 
 setTimeout(function(){
-alert("fim! 🎉🎉");
+showCompletionPopup();
 },200);
 }
 }
@@ -1112,5 +1114,6 @@ JSON.stringify(Object.keys(answerClips)
 <script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
 <script>imageMapResize();</script>
 
+<script src="../completion-popup.js"></script>
 </body>
 </html>

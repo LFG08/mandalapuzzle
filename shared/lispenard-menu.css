@@ -6,7 +6,7 @@
 /* Shared puzzle controls: keep the legacy games visually and behaviorally aligned
    with the Lispenard Street menu. */
 #wordMenu {
-  width: calc(var(--menu-width) * var(--menu-zoom));
+  width: var(--menu-width);
   min-width: 0;
   max-height: 70vh;
   overflow: visible;
@@ -114,9 +114,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(16px * var(--menu-zoom));
-  min-width: calc(16px * var(--menu-zoom));
-  height: calc(16px * var(--menu-zoom));
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
   padding: 0;
   margin-right: 4px;
   border: 0;
@@ -124,7 +124,7 @@
   background: #ccc;
   color: #000;
   font-size: calc(11px * var(--menu-zoom));
-  line-height: calc(16px * var(--menu-zoom));
+  line-height: 16px;
   text-decoration: none;
   cursor: pointer;
 }
@@ -132,16 +132,26 @@
 .menu-btn { font-size: calc(9px * var(--menu-zoom)); }
 
 .menu-font-controls {
+  position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  width: 110px;
+  min-width: 110px;
   gap: 3px;
   font-size: .72em;
 }
 
+.menu-font-label {
+  position: absolute;
+  right: 42px;
+  white-space: nowrap;
+}
+
 .menu-font-controls button {
-  width: calc(18px * var(--menu-zoom));
-  min-width: calc(18px * var(--menu-zoom));
-  height: calc(18px * var(--menu-zoom));
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
   padding: 0;
   border: 1px solid #aaa;
   border-radius: 3px;
@@ -185,7 +195,7 @@
 }
 
 #wordMenu.collapsed {
-  width: calc(var(--menu-width) * var(--menu-zoom));
+  width: var(--menu-width);
   height: auto !important;
   max-height: none;
 }
@@ -205,7 +215,7 @@
   #wordMenu {
     top: 8px;
     left: 8px;
-    width: min(calc(500px * var(--menu-zoom)), calc(100vw - 16px));
+    width: min(500px, calc(100vw - 16px));
     font-size: calc(1rem * var(--menu-zoom));
   }
 }

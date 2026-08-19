@@ -7,6 +7,7 @@
   const prefix = `${location.pathname.replace(/\W+/g, "_")}_`;
   let menuZoom = Number(localStorage.getItem(prefix + "menuZoom")) || 1;
   let mandalaZoom = Number(localStorage.getItem(prefix + "mandalaZoom")) || 1;
+  let scrollZoomEnabled = localStorage.getItem(prefix + "scrollZoom") !== "off";
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, Number(value.toFixed(2))));
@@ -56,6 +57,27 @@
   syncMenuZoom();
   container.style.zoom = mandalaZoom;
 
+  const scrollZoomToggle = document.createElement("button");
+  scrollZoomToggle.type = "button";
+  scrollZoomToggle.className = "scroll-zoom-toggle";
+  function syncScrollZoomToggle() {
+    scrollZoomToggle.textContent = `Scroll Zoom: ${scrollZoomEnabled ? "On" : "Off"}`;
+    scrollZoomToggle.setAttribute("aria-pressed", String(scrollZoomEnabled));
+    scrollZoomToggle.title = "Clique ou use o botão direito fora do menu para alternar";
+  }
+  function toggleScrollZoom() {
+    scrollZoomEnabled = !scrollZoomEnabled;
+    localStorage.setItem(prefix + "scrollZoom", scrollZoomEnabled ? "on" : "off");
+    syncScrollZoomToggle();
+  }
+  syncScrollZoomToggle();
+  menu.appendChild(scrollZoomToggle);
+  scrollZoomToggle.addEventListener("click", toggleScrollZoom);
+  scrollZoomToggle.addEventListener("contextmenu", function (event) {
+    event.preventDefault();
+    toggleScrollZoom();
+  });
+
   window.addEventListener("load", function () {
     menu.classList.remove("mobile-pinned", "pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right");
     menu.style.right = "auto";
@@ -65,9 +87,16 @@
   document.addEventListener("wheel", function (event) {
     if (event.target.closest(".tipOverlay")) return;
     if (event.target.closest("#wordMenu")) return;
+    if (!scrollZoomEnabled) return;
     event.preventDefault();
     syncMandalaZoom(mandalaZoom * (event.deltaY < 0 ? 1.1 : .9), event);
   }, { passive: false });
+
+  document.addEventListener("contextmenu", function (event) {
+    if (event.target.closest("#wordMenu, .tipOverlay")) return;
+    event.preventDefault();
+    toggleScrollZoom();
+  });
 
   if (toggle) {
     function syncToggle() {

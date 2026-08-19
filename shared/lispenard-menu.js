@@ -34,7 +34,7 @@
     const fontControls = document.createElement("span");
     fontControls.className = "menu-font-controls";
     fontControls.setAttribute("aria-label", "Zoom do menu");
-    fontControls.innerHTML = '<span class="menu-font-label">Menu Zoom</span><button type="button" data-font-step="-0.1" aria-label="Diminuir zoom do menu">−</button><button type="button" data-font-step="0.1" aria-label="Aumentar zoom do menu">+</button>';
+    fontControls.innerHTML = '<span class="menu-font-label" aria-hidden="true">🔍</span><button type="button" data-font-step="-0.1" aria-label="Diminuir zoom do menu">−</button><button type="button" data-font-step="0.1" aria-label="Aumentar zoom do menu">+</button>';
     menuHeaderActions.prepend(fontControls);
     fontControls.addEventListener("click", function (event) {
       const button = event.target.closest("button[data-font-step]");

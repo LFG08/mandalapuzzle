@@ -128,6 +128,27 @@
 
 .menu-btn { font-size: calc(9px * var(--menu-zoom)); }
 
+.menu-font-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: .72em;
+}
+
+.menu-font-controls button {
+  width: calc(18px * var(--menu-zoom));
+  min-width: calc(18px * var(--menu-zoom));
+  height: calc(18px * var(--menu-zoom));
+  padding: 0;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  background: #eee;
+  color: #000;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
 #wordList {
   flex: 1;
   min-height: 0;

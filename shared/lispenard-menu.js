@@ -16,6 +16,22 @@
     document.documentElement.style.setProperty("--menu-zoom", menuZoom);
   }
 
+  const menuHeaderActions = menu.querySelector("#menuHeader .right, #menuHeader .title:last-child");
+  if (menuHeaderActions) {
+    const fontControls = document.createElement("span");
+    fontControls.className = "menu-font-controls";
+    fontControls.setAttribute("aria-label", "Tamanho da fonte");
+    fontControls.innerHTML = '<span class="menu-font-label">fonte</span><button type="button" data-font-step="-0.1" aria-label="Diminuir fonte">−</button><button type="button" data-font-step="0.1" aria-label="Aumentar fonte">+</button>';
+    menuHeaderActions.prepend(fontControls);
+    fontControls.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-font-step]");
+      if (!button) return;
+      menuZoom = clamp(menuZoom + Number(button.dataset.fontStep), .75, 1.8);
+      localStorage.setItem(prefix + "menuZoom", menuZoom);
+      syncMenuZoom();
+    });
+  }
+
   function syncMandalaZoom(nextZoom, event) {
     const oldZoom = mandalaZoom;
     const newZoom = clamp(nextZoom, .5, 2.5);
@@ -48,13 +64,8 @@
 
   document.addEventListener("wheel", function (event) {
     if (event.target.closest(".tipOverlay")) return;
+    if (event.target.closest("#wordMenu")) return;
     event.preventDefault();
-    if (event.target.closest("#wordMenu")) {
-      menuZoom = clamp(menuZoom + (event.deltaY < 0 ? .1 : -.1), .75, 1.8);
-      localStorage.setItem(prefix + "menuZoom", menuZoom);
-      syncMenuZoom();
-      return;
-    }
     syncMandalaZoom(mandalaZoom * (event.deltaY < 0 ? 1.1 : .9), event);
   }, { passive: false });
 

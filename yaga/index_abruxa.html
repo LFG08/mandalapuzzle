@@ -380,7 +380,7 @@ position:fixed;
 background:rgba(0,0,0,0.85);
 color:#f5e6d3;
 padding:6px 10px;
-font-size:12px;
+font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
 font-family:Georgia, serif;
 border:1px solid #f5e6d3;
 pointer-events:none;
@@ -631,6 +631,10 @@ cursor:pointer;
 
 
 @media (max-width: 900px) and (any-pointer: coarse){
+  #wordTooltip{
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+
   :root{
     --mobile-menu-ui-scale:2;
     --mobile-menu-base-width:250px;

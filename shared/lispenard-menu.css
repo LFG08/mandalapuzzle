@@ -6,9 +6,10 @@
 /* Shared puzzle controls: keep the legacy games visually and behaviorally aligned
    with the Lispenard Street menu. */
 #wordMenu {
-  width: var(--menu-width);
+  width: min(var(--menu-width), calc(100vw - 16px));
   min-width: 0;
-  max-height: 70vh;
+  max-width: calc(100vw - 16px);
+  max-height: min(70vh, calc(100dvh - 16px));
   overflow: visible;
   box-sizing: border-box;
   background: rgba(0, 0, 0, .82);
@@ -47,6 +48,7 @@
   flex: 0 0 auto;
   align-self: stretch;
   justify-content: flex-end;
+  flex-wrap: wrap;
   margin-top: 0;
   overflow: visible;
 }
@@ -132,19 +134,16 @@
 .menu-btn { font-size: calc(9px * var(--menu-zoom)); }
 
 .menu-font-controls {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  width: 110px;
-  min-width: 110px;
+  justify-content: flex-start;
+  min-width: 0;
+  margin-right: auto;
   gap: 3px;
   font-size: .72em;
 }
 
 .menu-font-label {
-  position: absolute;
-  right: 42px;
   white-space: nowrap;
 }
 
@@ -195,9 +194,9 @@
 }
 
 #wordMenu.collapsed {
-  width: var(--menu-width);
+  width: min(var(--menu-width), calc(100vw - 16px));
   height: auto !important;
-  max-height: none;
+  max-height: calc(100dvh - 16px);
 }
 
 /* Minimize only the checklist; keep the menu controls available. */

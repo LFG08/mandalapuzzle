@@ -15,6 +15,18 @@
 
   function syncMenuZoom() {
     document.documentElement.style.setProperty("--menu-zoom", menuZoom);
+    requestAnimationFrame(keepMenuInViewport);
+  }
+
+  function keepMenuInViewport() {
+    const rect = menu.getBoundingClientRect();
+    const gutter = 8;
+    const maxLeft = Math.max(gutter, innerWidth - rect.width - gutter);
+    const maxTop = Math.max(gutter, innerHeight - Math.min(rect.height, innerHeight - gutter * 2) - gutter);
+    const left = Math.min(maxLeft, Math.max(gutter, rect.left));
+    const top = Math.min(maxTop, Math.max(gutter, rect.top));
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
   }
 
   const menuHeaderActions = menu.querySelector("#menuHeader .right, #menuHeader .title:last-child");
@@ -82,6 +94,10 @@
     menu.classList.remove("mobile-pinned", "pinned-bottom-collapsed", "pinned-top-left", "pinned-top-right");
     menu.style.right = "auto";
     menu.style.bottom = "auto";
+    keepMenuInViewport();
+  });
+  window.addEventListener("resize", function () {
+    requestAnimationFrame(keepMenuInViewport);
   });
 
   document.addEventListener("wheel", function (event) {
@@ -190,10 +206,10 @@
     if (resize.edges.includes("s")) height = Math.max(120, resize.height + dy);
     if (resize.edges.includes("w")) { left = Math.min(resize.left + dx, resize.left + resize.width - 190); width = resize.width + resize.left - left; }
     if (resize.edges.includes("n")) { top = Math.min(resize.top + dy, resize.top + resize.height - 120); height = resize.height + resize.top - top; }
-    menu.style.left = `${Math.max(0, left)}px`;
-    menu.style.top = `${Math.max(0, top)}px`;
-    menu.style.width = `${width}px`;
-    menu.style.height = `${height}px`;
+    menu.style.left = `${Math.max(8, left)}px`;
+    menu.style.top = `${Math.max(8, top)}px`;
+    menu.style.width = `${Math.min(width, innerWidth - 16)}px`;
+    menu.style.height = `${Math.min(height, innerHeight - 16)}px`;
   });
   function stopResize() { resize = null; }
   document.addEventListener("pointerup", stopResize);

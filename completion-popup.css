@@ -52,8 +52,15 @@
 
 .completion-popup__message { margin: 0 0 24px; font: 1rem/1.55 Arial, sans-serif; opacity: .92; }
 
+.completion-popup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
 .completion-popup__button {
-  min-width: 150px;
+  min-width: 105px;
   padding: 11px 24px;
   border: 1px solid color-mix(in srgb, var(--completion-accent, #f6d365) 72%, white);
   border-radius: 999px;
@@ -61,6 +68,7 @@
   background: var(--completion-accent, #f6d365);
   box-shadow: 0 6px 22px color-mix(in srgb, var(--completion-accent, #f6d365) 30%, transparent);
   font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
   transition: filter 160ms ease, transform 160ms ease;
 }

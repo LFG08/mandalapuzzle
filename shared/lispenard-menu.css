@@ -17,8 +17,8 @@
 
 #menuHeader {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: 6px;
   padding: 0;
   border-bottom: 0;
@@ -26,7 +26,7 @@
 }
 
 #menuHeader > .title:first-child {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -45,6 +45,9 @@
 #menuHeader .right,
 #menuHeader .title:last-child {
   flex: 0 0 auto;
+  align-self: stretch;
+  justify-content: flex-end;
+  margin-top: 0;
   overflow: visible;
 }
 
@@ -165,8 +168,20 @@
   background: rgba(0, 0, 0, .42);
   color: #fff;
   padding: 8px;
-  font: inherit;
+  /* Override legacy fixed sizes so every text-based menu control follows
+     --menu-zoom through the menu's inherited font size. */
+  font: inherit !important;
   cursor: pointer;
+}
+
+#mobileMenuOptions,
+#mobileMenuOptions label,
+#mobileMenuOptions input,
+#mobileMenuOptions select,
+#mobileMenuOptions option,
+#wordTooltip,
+#menuHeader .tooltip {
+  font-size: inherit !important;
 }
 
 #wordMenu.collapsed {

@@ -396,7 +396,7 @@ document.addEventListener("click",event=>{if(event.target.closest(".info-wrapper
 document.addEventListener("touchstart",event=>{if(event.target.closest(".info-wrapper"))return;closeInfoTooltips();},{passive:true});
 document.addEventListener("keydown",event=>{if(event.key==="Escape")closeInfoTooltips();});
 const navigationKeys={a:[-1,0],s:[0,1],w:[0,-1],d:[1,0]};
-document.addEventListener("keydown",event=>{if(event.ctrlKey||event.metaKey||event.altKey)return;if(event.target.closest("input,textarea,select,[contenteditable='true']"))return;const direction=navigationKeys[event.key.toLowerCase()];if(!direction)return;event.preventDefault();window.scrollBy(direction[0]*80,direction[1]*80);});
+document.addEventListener("keydown",event=>{if(event.ctrlKey||event.metaKey||event.altKey)return;if(event.target.closest("input,textarea,select,[contenteditable='true']"))return;const direction=navigationKeys[event.key.toLowerCase()];if(!direction)return;event.preventDefault();window.scrollBy({left:direction[0]*40,top:direction[1]*40,behavior:"smooth"});});
 
 </script>
 </body>

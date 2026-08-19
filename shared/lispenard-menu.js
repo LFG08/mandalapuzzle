@@ -111,8 +111,14 @@
     const direction = navigationKeys[event.key.toLowerCase()];
     if (!direction) return;
     event.preventDefault();
-    const step = 80;
-    window.scrollBy(direction[0] * step, direction[1] * step);
+    // Keep WASD navigation close to the browser's arrow-key scrolling: use a
+    // smaller increment and let successive key-repeat events blend together.
+    const step = 40;
+    window.scrollBy({
+      left: direction[0] * step,
+      top: direction[1] * step,
+      behavior: "smooth"
+    });
   });
 
   const resizeMargin = 10;

@@ -309,9 +309,14 @@ function setMenuZoom(nextZoom){
   localStorage.setItem(MENU_ZOOM_KEY,state.menuZoom);
   sync();
 }
+function isWheelOverMenu(event){
+  if(event.target.closest?.("#wordMenu"))return true;
+  const rect=menu.getBoundingClientRect();
+  return event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom;
+}
 document.addEventListener("wheel",event=>{
-  if(event.target.closest(".tipOverlay"))return;
-  if(event.target.closest("#wordMenu")){
+  if(event.target.closest?.(".tipOverlay"))return;
+  if(isWheelOverMenu(event)){
     event.preventDefault();
     setMenuZoom(state.menuZoom+(event.deltaY<0?.1:-.1));
     return;

@@ -28,6 +28,9 @@ Hand Bells, High-C, Single.wav by InspectorJ -- https://freesound.org/s/339820/ 
 Jingle - UnrealUnearth
 SYS_Ominous_Jingle by MirMaximus -- https://freesound.org/s/865579/ -- License: Creative Commons 0
 
+Arcane
+347328__newagesoup__fun-explosion06: FUN-EXPLOSION06.wav by newagesoup -- https://freesound.org/s/347328/ -- License: Attribution 4.0
+
 
 AMBIANCE: 
 OwlHoot(clean).wav by musicmasta1 -- https://freesound.org/s/251937/ -- License: Attribution NonCommercial 3.0

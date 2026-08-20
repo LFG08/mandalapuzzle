@@ -294,9 +294,10 @@ const zoomMenuWordsButton=document.getElementById("zoomMenuWords");
 if(zoomMenuWordsButton){zoomMenuWordsButton.onclick=()=>{state.menuZoom=state.menuZoom>=1.75?.75:Number((state.menuZoom+.25).toFixed(2));localStorage.setItem(MENU_ZOOM_KEY,state.menuZoom);sync();};}
 document.getElementById("spoilersToggle").onclick=()=>{state.spoilers=!state.spoilers;localStorage.setItem(SPOILER_KEY,state.spoilers?"on":"off");sync();};
 
+function minimumMandalaZoom(){return Math.min(1,Math.max(innerWidth/MANDALA_WIDTH,innerHeight/MANDALA_HEIGHT));}
 function clampZoom(value,min,max){return Math.min(max,Math.max(min,Number(value.toFixed(2))));}
 function setMandalaZoom(nextZoom,event){
-  const oldZoom=state.mandalaZoom, newZoom=clampZoom(nextZoom,.5,2.5);
+  const oldZoom=state.mandalaZoom, newZoom=clampZoom(nextZoom,minimumMandalaZoom(),2.5);
   if(newZoom===oldZoom)return;
   const anchorX=event?event.clientX:innerWidth/2, anchorY=event?event.clientY:innerHeight/2;
   const beforeX=(scrollX+anchorX)/oldZoom, beforeY=(scrollY+anchorY)/oldZoom;
@@ -305,6 +306,8 @@ function setMandalaZoom(nextZoom,event){
   sync();
   scrollTo(beforeX*newZoom-anchorX,beforeY*newZoom-anchorY);
 }
+state.mandalaZoom=clampZoom(state.mandalaZoom,minimumMandalaZoom(),2.5);
+window.addEventListener("resize",()=>setMandalaZoom(state.mandalaZoom));
 function setMenuZoom(nextZoom){
   state.menuZoom=clampZoom(nextZoom,.75,1.8);
   localStorage.setItem(MENU_ZOOM_KEY,state.menuZoom);

@@ -7,6 +7,7 @@
   // not enter this sequence, even when they use this shared completion popup.
   const mainWordElementPuzzles = [
     { path: "goya", key: "goyaPuzzleProgress", total: 18 },
+    { path: "arcane", key: "arcanePuzzleProgress", total: 18 },
     { path: "tarits", key: "TARITSPuzzleProgress", total: 20 },
     { path: "unrealunearth", key: "unrealPuzzleProgress", total: 23 },
     { path: "vibevegana", key: "prantasPuzzleProgress", total: 25 },

@@ -1,6 +1,6 @@
 (function () {
   const menu = document.getElementById("wordMenu");
-  const container = document.querySelector(".container");
+  const container = document.querySelector("[data-zoom-container]") || document.querySelector(".container");
   const toggle = document.getElementById("toggleMenu");
   if (!menu || !container) return;
 
@@ -47,7 +47,10 @@
 
   function syncMandalaZoom(nextZoom, event) {
     const oldZoom = mandalaZoom;
-    const newZoom = clamp(nextZoom, .5, 2.5);
+    const fitMinimum = container.dataset.minZoom === "fit"
+      ? Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight))
+      : .5;
+    const newZoom = clamp(nextZoom, fitMinimum, 2.5);
     if (newZoom === oldZoom) return;
 
     const anchorX = event ? event.clientX : innerWidth / 2;
@@ -67,6 +70,10 @@
   }
 
   syncMenuZoom();
+  if (container.dataset.minZoom === "fit") {
+    const fitMinimum = Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight));
+    mandalaZoom = clamp(mandalaZoom, fitMinimum, 2.5);
+  }
   container.style.zoom = mandalaZoom;
 
   const scrollZoomToggle = document.createElement("button");
@@ -98,6 +105,7 @@
   });
   window.addEventListener("resize", function () {
     requestAnimationFrame(keepMenuInViewport);
+    if (container.dataset.minZoom === "fit") syncMandalaZoom(mandalaZoom);
   });
 
   document.addEventListener("wheel", function (event) {

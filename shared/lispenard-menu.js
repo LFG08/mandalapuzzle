@@ -47,10 +47,11 @@
 
   function syncMandalaZoom(nextZoom, event) {
     const oldZoom = mandalaZoom;
-    const fitMinimum = container.dataset.minZoom === "fit"
+    const configuredMinimum = Number(container.dataset.minZoom);
+    const minimumZoom = container.dataset.minZoom === "fit"
       ? Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight))
-      : .5;
-    const newZoom = clamp(nextZoom, fitMinimum, 2.5);
+      : Number.isFinite(configuredMinimum) && configuredMinimum > 0 ? configuredMinimum : .5;
+    const newZoom = clamp(nextZoom, minimumZoom, 2.5);
     if (newZoom === oldZoom) return;
 
     const anchorX = event ? event.clientX : innerWidth / 2;
@@ -73,6 +74,11 @@
   if (container.dataset.minZoom === "fit") {
     const fitMinimum = Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight));
     mandalaZoom = clamp(mandalaZoom, fitMinimum, 2.5);
+  } else {
+    const configuredMinimum = Number(container.dataset.minZoom);
+    if (Number.isFinite(configuredMinimum) && configuredMinimum > 0) {
+      mandalaZoom = clamp(mandalaZoom, configuredMinimum, 2.5);
+    }
   }
   container.style.zoom = mandalaZoom;
 

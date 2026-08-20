@@ -353,13 +353,131 @@ padding:calc(4px * var(--mobile-menu-ui-scale)) 0;
 cursor:help;
 }
 
-#wordList li.figure-word:not(.found):not(.hint-revealed):hover{
-font-size:0;
+#wordTooltip{
+position:fixed;
+background:rgba(0,0,0,0.85);
+color:white;
+padding:6px 10px;
+font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+font-family:'Times New Roman', Times, serif;
+border:1px solid white;
+pointer-events:none;
+opacity:0;
+transition:opacity 0.15s;
+z-index:999;
 }
 
-#wordList li.figure-word:not(.found):not(.hint-revealed):hover::after{
-content:"F";
-font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+#resetPopup{
+position:fixed;
+inset:0;
+display:grid;
+place-items:center;
+padding:24px;
+background:rgba(1,8,25,.78);
+backdrop-filter:blur(7px);
+opacity:0;
+visibility:hidden;
+transition:opacity .2s ease, visibility .2s ease;
+z-index:100001;
+}
+
+#resetPopup.is-visible{
+opacity:1;
+visibility:visible;
+}
+
+.reset-popup-card{
+position:relative;
+isolation:isolate;
+width:min(390px,100%);
+overflow:hidden;
+box-sizing:border-box;
+padding:36px 30px 30px;
+border:2px solid #43f4f2;
+border-radius:26px;
+color:#efffff;
+text-align:center;
+background:
+radial-gradient(circle at 15% 0,rgba(38,236,255,.42),transparent 42%),
+radial-gradient(circle at 92% 100%,rgba(249,55,211,.4),transparent 45%),
+linear-gradient(145deg,#061b3b 5%,#15295b 54%,#430d53 100%);
+box-shadow:0 0 26px rgba(45,238,255,.5),0 0 52px rgba(242,46,213,.24),0 24px 70px rgba(0,0,0,.72);
+transform:translateY(14px) scale(.95);
+transition:transform .24s cubic-bezier(.2,.8,.2,1);
+}
+
+#resetPopup.is-visible .reset-popup-card{
+transform:translateY(0) scale(1);
+}
+
+.reset-popup-card::before,
+.reset-popup-card::after{
+content:"";
+position:absolute;
+z-index:-1;
+width:140px;
+height:140px;
+border:13px double currentColor;
+border-radius:48% 52% 45% 55%;
+opacity:.16;
+transform:rotate(35deg);
+}
+
+.reset-popup-card::before{color:#43f4f2;top:-96px;left:-70px;}
+.reset-popup-card::after{color:#ff4fd8;right:-78px;bottom:-100px;}
+
+.reset-popup-symbol{
+color:#ff66dc;
+font-size:1.55rem;
+letter-spacing:.42rem;
+margin-right:-.42rem;
+text-shadow:0 0 15px currentColor;
+}
+
+.reset-popup-title{
+margin:10px 0 8px;
+color:#76ffff;
+font:700 clamp(1.65rem,7vw,2.15rem)/1.1 Georgia,serif;
+text-shadow:0 0 13px rgba(67,244,242,.65);
+}
+
+.reset-popup-message{
+margin:0 0 24px;
+font:1rem/1.5 Arial,sans-serif;
+opacity:.92;
+}
+
+.reset-popup-actions{
+display:flex;
+justify-content:center;
+gap:12px;
+}
+
+.reset-popup-button{
+min-width:112px;
+padding:11px 20px;
+border:1px solid #8cffff;
+border-radius:999px;
+color:#efffff;
+background:rgba(3,31,68,.88);
+box-shadow:0 0 15px rgba(67,244,242,.25);
+font-weight:700;
+cursor:pointer;
+transition:transform .16s ease,filter .16s ease;
+}
+
+.reset-popup-button.confirm{
+border-color:#ff8ce7;
+color:#2a072a;
+background:linear-gradient(135deg,#ff8ce7,#bffcff);
+box-shadow:0 0 18px rgba(255,79,216,.4);
+}
+
+.reset-popup-button:hover{filter:brightness(1.13);transform:translateY(-2px);}
+.reset-popup-button:focus-visible{outline:3px solid white;outline-offset:3px;}
+
+@media (prefers-reduced-motion:reduce){
+#resetPopup,.reset-popup-card,.reset-popup-button{transition:none;}
 }
 
 .found{
@@ -530,6 +648,18 @@ font-family:inherit;
 
 <body>
 
+<div id="resetPopup" role="dialog" aria-modal="true" aria-labelledby="resetPopupTitle" aria-describedby="resetPopupMessage">
+  <div class="reset-popup-card">
+    <div class="reset-popup-symbol" aria-hidden="true">✦ ✧ ✦</div>
+    <h2 class="reset-popup-title" id="resetPopupTitle">Reiniciar mandala?</h2>
+    <p class="reset-popup-message" id="resetPopupMessage">Todo o seu progresso nesta mandala será apagado.</p>
+    <div class="reset-popup-actions">
+      <button class="reset-popup-button" id="cancelReset" type="button">Cancelar</button>
+      <button class="reset-popup-button confirm" id="confirmResetButton" type="button">Reiniciar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= MENU ================= -->
 
 <div id="wordMenu">
@@ -552,8 +682,7 @@ font-family:inherit;
 
     <span class="tooltip help-tooltip">
       Como jogar: Encontre as (P)alavras e (F)iguras escondidas. Utilize o menu para registrar o seu palpite. Em caso de acerto, o menu revela o nome do elemento escondido.
-      Para dicas, clique com o botão direito do mouse no menu.
-      1° Dica: Revela qual o nome do elemento escondido no menu; 2° Dica: Região onde o elemento se encontra. Boa Sorte!
+      Para usar a dica, clique com o botão direito do mouse em um item do menu. A dica mostra a região onde o elemento se encontra e pode ser usada quantas vezes quiser. Boa Sorte!
     </span>
   </span>
 
@@ -610,7 +739,7 @@ font-family:inherit;
 
 <!-- ================= MANDALA ================= -->
 
-<main class="puzzle-stage" data-zoom-container data-min-zoom="fit">
+<main class="puzzle-stage" data-zoom-container data-min-zoom="1">
 
 <div class="container">
 
@@ -642,24 +771,24 @@ font-family:inherit;
 
 <map name="image-map">
 
-<area alt="Jinx" title="Jinx" href="" coords="1046,218,1040,238,1047,256,1065,274,1093,283,1102,263,1105,241,1109,227,1114,209,1100,196,1082,192,1065,187,1055,202" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Jinx');return false;">
-<area alt="Powder" title="Powder" href="" coords="94,525,98,545,103,566,119,565,126,552,137,541,146,531,130,516,105,512" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Powder');return false;">
-<area alt="BOOM" title="BOOM" href="" coords="41,1170,20,1188,20,1226,34,1253,67,1263,81,1246,69,1212,67,1185" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'BOOM');return false;">
-<area alt="HAHAHAHA" title="HAHAHAHA" href="" coords="1234,2048,1219,2017,1266,2001,1301,2008,1319,2028,1310,2048,1290,2048" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'HAHAHAHA');return false;">
-<area alt="Violet" title="Violet" href="" coords="1766,2047,1760,2020,1778,1997,1805,2004,1814,1968,1847,2004,1880,2047" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Violet');return false;">
-<area alt="Isha" title="Isha" href="" coords="789,1136,787,1114,774,1091,792,1076,814,1075,859,1089,870,1111,847,1134,816,1138" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Isha');return false;">
-<area alt="Caitlyn" title="Caitlyn" href="" coords="917,1872,906,1850,847,1883,854,1906" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Caitlyn');return false;">
-<area alt="Mel" title="Mel" href="" coords="1874,1511,1892,1577,1834,1567" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Mel');return false;">
-<area alt="Ambessa" title="Ambessa" href="" coords="637,762,651,818,680,809,664,755" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Ambessa');return false;">
-<area alt="Hexatech" title="Hexatech" href="" coords="409,429,412,415,432,407,456,389,443,371,414,393,405,413,389,418,369,438,389,454" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Hexatech');return false;">
-<area alt="Viktor" title="Viktor" href="" coords="604,1350,631,1350,640,1368,644,1386,617,1393,597,1369" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Viktor');return false;">
-<area alt="Ekko" title="Ekko" href="" coords="919,1064,941,1102,966,1089,973,1071,979,1048,961,1037,946,1042" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Ekko');return false;">
-<area alt="Silco" title="Silco" href="" coords="1728,372,1789,401,1775,429,1713,393" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Silco');return false;">
-<area alt="Heimerdinger" title="Heimerdinger" href="" coords="391,1919,378,1896,365,1881,364,1825,378,1825,392,1859,407,1883,418,1910" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Heimerdinger');return false;">
-<area alt="Jayce" title="Jayce" href="" coords="1357,606,1337,613,1342,631,1362,631,1378,631,1395,628,1393,613,1378,604" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Jayce');return false;">
-<area alt="Vander" title="Vander" href="" coords="1518,1684,1539,1668,1550,1644,1574,1657,1570,1677,1558,1693,1534,1701" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Vander');return false;">
-<area alt="Sevika" title="Sevika" href="" coords="1597,993,1626,981,1641,970,1630,954,1605,963,1588,975" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Sevika');return false;">
-<area alt="Singed" title="Singed" href="" coords="1257,1375,1248,1397,1292,1411,1299,1397" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Singed');return false;">
+<area alt="Jinx" href="" coords="1046,218,1040,238,1047,256,1065,274,1093,283,1102,263,1105,241,1109,227,1114,209,1100,196,1082,192,1065,187,1055,202" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Jinx');return false;">
+<area alt="Powder" href="" coords="94,525,98,545,103,566,119,565,126,552,137,541,146,531,130,516,105,512" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Powder');return false;">
+<area alt="BOOM" href="" coords="41,1170,20,1188,20,1226,34,1253,67,1263,81,1246,69,1212,67,1185" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'BOOM');return false;">
+<area alt="HAHAHAHA" href="" coords="1234,2048,1219,2017,1266,2001,1301,2008,1319,2028,1310,2048,1290,2048" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'HAHAHAHA');return false;">
+<area alt="Violet" href="" coords="1766,2047,1760,2020,1778,1997,1805,2004,1814,1968,1847,2004,1880,2047" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Violet');return false;">
+<area alt="Isha" href="" coords="789,1136,787,1114,774,1091,792,1076,814,1075,859,1089,870,1111,847,1134,816,1138" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Isha');return false;">
+<area alt="Caitlyn" href="" coords="917,1872,906,1850,847,1883,854,1906" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Caitlyn');return false;">
+<area alt="Mel" href="" coords="1874,1511,1892,1577,1834,1567" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Mel');return false;">
+<area alt="Ambessa" href="" coords="637,762,651,818,680,809,664,755" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Ambessa');return false;">
+<area alt="Hexatech" href="" coords="409,429,412,415,432,407,456,389,443,371,414,393,405,413,389,418,369,438,389,454" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Hexatech');return false;">
+<area alt="Viktor" href="" coords="604,1350,631,1350,640,1368,644,1386,617,1393,597,1369" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Viktor');return false;">
+<area alt="Ekko" href="" coords="919,1064,941,1102,966,1089,973,1071,979,1048,961,1037,946,1042" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Ekko');return false;">
+<area alt="Silco" href="" coords="1728,372,1789,401,1775,429,1713,393" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Silco');return false;">
+<area alt="Heimerdinger" href="" coords="391,1919,378,1896,365,1881,364,1825,378,1825,392,1859,407,1883,418,1910" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Heimerdinger');return false;">
+<area alt="Jayce" href="" coords="1357,606,1337,613,1342,631,1362,631,1378,631,1395,628,1393,613,1378,604" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Jayce');return false;">
+<area alt="Vander" href="" coords="1518,1684,1539,1668,1550,1644,1574,1657,1570,1677,1558,1693,1534,1701" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Vander');return false;">
+<area alt="Sevika" href="" coords="1597,993,1626,981,1641,970,1630,954,1605,963,1588,975" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Sevika');return false;">
+<area alt="Singed" href="" coords="1257,1375,1248,1397,1292,1411,1299,1397" shape="poly" data-gabarito="arcane" onclick="toggleAnswer(this,'Singed');return false;">
 
 </map>
 
@@ -720,6 +849,7 @@ const menuItems = {};
 const answerClips = {};
 const answerGlows = {};
 const answerAudio = {};
+const wordTooltip = document.getElementById("wordTooltip");
 const completionBoomAudio = new Audio(completionBoomSource);
 completionBoomAudio.preload = "auto";
 
@@ -919,69 +1049,25 @@ function renderMenuWord(li){
   li.textContent = li.dataset.hidden;
 }
 
-function saveHints(){
-  let hints = {};
-  document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
-    let hintLevel = Number(li.dataset.hintLevel || 0);
-    if(hintLevel > 0){
-      hints[li.id] = hintLevel;
-    }
-  });
-  localStorage.setItem(hintStorageKey, JSON.stringify(hints));
-}
-
-function loadHints(){
-  let raw = localStorage.getItem(hintStorageKey);
-  if(!raw) return;
-  let hints;
-  try{
-    hints = JSON.parse(raw);
-  }catch{
-    return;
-  }
-  document.querySelectorAll("#wordList li.hidden-word").forEach(li => {
-    let savedHint = Number(hints[li.id] || 0);
-    if(savedHint <= 0) return;
-    li.dataset.hintLevel = String(Math.min(savedHint, 2));
-    renderMenuWord(li);
-  });
-}
-
-function applyHint(item, hintLevel){
-  let nextLevel = Math.max(Number(item.dataset.hintLevel || 0), hintLevel);
-  item.dataset.hintLevel = String(Math.min(nextLevel, 2));
-
+function showAreaHint(item){
   let word = item.dataset.hidden;
   let regionId = areaRegionMap[word];
   let area = findAreaByWord(word);
 
-  if(hintLevel >= 2){
-    if(regionId){
-      showRegionHint(regionId);
-    }
-    if(area){
-      centerViewOnArea(area);
-    }
+  if(regionId){
+    showRegionHint(regionId);
   }
-
-  renderMenuWord(item);
-  saveHints();
+  if(area){
+    centerViewOnArea(area);
+  }
 }
 
 function requestHint(item){
   if(!item.classList.contains("hidden-word")) return;
-  if(item.classList.contains("found")) return;
 
-  let currentHint = Number(item.dataset.hintLevel || 0);
-  if(currentHint >= 2){
-    alert("Essa palavra já recebeu todas as dicas.");
-    return;
-  }
+  if(!confirm("Deseja ver a região onde este elemento se encontra?")) return;
 
-  let nextHint = currentHint + 1;
-  if(!confirm("Deseja a " + nextHint + "° dica?")) return;
-
-  applyHint(item, nextHint);
+  showAreaHint(item);
 }
 
 function normalizeGabaritoKey(value){
@@ -1147,10 +1233,29 @@ function clearAll(){
 }
 
 function confirmReset(){
-  if(confirm("Reset?")){
-    clearAll();
-  }
+  let popup = document.getElementById("resetPopup");
+  popup.classList.add("is-visible");
+  document.getElementById("cancelReset").focus();
 }
+
+function closeResetPopup(){
+  document.getElementById("resetPopup").classList.remove("is-visible");
+  document.getElementById("clearButton").focus();
+}
+
+document.getElementById("cancelReset").addEventListener("click", closeResetPopup);
+document.getElementById("confirmResetButton").addEventListener("click", () => {
+  clearAll();
+  closeResetPopup();
+});
+document.getElementById("resetPopup").addEventListener("click", e => {
+  if(e.target.id === "resetPopup") closeResetPopup();
+});
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && document.getElementById("resetPopup").classList.contains("is-visible")){
+    closeResetPopup();
+  }
+});
 
 function isMobileViewport(){
   return window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
@@ -1233,6 +1338,19 @@ document.addEventListener("dragstart", e => e.preventDefault());
 document.querySelectorAll("#wordList li").forEach(li => {
   menuItems[li.id] = li;
   renderMenuWord(li);
+  li.addEventListener("mouseenter", () => {
+    if(!li.classList.contains("figure-word") || li.classList.contains("found") || li.classList.contains("hint-revealed")) return;
+    wordTooltip.textContent = "F";
+    wordTooltip.style.opacity = "1";
+  });
+  li.addEventListener("mousemove", e => {
+    if(wordTooltip.style.opacity !== "1") return;
+    wordTooltip.style.left = (e.clientX + 10) + "px";
+    wordTooltip.style.top = (e.clientY + 10) + "px";
+  });
+  li.addEventListener("mouseleave", () => {
+    wordTooltip.style.opacity = "0";
+  });
   li.addEventListener("contextmenu", e => {
     e.preventDefault();
     requestHint(li);
@@ -1339,7 +1457,7 @@ document.addEventListener("mouseup", () => {
 window.addEventListener("load", function(){
   document.querySelectorAll("#wordList li.hidden-word").forEach(renderMenuWord);
   initMobileMenuOptions();
-  loadHints();
+  localStorage.removeItem(hintStorageKey);
   loadProgress();
   let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
   soundEnabled = savedSoundEnabled !== "0";

@@ -20,6 +20,10 @@
 
 /* ================= MANDALA ================= */
 
+.puzzle-stage{
+width:var(--mandala-display-size);
+}
+
 .container{
 position:relative;
 width:var(--mandala-display-size);
@@ -64,6 +68,7 @@ transition:opacity 0.8s ease;
 #endEffect.visible{
 opacity:1;
 animation:endEffectFlicker 0.34s steps(2, end) infinite;
+filter:brightness(1.45) saturate(1.3) drop-shadow(0 0 22px rgba(89, 255, 220, .9));
 }
 
 #endEffect.visible.settled{
@@ -158,11 +163,27 @@ opacity:.9;
 /* ================= BACKGROUND ================= */
 
 body{
-background:rgb(0, 17, 33);
+background:#690754;
 margin:0;
 overflow:auto;
 cursor:grab;
 user-select:none;
+transition:background-color .18s linear;
+}
+
+body.lights-out{
+background:#000;
+}
+
+body.lights-out .container > img:first-child,
+body.lights-out #answersOverlay,
+body.lights-out #regionHints{
+filter:brightness(.18) saturate(.55);
+}
+
+body.lights-out #wordMenu,
+body.lights-out .mandala-footnote{
+filter:brightness(.38);
 }
 
 body.dragging{
@@ -414,7 +435,7 @@ font-family:inherit;
   margin:0 0 34px;
   padding:14px 18px 18px;
   color:rgba(238, 255, 222, 0.78);
-  background:linear-gradient(90deg, rgba(0, 17, 33, 0.92), rgba(10, 55, 68, 0.78), rgba(0, 17, 33, 0.92));
+  background:linear-gradient(90deg, rgba(60, 0, 49, 0.96), rgba(105, 7, 84, 0.82), rgba(60, 0, 49, 0.96));
   border-top:1px solid rgba(255, 255, 255, 0.16);
   font-family:'Times New Roman', Times, serif;
   font-size:0.88rem;
@@ -504,7 +525,7 @@ font-family:inherit;
 
 <link rel="stylesheet" href="../shared/lispenard-menu.css">
 <link rel="stylesheet" href="../completion-popup.css">
-<style>:root{--completion-surface:#04243a;--completion-accent:#a7ffd2;--completion-button-text:#092334;}</style>
+<style>:root{--completion-surface:#4b073f;--completion-accent:#f58bdf;--completion-text:#fff0fc;--completion-button-text:#3d0735;}</style>
 </head>
 
 <body>
@@ -589,6 +610,8 @@ font-family:inherit;
 
 <!-- ================= MANDALA ================= -->
 
+<main class="puzzle-stage" data-zoom-container data-min-zoom="fit">
+
 <div class="container">
 
 <img src="MANDALA.png" usemap="#image-map" width="2048" height="2048" decoding="async" fetchpriority="high">
@@ -602,6 +625,16 @@ font-family:inherit;
 </div>
 
 </div>
+
+<footer class="mandala-footnote">
+  <strong>Créditos dos efeitos sonoros:</strong>
+  <a href="https://wiki.leagueoflegends.com/en-us/Category:Ping_SFX">Generic Ping SFX e Assist Me Ping SFX</a>,
+  League of Legends Wiki;
+  <a href="https://freesound.org/s/347328/">FUN-EXPLOSION06.wav, por newagesoup</a>, licença Attribution 4.0;
+  <a href="https://freesound.org/s/121371/">ExplosionBombBlastDistantMuffled_LikeCinematicBoom_4_48k32bit.wav, por zimbot</a>, licença Attribution 4.0.
+</footer>
+
+</main>
 
 
 
@@ -645,16 +678,27 @@ const gabaritoOverlays = {
 };
 const defaultGabarito = "arcane";
 const answerRevealPadding = 42;
-const handbellSounds = {
-  C: "../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
-  D: "../sound_effects/339813__inspectorj__hand-bells-D-single.wav",
-  E: "../sound_effects/339812__inspectorj__hand-bells-e-single.wav",
-  F: "../sound_effects/339816__inspectorj__hand-bells-F-single.wav",
-  G: "../sound_effects/339818__inspectorj__hand-bells-G-single.wav",
-  A: "../sound_effects/339810__inspectorj__hand-bells-A-single.wav",
-  B: "../sound_effects/339809__inspectorj__hand-bells-b-single.wav"
+const answerSoundSources = {
+  Powder: "../sound_effects/Generic_ping_SFX.ogg",
+  Isha: "../sound_effects/Generic_ping_SFX.ogg",
+  Heimerdinger: "../sound_effects/Generic_ping_SFX.ogg",
+  Ekko: "../sound_effects/Generic_ping_SFX.ogg",
+  Vander: "../sound_effects/Generic_ping_SFX.ogg",
+  Violet: "../sound_effects/Generic_ping_SFX.ogg",
+  Mel: "../sound_effects/Generic_ping_SFX.ogg",
+  Jayce: "../sound_effects/Generic_ping_SFX.ogg",
+  Jinx: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  Silco: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  Ambessa: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  Singed: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  Sevika: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  Viktor: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  Caitlyn: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  Hexatech: "../sound_effects/Assist_Me_ping_SFX.ogg",
+  BOOM: "../sound_effects/347328__newagesoup__fun-explosion06.wav",
+  HAHAHAHA: "../sound_effects/347328__newagesoup__fun-explosion06.wav"
 };
-const foundBellSequence = ["G", "G", "A", "G", "C", "B", "G", "G", "A", "G", "D"];
+const completionBoomSource = "../sound_effects/121371__zimbot__explosionbombblastdistantmuffled_likecinematicboom_4_48k32bit.wav";
 
 let allowToggleOff = true;
 let rotation = 0;
@@ -675,7 +719,9 @@ function updateSoundButton(){
 const menuItems = {};
 const answerClips = {};
 const answerGlows = {};
-const bellAudio = {};
+const answerAudio = {};
+const completionBoomAudio = new Audio(completionBoomSource);
+completionBoomAudio.preload = "auto";
 
 function clamp(value, min, max){
   return Math.min(max, Math.max(min, value));
@@ -699,19 +745,31 @@ function getFoundCount(){
   return getPuzzleWords().filter(word => answerClips[word]?.classList.contains("visible")).length;
 }
 
-function getBellAudio(note){
-  if(!bellAudio[note]){
-    bellAudio[note] = new Audio(handbellSounds[note]);
-    bellAudio[note].preload = "auto";
+function getAnswerAudio(word){
+  if(!answerSoundSources[word]) return null;
+  if(!answerAudio[word]){
+    answerAudio[word] = new Audio(answerSoundSources[word]);
+    answerAudio[word].preload = "auto";
   }
-  return bellAudio[note];
+  return answerAudio[word];
 }
 
-function playBell(note){
-  let audio = getBellAudio(note);
+function playAnswerSound(word){
+  let audio = getAnswerAudio(word);
+  if(!audio) return;
   audio.pause();
   audio.currentTime = 0;
-  return audio.play().catch(() => {});
+  audio.play().catch(() => {});
+}
+
+function startCompletionEffect(){
+  if(getFoundCount() !== getPuzzleWords().length) return;
+  document.body.classList.add("lights-out");
+  document.getElementById("endEffect")?.classList.add("visible");
+  if(soundEnabled){
+    completionBoomAudio.currentTime = 0;
+    completionBoomAudio.play().catch(() => {});
+  }
 }
 
 function showCompletionMessage(){
@@ -730,9 +788,9 @@ function updateCounter(){
   document.getElementById("counter").textContent = found + " / " + total;
   let endEffect = document.getElementById("endEffect");
   let isComplete = found === total && total > 0;
-  endEffect?.classList.toggle("visible", isComplete);
-
   if(!isComplete){
+    document.body.classList.remove("lights-out");
+    endEffect?.classList.remove("visible");
     endEffect?.classList.remove("settled");
     clearTimeout(endEffectSettleTimer);
     endEffectSettleTimer = null;
@@ -745,18 +803,18 @@ function updateCounter(){
     clearTimeout(completionTimer);
     clearTimeout(endEffectSettleTimer);
     endEffect?.classList.remove("settled");
-    endEffectSettleTimer = setTimeout(() => {
-      endEffectSettleTimer = null;
-      if(getFoundCount() === getPuzzleWords().length){
-        endEffect?.classList.add("settled");
-      }
-    }, 3000);
+    endEffectSettleTimer = setTimeout(startCompletionEffect, 1000);
     completionTimer = setTimeout(() => {
       completionTimer = null;
       if(getFoundCount() === getPuzzleWords().length){
-        showCompletionMessage();
+        endEffect?.classList.add("settled");
       }
     }, 4000);
+    setTimeout(() => {
+      if(getFoundCount() === getPuzzleWords().length){
+        showCompletionMessage();
+      }
+    }, 5000);
   }else if(found < total){
     completionShown = false;
     clearTimeout(completionTimer);
@@ -1030,12 +1088,8 @@ function toggleAnswer(area, word, gabaritoOrShouldPersist=true, shouldPersist=tr
     renderMenuWord(menuItem);
   }
 
-  let foundAfterToggle = getFoundCount();
   if(wasJustFound && soundEnabled && !isBootstrapping){
-    let foundNote = foundBellSequence[foundAfterToggle - 1];
-    if(foundNote){
-      playBell(foundNote);
-    }
+    playAnswerSound(word);
   }
 
   updateCounter();
@@ -1087,6 +1141,7 @@ function clearAll(){
   clearTimeout(endEffectSettleTimer);
   endEffectSettleTimer = null;
   document.getElementById("endEffect")?.classList.remove("settled");
+  document.body.classList.remove("lights-out");
   completionShown = false;
   updateCounter();
 }

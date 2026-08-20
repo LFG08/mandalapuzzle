@@ -739,7 +739,7 @@ font-family:inherit;
 
 <!-- ================= MANDALA ================= -->
 
-<main class="puzzle-stage" data-zoom-container data-min-zoom="1">
+<main class="puzzle-stage" data-zoom-container data-min-zoom="fit">
 
 <div class="container">
 
@@ -1064,9 +1064,6 @@ function showAreaHint(item){
 
 function requestHint(item){
   if(!item.classList.contains("hidden-word")) return;
-
-  if(!confirm("Deseja ver a região onde este elemento se encontra?")) return;
-
   showAreaHint(item);
 }
 

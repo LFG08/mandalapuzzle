@@ -5,9 +5,20 @@
   if (!menu || !container) return;
 
   const prefix = `${location.pathname.replace(/\W+/g, "_")}_`;
-  let menuZoom = Number(localStorage.getItem(prefix + "menuZoom")) || 1;
+  const sharedPreferencePrefix = "cacapalavras_";
+  const menuZoomKey = sharedPreferencePrefix + "menuZoom";
+  const menuWidthKey = sharedPreferencePrefix + "menuWidth";
+  const savedSharedMenuZoom = Number(localStorage.getItem(menuZoomKey));
+  const savedPuzzleMenuZoom = Number(localStorage.getItem(prefix + "menuZoom"));
+  let menuZoom = savedSharedMenuZoom || savedPuzzleMenuZoom || 1;
   let mandalaZoom = Number(localStorage.getItem(prefix + "mandalaZoom")) || 1;
   let scrollZoomEnabled = localStorage.getItem(prefix + "scrollZoom") !== "off";
+
+  // Menu presentation is a user preference shared by every caça-palavras.
+  // Keep puzzle zoom and interaction settings scoped to the current puzzle.
+  if (!savedSharedMenuZoom && savedPuzzleMenuZoom) {
+    localStorage.setItem(menuZoomKey, savedPuzzleMenuZoom);
+  }
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, Number(value.toFixed(2))));
@@ -40,7 +51,7 @@
       const button = event.target.closest("button[data-font-step]");
       if (!button) return;
       menuZoom = clamp(menuZoom + Number(button.dataset.fontStep), .75, 1.8);
-      localStorage.setItem(prefix + "menuZoom", menuZoom);
+      localStorage.setItem(menuZoomKey, menuZoom);
       syncMenuZoom();
     });
   }
@@ -71,6 +82,10 @@
   }
 
   syncMenuZoom();
+  const savedMenuWidth = Number(localStorage.getItem(menuWidthKey));
+  if (Number.isFinite(savedMenuWidth) && savedMenuWidth >= 190) {
+    menu.style.width = `${Math.min(savedMenuWidth, Math.max(190, innerWidth - 16))}px`;
+  }
   if (container.dataset.minZoom === "fit") {
     const fitMinimum = Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight));
     mandalaZoom = clamp(mandalaZoom, fitMinimum, 2.5);
@@ -112,6 +127,22 @@
   window.addEventListener("resize", function () {
     requestAnimationFrame(keepMenuInViewport);
     if (container.dataset.minZoom === "fit") syncMandalaZoom(mandalaZoom);
+  });
+  window.addEventListener("storage", function (event) {
+    if (event.key === menuZoomKey) {
+      const nextZoom = Number(event.newValue);
+      if (Number.isFinite(nextZoom) && nextZoom > 0) {
+        menuZoom = clamp(nextZoom, .75, 1.8);
+        syncMenuZoom();
+      }
+    }
+    if (event.key === menuWidthKey) {
+      const nextWidth = Number(event.newValue);
+      if (Number.isFinite(nextWidth) && nextWidth >= 190) {
+        menu.style.width = `${Math.min(nextWidth, Math.max(190, innerWidth - 16))}px`;
+        requestAnimationFrame(keepMenuInViewport);
+      }
+    }
   });
 
   document.addEventListener("wheel", function (event) {
@@ -215,6 +246,7 @@
   function stopResize(event) {
     if (!resize || event.pointerId !== resize.pointerId) return;
     resize = null;
+    localStorage.setItem(menuWidthKey, Math.round(menu.getBoundingClientRect().width));
   }
   document.addEventListener("pointerup", stopResize);
   document.addEventListener("pointercancel", stopResize);

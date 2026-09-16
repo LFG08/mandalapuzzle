@@ -191,41 +191,31 @@
     });
   });
 
-  const resizeMargin = 10;
   let resize = null;
-  function resizeEdges(event) {
-    // Leave the word list (including its native scrollbar) to the browser. Treating
-    // a scrollbar press as an east-edge resize hides the scrollbar while the user
-    // is trying to scroll it.
-    if (menu.classList.contains("collapsed") || event.target.closest("#wordList, button, a, select")) return "";
-    const rect = menu.getBoundingClientRect();
-    return `${event.clientY - rect.top <= resizeMargin ? "n" : event.clientY >= rect.bottom - resizeMargin ? "s" : ""}${event.clientX - rect.left <= resizeMargin ? "w" : event.clientX >= rect.right - resizeMargin ? "e" : ""}`;
-  }
-  menu.addEventListener("pointerdown", function (event) {
-    const edges = resizeEdges(event);
-    if (!edges) return;
+  const resizeHandle = document.createElement("div");
+  resizeHandle.className = "menu-resize-handle";
+  resizeHandle.setAttribute("role", "separator");
+  resizeHandle.setAttribute("aria-orientation", "vertical");
+  resizeHandle.setAttribute("aria-label", "Redimensionar largura do menu");
+  menu.appendChild(resizeHandle);
+
+  resizeHandle.addEventListener("pointerdown", function (event) {
     event.preventDefault();
     event.stopPropagation();
     const rect = menu.getBoundingClientRect();
-    resize = { edges, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top, width: rect.width, height: rect.height };
-    menu.style.maxHeight = "none";
-    menu.setPointerCapture?.(event.pointerId);
-  }, true);
-  document.addEventListener("pointermove", function (event) {
-    if (!resize) return;
-    const dx = event.clientX - resize.x;
-    const dy = event.clientY - resize.y;
-    let { left, top, width, height } = resize;
-    if (resize.edges.includes("e")) width = Math.max(190, resize.width + dx);
-    if (resize.edges.includes("s")) height = Math.max(120, resize.height + dy);
-    if (resize.edges.includes("w")) { left = Math.min(resize.left + dx, resize.left + resize.width - 190); width = resize.width + resize.left - left; }
-    if (resize.edges.includes("n")) { top = Math.min(resize.top + dy, resize.top + resize.height - 120); height = resize.height + resize.top - top; }
-    menu.style.left = `${Math.max(8, left)}px`;
-    menu.style.top = `${Math.max(8, top)}px`;
-    menu.style.width = `${Math.min(width, innerWidth - 16)}px`;
-    menu.style.height = `${Math.min(height, innerHeight - 16)}px`;
+    resize = { pointerId: event.pointerId, x: event.clientX, width: rect.width };
+    resizeHandle.setPointerCapture?.(event.pointerId);
   });
-  function stopResize() { resize = null; }
+  document.addEventListener("pointermove", function (event) {
+    if (!resize || event.pointerId !== resize.pointerId) return;
+    const dx = event.clientX - resize.x;
+    const availableWidth = Math.max(190, innerWidth - menu.getBoundingClientRect().left - 8);
+    menu.style.width = `${Math.min(Math.max(190, resize.width + dx), availableWidth)}px`;
+  });
+  function stopResize(event) {
+    if (!resize || event.pointerId !== resize.pointerId) return;
+    resize = null;
+  }
   document.addEventListener("pointerup", stopResize);
   document.addEventListener("pointercancel", stopResize);
 }());

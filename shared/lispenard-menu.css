@@ -16,6 +16,20 @@
   font-size: calc(1rem * var(--menu-zoom));
 }
 
+/* Width is adjusted exclusively from this dedicated right-edge handle. Keeping
+   it separate from the header prevents a vertical menu drag from being mistaken
+   for a resize and gives the browser the proper horizontal-resize pointer. */
+.menu-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  bottom: 0;
+  width: 10px;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 2;
+}
+
 #menuHeader {
   display: flex;
   flex-direction: column;
@@ -199,8 +213,13 @@
   max-height: calc(100dvh - 16px);
 }
 
-/* Minimize only the checklist; keep the menu controls available. */
-#wordMenu.collapsed > #wordList { display: none !important; }
+/* Keep only the two frequently used puzzle controls visible while minimized.
+   The expand button lives in the header, so it remains available as well. */
+#wordMenu.collapsed > #wordList,
+#wordMenu.collapsed > select,
+#wordMenu.collapsed > button:not(#rotateMandala):not(.scroll-zoom-toggle) {
+  display: none !important;
+}
 #mobileMenuOptions { display: none !important; }
 #wordMenu.mobile-pinned,
 #wordMenu.pinned-bottom-collapsed,

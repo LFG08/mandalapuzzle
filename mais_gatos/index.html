@@ -101,7 +101,7 @@ opacity:1;
 /* ================= BACKGROUND ================= */
 
 body{
-background:rgb(16, 56, 0);
+background:#400209;
 margin:0;
 overflow:auto;
 cursor:grab;
@@ -407,13 +407,14 @@ font-family:inherit;
   }
 }
 
-#soundCredits{box-sizing:border-box;width:min(100%,900px);padding:24px;color:#f4e7bb;background:#32120f;font:14px/1.6 sans-serif;cursor:auto;user-select:text;}
+#soundCredits{box-sizing:border-box;width:min(100%,900px);padding:24px;color:#f4e7bb;background:#32120f;font:0.88rem/1.35 "Times New Roman", Times, serif;cursor:auto;user-select:text;}
+#soundCredits summary{cursor:pointer;}
 #soundCredits p{margin:6px 0;} #soundCredits a{color:#ffce67;}
 area{cursor:pointer;}
 </style>
 
 <link rel="stylesheet" href="../completion-popup.css">
-<style>:root{--completion-surface:#103800;--completion-accent:#74df3c;--completion-button-text:#071507;}</style>
+<style>:root{--completion-surface:#400209;--completion-accent:#ffce67;--completion-button-text:#400209;}</style>
 <link rel="stylesheet" href="../shared/lispenard-menu.css">
 </head>
 
@@ -514,12 +515,15 @@ area{cursor:pointer;}
 <area shape="poly" coords="461,1793,497,1793,497,1832,461,1832" href="#" alt="Gato 18" onclick="toggleAnswer(this,'Gato_18');return false;">
 <area shape="poly" coords="1172,1875,1201,1875,1201,1899,1172,1899" href="#" alt="Gato 19" onclick="toggleAnswer(this,'Gato_19');return false;">
 </map>
-<footer id="soundCredits" aria-label="Créditos dos sons"><strong>Créditos dos sons</strong>
+<footer id="soundCredits" aria-label="Créditos dos sons">
+<details>
+<summary>Créditos dos sons</summary>
 <p>Cat Meow 3 by ebcrosby -- <a href="https://freesound.org/s/334435/" target="_blank" rel="noopener noreferrer">Freesound</a> -- License: Attribution 3.0</p>
 <p>Cat meow.m4a by Christyboy100 -- <a href="https://freesound.org/s/495694/" target="_blank" rel="noopener noreferrer">Freesound</a> -- License: Attribution 3.0</p>
 <p>Cat Meowing by lextrack -- <a href="https://freesound.org/s/333916/" target="_blank" rel="noopener noreferrer">Freesound</a> -- License: Creative Commons 0</p>
 <p>cat meow short by skymary -- <a href="https://freesound.org/s/412017/" target="_blank" rel="noopener noreferrer">Freesound</a> -- License: Creative Commons 0</p>
 <p>New Cat Meow 1 by steffcaffrey -- <a href="https://freesound.org/s/479272/" target="_blank" rel="noopener noreferrer">Freesound</a> -- License: Creative Commons 0</p>
+</details>
 </footer>
 
 <!-- ================= SCRIPT ================= -->

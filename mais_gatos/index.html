@@ -481,7 +481,7 @@ area{cursor:pointer;}
 
 <div class="container" data-zoom-container data-min-zoom="fit">
 
-<img src="maisgatos_mandala.png" alt="Mandala com 19 gatos escondidos" usemap="#image-map" width="2048" height="2048">
+<img src="../maisgatos_mandala.png" alt="Mandala com 19 gatos escondidos" usemap="#image-map" width="2048" height="2048">
 
 <div id="answersOverlay"></div>
 <div id="regionHints">
@@ -1049,9 +1049,10 @@ window.addEventListener("resize", () => {
 </script>
 
 
-<!-- Image-map coordinates use the native 2048px size; shared zoom scales the whole container. -->
+<!-- SVG hit targets keep the image-map coordinates aligned with zoom and rotation. -->
 
 <script src="../completion-popup.js"></script>
+<script src="../shared/image-map-targets.js"></script>
 <script src="../shared/lispenard-menu.js"></script>
 </body>
 </html>

@@ -702,9 +702,7 @@ mandalaZoom = clamp(nextZoom, minMandalaZoom, maxMandalaZoom);
 document.documentElement.style.setProperty("--mandala-zoom", mandalaZoom.toFixed(2));
 layoutHintRegions();
 
-if(typeof imageMapResize === "function"){
-  imageMapResize();
-}
+
 }
 
 function getHintScale(){
@@ -1654,8 +1652,8 @@ localStorage.setItem(progressStorageKey, JSON.stringify(foundWords));
 
 </script>
 
-<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
-<script>imageMapResize();</script>
+<script src="../shared/image-map-targets.js"></script>
+
 
 <script src="../shared/lispenard-menu.js"></script>
 <script src="../completion-popup.js"></script>

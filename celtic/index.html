@@ -1777,9 +1777,7 @@ loadProgress();
 updateCounter();
 updateSoundUI();
 
-if(typeof imageMapResize === "function"){
-imageMapResize();
-}
+
 }
 
 toggleClickMode.onclick = function(){
@@ -1877,8 +1875,8 @@ currentLevel = getSavedLevel();
 renderLevel();
 });
 </script>
-<script src="https://unpkg.com/image-map-resizer/js/imageMapResizer.min.js"></script>
-<script>imageMapResize();</script>
+<script src="../shared/image-map-targets.js"></script>
+
 <script src="../completion-popup.js"></script>
 <script src="../shared/lispenard-menu.js"></script>
 </body>

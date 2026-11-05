@@ -13,6 +13,7 @@
     { path: "vibevegana", key: "prantasPuzzleProgress", total: 25 },
     { path: "margrego", key: "marPuzzleProgress", total: 26 },
     { path: "losgatos", key: "losgatosPuzzleProgress", total: 26 },
+    { path: "mais_gatos", key: "mais_gatosPuzzleProgress", total: 19 },
     { path: "ajna", key: "ajnaPuzzleProgress", total: 27 },
     { path: "bichanos", key: "gatosPuzzleProgress", total: 34 },
     { path: "LispenardStreet", key: "lispenardStreetProgressV1", total: 39 },

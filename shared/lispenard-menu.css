@@ -3,6 +3,11 @@
   --menu-zoom: 1;
 }
 
+/* Hide the browser's map outline after pointer clicks; keep keyboard focus visible. */
+area[href]:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Shared puzzle controls: keep the legacy games visually and behaviorally aligned
    with the Lispenard Street menu. */
 #wordMenu {

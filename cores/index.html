@@ -151,7 +151,7 @@ animation:hintPulse 0.9s ease-in-out 2;
 /* ================= BACKGROUND ================= */
 
 body{
-background:rgb(64, 23, 124);
+background:#000;
 margin:0;
 overflow:auto;
 cursor:grab;
@@ -161,6 +161,15 @@ user-select:none;
 body.dragging{
 cursor:grabbing;
 }
+
+.sound-credits{
+position:relative;
+max-width:60rem;
+padding:20px;
+color:#ccc;
+font: .85rem/1.6 Georgia,serif;
+}
+.sound-credits a{color:inherit;}
 
 /* ================= MENU ================= */
 
@@ -438,8 +447,7 @@ cursor:pointer;
 <span class="info-wrapper">
     <button class="info-btn">i</button>
     <span class="tooltip">
-      Encontre 13 nomes de cores escondidos nesta mandala.<br><br>
-      Star twinkle ding.wav by robinhood76 -- <a href="https://freesound.org/s/819418/" class="highlight" target="_blank" rel="noopener noreferrer">https://freesound.org/s/819418/</a> -- License: Creative Commons 0
+      Encontre 13 nomes de cores escondidos nesta mandala.
     </span>
 </span>
 <span class="info-wrapper">
@@ -497,6 +505,13 @@ cursor:pointer;
   <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
 
 </div>
+
+<footer class="sound-credits">
+Som: <cite>Star twinkle ding.wav</cite>, por
+<a href="https://freesound.org/people/robinhood76/" target="_blank" rel="noopener noreferrer">robinhood76</a> —
+<a href="https://freesound.org/s/819418/" target="_blank" rel="noopener noreferrer">Freesound</a>.
+Licença: <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="license noopener noreferrer">Creative Commons 0 (CC0)</a>.
+</footer>
 
 <!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
 
@@ -979,7 +994,7 @@ offsetY=e.clientY-menu.offsetTop;
 document.onmousemove=e=>{
 if(!dragging) return;
 menu.style.left=(e.clientX-offsetX)+"px";
-menu.style.top=(e.clientY-offsetY)+"px";
+menu.style.top=Math.max(0,e.clientY-offsetY)+"px";
 };
 
 document.onmouseup=()=>dragging=false;

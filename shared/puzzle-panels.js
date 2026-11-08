@@ -45,13 +45,69 @@
   }
   if (toggle) toggle.addEventListener('click', () => requestAnimationFrame(() => { syncToggle(); fit(); remember(); }));
   syncToggle();
+  // Keep frequent actions visible; preserve secondary controls and their listeners.
+  const title = header.querySelector(':scope > .title');
+  const counter = header.querySelector('#counter');
+  const primary = document.createElement('div');
+  primary.className = 'panel-primary';
+  if (title && title !== actions) primary.append(title);
+  const quick = document.createElement('div');
+  quick.className = 'panel-quick';
+  if (counter) quick.append(counter);
+  if (toggle) quick.append(toggle);
+  quick.append(hide);
+  primary.append(quick);
+  const options = document.createElement('details');
+  options.className = 'panel-options';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Opções';
+  summary.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    options.open = !options.open;
+  });
+  const secondary = document.createElement('div');
+  secondary.className = 'panel-secondary';
+  // Move nodes instead of rebuilding them: dynamic credits and existing handlers survive.
+  while (actions.firstChild) secondary.append(actions.firstChild);
+  secondary.querySelectorAll('.menu-font-label').forEach(label => label.remove());
+  secondary.querySelectorAll('.menu-font-controls button').forEach(button => {
+    const decrease = button.dataset.fontStep?.startsWith('-') || button.id === 'decreaseMenuFont';
+    button.textContent = decrease ? '\u2212' : '+';
+  });
+  secondary.querySelectorAll('.info-btn').forEach(button => {
+    const help = button.parentElement.querySelector('.help-tooltip');
+    button.textContent = help ? 'Ajuda' : 'Créditos';
+    button.setAttribute('aria-label', help ? 'Como jogar' : 'Informações e créditos');
+    button.title = button.getAttribute('aria-label');
+    button.addEventListener('click', event => {
+      event.stopImmediatePropagation();
+      const wrapper = button.parentElement;
+      const open = !wrapper.classList.contains('active');
+      secondary.querySelectorAll('.info-wrapper').forEach(item => {
+        item.classList.remove('active');
+        item.querySelector('button')?.setAttribute('aria-expanded', 'false');
+      });
+      wrapper.classList.toggle('active', open);
+      button.setAttribute('aria-expanded', String(open));
+      positionHelp();
+    }, true);
+  });
+  secondary.querySelectorAll('a.menu-btn').forEach(link => {
+    link.textContent = 'Início'; link.setAttribute('aria-label', 'Voltar à página inicial');
+  });
+  options.append(summary, secondary);
+  actions.remove();
+  header.append(primary, options);
+  options.addEventListener('toggle', () => { fit(); positionHelp(); });
   // Capture legacy drag handlers so one pointer gesture has one owner.
   for (const type of ['mousedown', 'touchstart']) header.addEventListener(type, e => e.stopImmediatePropagation(), true);
   header.tabIndex = 0;
   header.setAttribute('aria-label', 'Mover menu: arraste ou use as setas do teclado');
   let gesture;
   header.addEventListener('pointerdown', e => {
-    if (e.target.closest('button, a, input, select, .info-wrapper') || e.button !== 0) return;
+    if (e.target.closest('button, a, input, select, summary, .panel-secondary, .info-wrapper')) { e.stopImmediatePropagation(); return; }
+    if (e.button !== 0) return;
     e.preventDefault(); e.stopImmediatePropagation();
     const r = menu.getBoundingClientRect();
     gesture = {id:e.pointerId, x:e.clientX, y:e.clientY, left:r.left, top:r.top};

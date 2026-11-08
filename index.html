@@ -172,44 +172,28 @@ border:2px solid rgba(255,255,255,0.2);
 }
 
 .thumb.progress-complete{
-border:1px hidden #ff7b00;
-box-shadow:
-0 0 12px rgba(255, 215, 0, 0.6),
-0 0 24px rgba(255, 240, 150, 0.45);
-animation:goldShine 2.2s linear infinite;
-}
-
-@keyframes goldShine{
-0%{ filter:brightness(1); }
-50%{ filter:brightness(1.2); }
-100%{ filter:brightness(1); }
-}
-
-#coresCard .thumb.progress-complete{
 position:relative;
 overflow:visible;
+border:2px solid transparent;
 box-shadow:none;
 }
-
-#coresCard .thumb.progress-complete img{
-border-radius:50%;
-}
-
-#coresCard .thumb.progress-complete::before{
+.thumb.progress-complete img{ border-radius:50%; }
+.thumb.progress-complete::before{
 content:"";
 position:absolute;
 inset:0;
 border-radius:50%;
-box-shadow:
-0 0 12px rgba(255, 215, 0, 0.6),
-0 0 24px rgba(255, 240, 150, 0.45);
 pointer-events:none;
-animation:coresRainbowShine 4s linear infinite;
+box-shadow:-6px 0 18px #ff404099, 6px -4px 22px #40ff6099, 0 6px 26px #4080ff99;
+animation:completedRgbGlow 4s linear infinite;
 }
-
-@keyframes coresRainbowShine{
-from{ filter:hue-rotate(0deg); }
-to{ filter:hue-rotate(360deg); }
+@keyframes completedRgbGlow{
+0%,100%{ box-shadow:-6px 0 18px #ff404099, 6px -4px 22px #40ff6099, 0 6px 26px #4080ff99; }
+33%{ box-shadow:0 6px 26px #ff404099, -6px 0 18px #40ff6099, 6px -4px 22px #4080ff99; }
+66%{ box-shadow:6px -4px 22px #ff404099, 0 6px 26px #40ff6099, -6px 0 18px #4080ff99; }
+}
+@media(prefers-reduced-motion:reduce){
+.thumb.progress-complete::before{ animation:none; }
 }
 
 .thumb img{

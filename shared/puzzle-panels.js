@@ -7,6 +7,7 @@
   const key = `puzzlePanel:${location.pathname}`;
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch (_) {}
+  if (typeof saved !== 'object' || Array.isArray(saved)) saved = {};
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
   function fit() {
     if (menu.hidden) return;
@@ -21,11 +22,14 @@
     const r = menu.getBoundingClientRect();
     try { localStorage.setItem(key, JSON.stringify({left:r.left, top:r.top, width:r.width, height:menu.style.height, collapsed:menu.classList.contains('collapsed')})); } catch (_) {}
   }
-  for (const prop of ['left', 'top', 'width']) {
-    if (Number.isFinite(saved[prop])) menu.style[prop] = `${saved[prop]}px`;
+  function restoreLayout() {
+    for (const prop of ['left', 'top', 'width']) {
+      if (Number.isFinite(saved[prop])) menu.style[prop] = `${saved[prop]}px`;
+    }
+    if (typeof saved.height === 'string' && /^\d+(\.\d+)?px$/.test(saved.height)) menu.style.height = saved.height;
+    if (typeof saved.collapsed === 'boolean') menu.classList.toggle('collapsed', saved.collapsed);
   }
-  if (typeof saved.height === 'string') menu.style.height = saved.height;
-  if (saved.collapsed) menu.classList.add('collapsed');
+  restoreLayout();
   const actions = header.querySelector('.right, .menu-actions, .title:last-child') || header;
   const hide = document.createElement('button');
   hide.type = 'button'; hide.textContent = '\u00d7'; hide.title = 'Ocultar menu'; hide.setAttribute('aria-label', hide.title);
@@ -98,6 +102,18 @@
     link.title = 'Voltar ao menu';
     quick.insertBefore(link, toggle || hide);
   });
+  const resetLayout = document.createElement('button');
+  resetLayout.type = 'button';
+  resetLayout.textContent = 'Restaurar painel';
+  resetLayout.title = 'Restaurar posição e tamanho do painel';
+  resetLayout.addEventListener('click', () => {
+    menu.style.width = '';
+    menu.style.height = '';
+    menu.style.left = '8px';
+    menu.style.top = '8px';
+    fit(); remember();
+  });
+  secondary.append(resetLayout);
   options.append(summary, secondary);
   actions.remove();
   header.append(primary, options);
@@ -139,8 +155,11 @@
   }, true);
   function size(w, h) {
     const r = menu.getBoundingClientRect();
-    menu.style.width = `${clamp(w, Math.min(210, innerWidth - 16), innerWidth - r.left - 8)}px`;
-    menu.style.height = `${clamp(h, Math.min(180, innerHeight - 16), innerHeight - r.top - 8)}px`;
+    const style = getComputedStyle(menu);
+    const minimumHeight = parseFloat(style.minHeight) || 0;
+    const minimumWidth = parseFloat(style.minWidth) || 0;
+    menu.style.width = `${clamp(w, minimumWidth, innerWidth - r.left - 8)}px`;
+    menu.style.height = `${clamp(h, minimumHeight, innerHeight - r.top - 8)}px`;
   }
   document.addEventListener('pointermove', e => {
     if (!gesture || e.pointerId !== gesture.id) return;
@@ -175,6 +194,7 @@
   menu.addEventListener('scroll', positionHelp);
   new ResizeObserver(() => { fit(); positionHelp(); }).observe(menu);
   window.addEventListener('resize', () => { fit(); positionHelp(); });
-  window.addEventListener('load', fit);
+  // Legacy pages reposition menus on load; restore preferences after those handlers.
+  window.addEventListener('load', () => { restoreLayout(); syncToggle(); fit(); });
   requestAnimationFrame(fit);
 })();

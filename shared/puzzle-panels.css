@@ -155,7 +155,7 @@
 #wordMenu.puzzle-panel .panel-options { font-family: inherit; }
 #wordMenu.puzzle-panel .panel-footer {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(76px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(10em, 100%), 1fr));
   gap: 6px;
   padding: 8px;
   border-top: 1px solid #ffffff30;
@@ -234,3 +234,26 @@
 }
 #wordMenu.puzzle-panel.panel-without-list .panel-footer { max-height: none; }
 #wordMenu.puzzle-panel.panel-without-list .panel-resize { cursor: ew-resize; }
+
+/* Controls grow to fit complete words and wrap only at word boundaries. */
+#wordMenu.puzzle-panel button,
+#wordMenu.puzzle-panel a,
+#wordMenu.puzzle-panel summary {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none;
+}
+#wordMenu.puzzle-panel .panel-secondary > button { max-width: 100%; white-space: normal; }
+#wordMenu.puzzle-panel .panel-secondary > button[hidden] { display: none !important; }
+#wordMenu.puzzle-panel .panel-volume {
+  display: flex;
+  flex: 1 0 100%;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 0;
+}
+#wordMenu.puzzle-panel .panel-volume > span { display: flex; justify-content: space-between; gap: 8px; }
+#wordMenu.puzzle-panel .panel-volume input { width: 100%; min-width: 0; margin: 0; accent-color: #ddd; touch-action: pan-x; }
+[data-panel-legacy-volume] { display: none !important; }
+#wordMenu.puzzle-panel .panel-secondary .ambianceVolumeControl { width: 100%; min-width: 0; padding: 6px 0; flex-wrap: wrap; }

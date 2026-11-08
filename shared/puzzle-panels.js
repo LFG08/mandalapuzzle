@@ -125,8 +125,57 @@
   footer.setAttribute('role', 'group');
   footer.setAttribute('aria-label', 'Controles do jogo');
   menu.querySelectorAll(':scope > button, :scope > select, #menuBody > button, #menuBody > select, #menuBody > .control-row > button').forEach(control => {
-    footer.append(control);
+    if (control.id === 'toggleClickMode') secondary.append(control);
+    else footer.append(control);
   });
+  const soundButtons = [...menu.querySelectorAll('#toggleSound, #soundButton'), ...footer.querySelectorAll('#toggleSound, #soundButton')];
+  const audio = window.puzzleAudio;
+  if (audio) {
+    if (!audio.hasPreference && soundButtons.some(button => /OFF/i.test(button.textContent))) audio.setVolume(0);
+    soundButtons.forEach(button => { button.hidden = true; secondary.append(button); });
+    function enableLegacySound() {
+      if (audio.volume > 0) soundButtons.forEach(button => {
+        if (/OFF/i.test(button.textContent)) button.click();
+      });
+    }
+    const volumeControl = document.createElement('label');
+    volumeControl.className = 'panel-volume';
+    volumeControl.innerHTML = '<span>Volume <output></output></span><input type="range" min="0" max="100" step="1" aria-label="Volume do som">';
+    const slider = volumeControl.querySelector('input');
+    const output = volumeControl.querySelector('output');
+    function syncVolume() {
+      const percent = Math.round(audio.volume * 100);
+      slider.value = String(percent);
+      slider.setAttribute('aria-valuetext', percent === 0 ? 'Sem som' : `${percent}%`);
+      output.textContent = `${percent}%`;
+      enableLegacySound();
+    }
+    slider.addEventListener('input', () => audio.setVolume(Number(slider.value) / 100));
+    window.addEventListener('puzzle-volume-change', syncVolume);
+    window.addEventListener('load', syncVolume);
+    secondary.append(volumeControl);
+    syncVolume();
+  }
+  const ambianceToggle = menu.querySelector('#ambianceToggle') || footer.querySelector('#ambianceToggle');
+  const ambianceControl = menu.querySelector('.ambianceVolumeControl');
+  if (ambianceToggle && ambianceControl) {
+    ambianceToggle.hidden = true;
+    secondary.append(ambianceToggle, ambianceControl);
+    const ambianceSlider = ambianceControl.querySelector('input');
+    const label = ambianceControl.querySelector('label');
+    if (label) label.textContent = 'Volume do ambiente';
+    if (/OFF/i.test(ambianceToggle.textContent)) {
+      ambianceSlider.value = '0';
+      ambianceSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    ambianceSlider.addEventListener('input', () => {
+      if (Number(ambianceSlider.value) > 0 && /OFF/i.test(ambianceToggle.textContent)) ambianceToggle.click();
+    });
+  }
+  // Celtic's original slider remains available to its game logic; the master
+  // slider now provides the single visible sound control in the shared menu.
+  const legacyVolume = document.getElementById('volumeButton');
+  if (legacyVolume) legacyVolume.dataset.panelLegacyVolume = '';
   footer.querySelectorAll('select').forEach(select => footer.append(select));
   const reset = footer.querySelector('#clearButton');
   if (reset) footer.append(reset);

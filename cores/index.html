@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<title>Cores — Mandala Puzzle</title>
+<link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+:root{
+--mobile-menu-ui-scale:1;
+--mobile-menu-base-width:250px;
+}
+
+/* ================= MANDALA ================= */
+
+.container{
+position:relative;
+width:2048px;
+height:2048px;
+contain:layout paint;
+transition:transform 0.25s ease;
+}
+
+.container img{
+position:absolute;
+top:0;
+left:0;
+}
+
+/* ================= ANSWER OVERLAY ================= */
+
+#answersOverlay{
+position:absolute;
+top:0;
+left:0;
+width:2048px;
+height:2048px;
+pointer-events:none;
+}
+
+.answerClip{
+position:absolute;
+top:0;
+left:0;
+width:2048px;
+height:2048px;
+
+background-image:url("mandala_gabarito_cores.png");
+background-size:2048px 2048px;
+
+opacity:0;
+transition:opacity 0.12s linear;
+}
+
+.answerClip.visible{
+opacity:1;
+}
+
+/* =================#regionHints{
+position:absolute;
+top:0;
+left:0;
+width:var(--mandala-display-size);
+height:var(--mandala-display-size);
+pointer-events:none;
+z-index:3;
+} 
+  
+.hint-region{
+position:absolute;
+border:6px solid rgba(130, 255, 130, 0);
+box-shadow:0 0 0 rgba(130, 255, 130, 0);
+opacity:0;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(213, 1, 233, 0.92);
+box-shadow:0 0 26px rgba(245, 130, 255, 0.95), inset 0 0 18px rgba(215, 130, 255, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}================= */
+
+.hint-region{
+position:absolute;
+pointer-events:none;
+border:3px dashed rgba(255,255,255,0.92);
+background:rgba(255,255,255,0.18);
+border:6px solid rgba(255, 230, 120, 0);
+box-shadow:0 0 0 rgba(255, 230, 120, 0);
+opacity:0;
+transition:opacity 0.2s ease;
+transition:opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hint-region.active{
+opacity:1;
+border-color:rgba(255, 230, 120, 0.95);
+box-shadow:0 0 26px rgba(255, 230, 120, 0.95), inset 0 0 18px rgba(255, 230, 120, 0.45);
+animation:hintPulse 0.9s ease-in-out 2;
+}
+
+@keyframes hintPulse{
+0%,100%{transform:scale(1);}
+50%{transform:scale(1.01);}
+50%{transform:scale(0.996);}
+}
+
+
+/* ================= BACKGROUND ================= */
+
+body{
+background:rgb(64, 23, 124);
+margin:0;
+overflow:auto;
+cursor:grab;
+user-select:none;
+}
+
+body.dragging{
+cursor:grabbing;
+}
+
+/* ================= MENU ================= */
+
+#wordMenu{
+  position:fixed;
+  top:120px;
+  left:30px;
+  width:calc(var(--mobile-menu-base-width) * var(--mobile-menu-ui-scale));
+
+  max-height:70vh;
+
+  background:rgba(0,0,0,0.800);
+  border:1px solid white;
+  color:white;
+
+  font-family:Times New Roman, Times, serif;
+  font-size:calc(0.9rem * var(--mobile-menu-ui-scale));
+
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+  box-sizing:border-box;
+}
+
+#menuHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  touch-action:none;
+}
+
+.title {
+  flex-shrink:inherit;
+  white-space: nowrap;
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  margin-left:calc(8px * var(--mobile-menu-ui-scale));
+  margin-top:calc(8px * var(--mobile-menu-ui-scale));
+  margin-bottom:calc(8px * var(--mobile-menu-ui-scale));
+  display:flex;
+  align-items:center;
+  gap:calc(6px * var(--mobile-menu-ui-scale));
+}
+
+#counter {
+  white-space: nowrap;
+}
+
+/* ================= INFO ================= */
+
+.info-btn,
+.menu-btn,
+#toggleMenu{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:calc(14px * var(--mobile-menu-ui-scale));
+  height:calc(14px * var(--mobile-menu-ui-scale));
+  border-radius:50%;
+  border:none;
+  font-size:calc(11px * var(--mobile-menu-ui-scale));
+  cursor:pointer;
+  background:#ccc;
+  color:black;
+  line-height:calc(14px * var(--mobile-menu-ui-scale));
+  padding:0;
+  margin-right:calc(4px * var(--mobile-menu-ui-scale));
+  text-decoration:none;
+}
+
+.menu-btn{
+  font-size:calc(8px * var(--mobile-menu-ui-scale));
+}
+
+.info-wrapper{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.info-wrapper .info-btn{
+  touch-action:manipulation;
+}
+
+.tooltip{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  min-width:180px;
+  max-width:min(320px, 80vw);
+  padding:8px 10px;
+  border-radius:6px;
+  background:rgba(0,0,0,0.92);
+  color:white;
+  font-size:12px;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:break-word;
+  word-break:break-word;
+  box-sizing:border-box;
+  z-index:9999;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .18s ease, visibility .18s ease;
+  border:1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:0 0 8px rgba(255, 255, 255, 0.45), 0 0 16px rgba(220, 80, 248, 0.35), inset 0 0 6px rgba(255, 255, 255, 0.2);
+}
+
+.tooltip.help-tooltip{
+  width:max-content;
+  max-width:min(320px, 80vw);
+}
+
+.info-wrapper:hover .tooltip,
+.info-wrapper:focus-within .tooltip{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+.info-wrapper.active .tooltip{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+.tooltip a,
+.highlight {
+  text-decoration: none;
+}
+
+.highlight {
+  color: #dc50f8;
+  text-decoration: none
+}
+
+.highlight:hover{
+  text-decoration: none;
+}
+
+#wordList{
+flex:1;
+overflow-y:auto;
+
+list-style:none;
+margin:0;
+padding:8px;
+line-height:1.4;
+}
+
+#wordList li{
+padding:4px 0;
+}
+
+.found{
+text-decoration:line-through;
+opacity:0.6;
+}
+
+.collapsed #wordList{
+display:none;
+}
+
+#wordTooltip{
+position:fixed;
+background:rgba(0,0,0,0.85);
+color:#f5e6d3;
+padding:6px 10px;
+font-size:12px;
+font-family:Georgia, serif;
+border:1px solid #f5e6d3;
+pointer-events:none;
+opacity:0;
+transition:opacity 0.15s;
+z-index:999;
+}
+
+#overlaySelector,
+#clearButton,
+#toggleClickMode,
+#toggleSound,
+#rotateMandala{
+
+border:none;
+border-top:1px solid white;
+
+background:rgba(0,0,0,0.418);
+color:white;
+
+padding:8px;
+font-family:Times New Roman, Times, serif;
+cursor:pointer;
+}
+
+@media (max-width: 900px) and (any-pointer: coarse){
+  :root{
+    --mobile-menu-ui-scale:2;
+    --mobile-menu-base-width:250px;
+  }
+
+  #wordMenu{
+    width:fit-content;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+
+  #menuHeader{
+    gap:1px;
+    padding-right:1px;
+  }
+
+  .title{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+    margin-left:2px;
+    margin-right:1px;
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+
+  #counter{
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+    white-space:nowrap;
+  }
+
+  .info-btn,
+  .menu-btn,
+  #toggleMenu{
+    width:14px;
+    height:14px;
+    min-width:14px;
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+    line-height:1;
+    margin-right:1px;
+    overflow:hidden;
+  }
+
+  .tooltip.help-tooltip{
+    width:230px;
+  }
+
+  #overlaySelector,
+  #clearButton,
+  #toggleClickMode,
+  #toggleSound,
+  #rotateMandala{
+    padding:calc(8px * var(--mobile-menu-ui-scale)) calc(6px * var(--mobile-menu-ui-scale));
+    font-size:calc(0.5rem * var(--mobile-menu-ui-scale));
+  }
+}
+
+</style>
+
+<link rel="stylesheet" href="../completion-popup.css">
+<style>:root{--completion-surface:#40177c;--completion-accent:#dc76ff;--completion-button-text:#18072d;}</style>
+<link rel="stylesheet" href="../shared/lispenard-menu.css">
+<script src="../shared/puzzle-focus.js" defer></script>
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+
+<div id="wordMenu">
+
+<div id="menuHeader">
+<span class="title">Cores</span>
+
+<div class="title">
+<span id="counter">0 / 13</span>
+<span class="info-wrapper">
+    <button class="info-btn">i</button>
+    <span class="tooltip">
+      Encontre 13 nomes de cores escondidos nesta mandala.<br><br>
+      Star twinkle ding.wav by robinhood76 -- <a href="https://freesound.org/s/819418/" class="highlight" target="_blank" rel="noopener noreferrer">https://freesound.org/s/819418/</a> -- License: Creative Commons 0
+    </span>
+</span>
+<span class="info-wrapper">
+    <button class="info-btn">?</button>
+
+    <span class="tooltip help-tooltip">
+      Como jogar: Encontre as palavras escondidas. Para dica, clique com o botão direito do mouse na palavra desejada no menu.
+    </span>
+  </span>
+  <a class="menu-btn" href="/" >☰</a>
+  <button id="toggleMenu">–</button>
+</div>
+</div>
+
+<ul id="wordList">
+<li id="menu-Amarelo">Amarelo</li>
+<li id="menu-Azul">Azul</li>
+<li id="menu-Ciano">Ciano</li>
+<li id="menu-Escarlate">Escarlate</li>
+<li id="menu-Esmeralda">Esmeralda</li>
+<li id="menu-Laranja">Laranja</li>
+<li id="menu-Lilas">Lilás</li>
+<li id="menu-Magenta">Magenta</li>
+<li id="menu-Marrom">Marrom</li>
+<li id="menu-Ocre">Ocre</li>
+<li id="menu-Rosa">Rosa</li>
+<li id="menu-Verde">Verde</li>
+<li id="menu-Vermelho">Vermelho</li>
+</ul>
+
+<div id="wordTooltip"></div>
+
+<button id="clearButton" onclick="confirmReset()">Reset</button>
+<button id="toggleClickMode">Desmarcar: ON</button>
+<button id="toggleSound">Som: ON</button>
+<button id="rotateMandala">Rotate (0°)</button>
+
+<select id="overlaySelector" aria-label="Cor das respostas">
+<option value="mandala_gabarito_cores.png">Arco-íris</option>
+</select>
+
+</div>
+
+<!-- ================= MANDALA ================= -->
+
+<div class="container" data-zoom-container data-min-zoom="fit">
+
+<img src="mandala_cores.png" width="2048" height="2048" alt="Mandala com 13 nomes de cores escondidos" usemap="#image-map">
+
+<div id="answersOverlay"></div>
+
+  <div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
+  <div id="regionHint-2" class="hint-region" style="left:1px;top:693px;width:2045px;height:667px;"></div>
+  <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
+
+</div>
+
+<!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
+
+<map name="image-map">
+<area shape="poly" coords="1311,1753,1344,1755,1410,1795,1414,1823,1394,1839,1341,1809,1307,1785" alt="Amarelo" href="#" onclick="toggleAnswer(this,'Amarelo');return false;">
+<area shape="poly" coords="569,313,602,314,609,349,600,408,567,408,559,370" alt="Azul" href="#" onclick="toggleAnswer(this,'Azul');return false;">
+<area shape="poly" coords="207,1691,242,1690,267,1706,263,1725,230,1732,201,1721" alt="Ciano" href="#" onclick="toggleAnswer(this,'Ciano');return false;">
+<area shape="poly" coords="1988,550,2004,550,2029,609,2013,619" alt="Escarlate" href="#" onclick="toggleAnswer(this,'Escarlate');return false;">
+<area shape="poly" coords="303,0,342,0,379,28,368,53,336,43,313,20" alt="Esmeralda" href="#" onclick="toggleAnswer(this,'Esmeralda');return false;">
+<area shape="poly" coords="1430,105,1459,119,1446,150,1426,177,1406,163,1415,135" alt="Laranja" href="#" onclick="toggleAnswer(this,'Laranja');return false;">
+<area shape="poly" coords="946,564,968,561,998,589,989,617,972,619,941,591" alt="Lilás" href="#" onclick="toggleAnswer(this,'Lilas');return false;">
+<area shape="poly" coords="471,811,490,812,487,833,503,859,484,870,466,850,461,830" alt="Magenta" href="#" onclick="toggleAnswer(this,'Magenta');return false;">
+<area shape="poly" coords="0,964,20,975,40,1004,29,1028,13,1022,0,1005" alt="Marrom" href="#" onclick="toggleAnswer(this,'Marrom');return false;">
+<area shape="poly" coords="733,1758,759,1744,775,1766,748,1785" alt="Ocre" href="#" onclick="toggleAnswer(this,'Ocre');return false;">
+<area shape="poly" coords="856,1195,873,1190,893,1215,884,1237,861,1229,849,1212" alt="Rosa" href="#" onclick="toggleAnswer(this,'Rosa');return false;">
+<area shape="poly" coords="1323,981,1368,985,1373,1008,1356,1019,1324,1007" alt="Verde" href="#" onclick="toggleAnswer(this,'Verde');return false;">
+<area shape="poly" coords="1853,1148,1884,1151,1915,1184,1956,1237,1932,1259,1899,1245,1864,1204,1847,1175" alt="Vermelho" href="#" onclick="toggleAnswer(this,'Vermelho');return false;">
+</map>
+
+
+
+</map>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+/* prevent image dragging */
+
+document.addEventListener("dragstart", e=>e.preventDefault());
+
+
+const hintStorageKey = "CORES_wordHints";
+const baseMandalaSize = 2048;
+const areaRegionMap = {};
+
+function clamp(value, min, max){
+return Math.min(max, Math.max(min, value));
+}
+
+function computeAreaRegion(coordsText){
+let coords = coordsText.split(",").map(Number).filter(n => !Number.isNaN(n));
+if(coords.length < 4) return 2;
+let ys = [];
+for(let i=1;i<coords.length;i+=2){
+ys.push(coords[i]);
+}
+let avgY = ys.reduce((acc, y) => acc + y, 0) / ys.length;
+if(avgY <= baseMandalaSize / 3) return 1;
+if(avgY <= (baseMandalaSize / 3) * 2) return 2;
+return 3;
+}
+
+function findAreaByWord(word){
+return Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area => {
+let handler = area.getAttribute("onclick") || "";
+return handler.includes("'" + word + "'");
+}) || null;
+}
+
+function getAreaBounds(area){
+let coords = (area?.coords || "").split(",").map(Number).filter(Number.isFinite);
+if(coords.length < 2) return null;
+let xs = [];
+let ys = [];
+for(let i = 0; i < coords.length; i += 2){
+xs.push(coords[i]);
+ys.push(coords[i + 1]);
+}
+if(!xs.length || !ys.length) return null;
+return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+}
+
+function centerViewOnArea(area){
+let bounds = getAreaBounds(area);
+if(!bounds) return;
+let container = document.querySelector(".container");
+if(!container) return;
+let containerRect = container.getBoundingClientRect();
+let areaCenterX = (bounds.minX + bounds.maxX) / 2;
+let areaCenterY = (bounds.minY + bounds.maxY) / 2;
+let targetX = window.scrollX + containerRect.left + areaCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + containerRect.top + areaCenterY - (window.innerHeight / 2);
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+window.scrollTo({ left: clamp(targetX, 0, maxX), top: clamp(targetY, 0, maxY), behavior: "smooth" });
+}
+
+let activeRegionHintTimeout = null;
+
+function centerViewOnRegion(regionEl){
+if(!regionEl) return;
+let container = document.querySelector(".container");
+if(!container) return;
+
+let containerRect = container.getBoundingClientRect();
+let left = Number(regionEl.style.left.replace("px", "")) || 0;
+let top = Number(regionEl.style.top.replace("px", "")) || 0;
+let width = Number(regionEl.style.width.replace("px", "")) || regionEl.offsetWidth;
+let height = Number(regionEl.style.height.replace("px", "")) || regionEl.offsetHeight;
+let regionCenterX = left + (width / 2);
+let regionCenterY = top + (height / 2);
+
+let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
+let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
+
+let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+window.scrollTo({
+left: Math.min(Math.max(targetX, 0), maxX),
+top: Math.min(Math.max(targetY, 0), maxY),
+behavior: "smooth"
+});
+}
+
+function showRegionHint(regionId){
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+let el = document.getElementById("regionHint-" + regionId);
+if(!el) return;
+
+if(activeRegionHintTimeout){
+clearTimeout(activeRegionHintTimeout);
+}
+
+el.classList.add("active");
+centerViewOnRegion(el);
+
+activeRegionHintTimeout = setTimeout(() => el.classList.remove("active"), 2200);
+}
+
+function saveHints(){
+let hints = {};
+document.querySelectorAll("#wordList li").forEach(li => {
+if(Number(li.dataset.hintLevel || 0) > 0){
+hints[li.id] = 1;
+}
+});
+localStorage.setItem(hintStorageKey, JSON.stringify(hints));
+}
+
+function loadHints(){
+let raw = localStorage.getItem(hintStorageKey);
+if(!raw) return;
+let hints;
+try{
+hints = JSON.parse(raw);
+}catch{
+return;
+}
+document.querySelectorAll("#wordList li").forEach(li => {
+if(hints[li.id]){
+li.dataset.hintLevel = "1";
+}
+});
+}
+
+
+/* ===== toggle mode ===== */
+
+let allowToggleOff=true;
+
+toggleClickMode.onclick=function(){
+
+allowToggleOff=!allowToggleOff;
+
+this.textContent=allowToggleOff
+? "Desmarcar: ON"
+: "Desmarcar: OFF";
+
+};
+
+/* ==== gabaritos ====*/
+let currentOverlay = "mandala_gabarito_cores.png";
+let isBootstrapping = true;
+
+
+/* OVERLAY */
+
+overlaySelector.onchange = function(){
+
+currentOverlay = this.value;
+
+Object.values(answerClips).forEach(clip=>{
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+});
+
+localStorage.setItem("CORES_selectedOverlay", currentOverlay);
+
+};
+
+
+/* ===== menu items ===== */
+
+const menuItems={};
+
+document.querySelectorAll("#wordList li").forEach(li=>{
+menuItems[li.id]=li;
+li.addEventListener("click", e => {
+if(e.button !== 0) return;
+let word = li.id.replace("menu-", "");
+let area = findAreaByWord(word);
+if(area){
+toggleAnswer(area, word);
+centerViewOnArea(area);
+}
+});
+li.addEventListener("contextmenu", e => {
+e.preventDefault();
+let word = li.id.replace("menu-", "");
+let regionId = areaRegionMap[word];
+let area = findAreaByWord(word);
+if(area){
+centerViewOnArea(area);
+}
+if(regionId){
+li.dataset.hintLevel = "1";
+saveHints();
+showRegionHint(regionId);
+}
+});
+});
+
+document.querySelectorAll("area").forEach(area => {
+let onclickText = area.getAttribute("onclick") || "";
+let match = onclickText.match(/'([^']+)'/);
+if(!match) return;
+areaRegionMap[match[1]] = computeAreaRegion(area.coords || "");
+});
+
+/* ===== menu definitions ===== */
+
+const tooltip = document.getElementById("wordTooltip");
+
+document.querySelectorAll("#wordList li").forEach(item => {
+
+item.addEventListener("mouseenter", e => {
+
+let text = item.dataset.def;
+if(!text) return;
+
+tooltip.textContent = text;
+tooltip.style.opacity = "1";
+
+});
+
+item.addEventListener("mousemove", e => {
+
+tooltip.style.left = (e.clientX + 10) + "px";
+tooltip.style.top = (e.clientY + 10) + "px";
+
+});
+
+item.addEventListener("mouseleave", () => {
+
+tooltip.style.opacity = "0";
+
+});
+
+});
+
+/* ===== answer highlights ===== */
+
+const answerClips={};
+const FOUND_SOUND_SRC="../celtic/819418__robinhood76__13819-star-twinkle-ding.wav";
+const soundEnabledKey = "CORES_soundEnabled";
+let soundEnabled = true;
+const toggleSound = document.getElementById("toggleSound");
+
+function updateSoundButton(){
+if(toggleSound){
+toggleSound.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
+}
+}
+
+if(toggleSound){
+toggleSound.onclick = function(){
+soundEnabled = !soundEnabled;
+localStorage.setItem(soundEnabledKey, soundEnabled ? "1" : "0");
+updateSoundButton();
+};
+}
+
+
+function toggleAnswer(area,word){
+
+if(!area.coords) return;
+
+if(!answerClips[word]){
+
+let coords=area.coords.split(",");
+let points=[];
+
+for(let i=0;i<coords.length;i+=2){
+points.push(coords[i]+"px "+coords[i+1]+"px");
+}
+
+let clip = document.createElement("div");
+clip.className = "answerClip";
+clip.style.clipPath = "polygon(" + points.join(",") + ")";
+clip.style.backgroundImage = "url('" + currentOverlay + "')";
+
+const answersOverlay = document.getElementById("answersOverlay");
+
+answersOverlay.appendChild(clip);
+
+answerClips[word]=clip;
+
+
+}
+
+let isVisible = answerClips[word].classList.contains("visible");
+
+if(!isVisible){
+
+  answerClips[word].classList.add("visible");
+  menuItems["menu-"+word].classList.add("found");
+  if(soundEnabled && !isBootstrapping){
+    const foundSound = new Audio(FOUND_SOUND_SRC);
+    foundSound.play().catch(() => {});
+  }
+
+}else if(allowToggleOff){
+
+  answerClips[word].classList.remove("visible");
+  menuItems["menu-"+word].classList.remove("found");
+
+}
+
+
+updateCounter();
+saveProgress();
+}
+
+/*counter*/
+function updateCounter(){
+
+let found = document.querySelectorAll("#wordList li.found").length;
+let total = document.querySelectorAll("#wordList li").length;
+
+document.getElementById("counter").textContent =
+found + " / " + total;
+
+  /* PUZZLE COMPLETE MESSAGE */
+
+if(found === total && total > 0){
+if(isBootstrapping) return;
+
+setTimeout(function(){
+showCompletionPopup();
+},200);
+}
+}
+
+/* SAVE PROGRESS */
+
+function loadProgress(){
+
+let saved = localStorage.getItem("coresPuzzleProgress");
+if(!saved) return;
+
+let words;
+try { words = JSON.parse(saved); } catch { return; }
+if (!Array.isArray(words)) return;
+
+words.forEach(word => {
+
+let area = document.querySelector(
+`area[onclick*="${word}"]`
+);
+
+if(area){
+
+// ONLY toggle if it's not already visible
+if(!answerClips[word] ||
+   !answerClips[word].classList.contains("visible")){
+
+toggleAnswer(area, word);
+
+}
+
+}
+
+});
+
+}
+
+window.addEventListener("load", function(){
+
+updateCounter();
+
+const overlayStorageKey = "CORES_selectedOverlay";
+const defaultOverlay = "mandala_gabarito_cores.png";
+
+/* restore overlay OR set default */
+let savedOverlay = localStorage.getItem(overlayStorageKey);
+let validOverlays = Array.from(overlaySelector.options).map(option => option.value);
+
+if(savedOverlay && validOverlays.includes(savedOverlay)){
+  currentOverlay = savedOverlay;
+  overlaySelector.value = savedOverlay;
+}else{
+  // FIRST TIME → force option 1
+  currentOverlay = defaultOverlay;
+  overlaySelector.value = defaultOverlay;
+}
+
+/* apply overlay immediately */
+overlaySelector.dispatchEvent(new Event("change"));
+
+/* load answers AFTER overlay is ready */
+loadProgress();
+loadHints();
+let savedSoundEnabled = localStorage.getItem(soundEnabledKey);
+soundEnabled = savedSoundEnabled !== "0";
+updateSoundButton();
+isBootstrapping = false;
+
+});
+
+
+/* ===== reset ===== */
+
+function clearAll(){
+
+for(let word in answerClips){
+answerClips[word].classList.remove("visible");
+}
+
+document.querySelectorAll("#wordList li")
+.forEach(li=>{
+li.classList.remove("found");
+delete li.dataset.hintLevel;
+});
+
+localStorage.removeItem("coresPuzzleProgress");
+document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
+localStorage.removeItem(hintStorageKey);
+updateCounter();
+}
+
+function confirmReset(){
+
+if(confirm("Reset?")){
+clearAll();
+localStorage.removeItem("coresPuzzleProgress");
+}
+
+  }
+
+/* ===== menu drag ===== */
+
+let menu=wordMenu;
+let header=menuHeader;
+
+let offsetX,offsetY,dragging=false;
+
+header.onmousedown=e=>{
+dragging=true;
+offsetX=e.clientX-menu.offsetLeft;
+offsetY=e.clientY-menu.offsetTop;
+};
+
+document.onmousemove=e=>{
+if(!dragging) return;
+menu.style.left=(e.clientX-offsetX)+"px";
+menu.style.top=(e.clientY-offsetY)+"px";
+};
+
+document.onmouseup=()=>dragging=false;
+
+/* ===== collapse menu ===== */
+
+toggleMenu.onclick=()=>wordMenu.classList.toggle("collapsed");
+
+/* ===== rotate mandala ===== */
+
+let rotation=0;
+
+rotateMandala.onclick=function(){
+
+rotation=(rotation+90)%360;
+
+document.querySelector(".container")
+.style.transform="rotate("+rotation+"deg)";
+
+this.textContent="Rotate ("+rotation+"°)";
+
+};
+
+/* ===== drag scroll ===== */
+
+let isDragging=false,startX,startY,scrollLeft,scrollTop;
+
+document.addEventListener("mousedown",e=>{
+
+if(e.target.closest("#wordMenu")) return;
+
+isDragging=true;
+document.body.classList.add("dragging");
+
+startX=e.clientX;
+startY=e.clientY;
+
+scrollLeft=window.scrollX;
+scrollTop=window.scrollY;
+
+});
+
+document.addEventListener("mousemove",e=>{
+
+if(!isDragging) return;
+
+window.scrollTo(
+scrollLeft-(e.clientX-startX),
+scrollTop-(e.clientY-startY)
+);
+
+});
+
+document.addEventListener("mouseup",()=>{
+isDragging=false;
+document.body.classList.remove("dragging");
+});
+
+/* ===== savePuzzleProgress ===== */
+
+function saveProgress(){
+if(isBootstrapping) return;
+
+localStorage.setItem(
+"coresPuzzleProgress",
+JSON.stringify(Object.keys(answerClips)
+.filter(w => answerClips[w].classList.contains("visible")))
+);
+
+}
+
+
+</script>
+
+<script src="../shared/image-map-targets.js"></script>
+
+
+<script src="../completion-popup.js"></script>
+<script src="../shared/lispenard-menu.js"></script>
+</body>
+</html>

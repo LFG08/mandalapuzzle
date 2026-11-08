@@ -185,6 +185,39 @@ animation:goldShine 2.2s linear infinite;
 100%{ filter:brightness(1); }
 }
 
+#coresCard .thumb.progress-complete{
+position:relative;
+isolation:isolate;
+overflow:visible;
+border:2px solid transparent;
+box-shadow:none;
+animation:none;
+}
+
+#coresCard .thumb.progress-complete img{
+border-radius:50%;
+}
+
+#coresCard .thumb.progress-complete::before,
+#coresCard .thumb.progress-complete::after{
+content:"";
+position:absolute;
+inset:-6px;
+border-radius:50%;
+background:conic-gradient(#ff3040, #ff9700, #ffe600, #22e66a, #00d9ff, #5260ff, #c440ff, #ff3040);
+mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+pointer-events:none;
+animation:coresRainbowSpin 4s linear infinite;
+}
+
+#coresCard .thumb.progress-complete::before{
+filter:blur(8px);
+}
+
+@keyframes coresRainbowSpin{
+to{ transform:rotate(360deg); }
+}
+
 .thumb img{
 width:100%;
 height:100%;
@@ -443,7 +476,7 @@ background:#5c2208;
 <h2 class="menu-section-title">caça-palavras/elementos</h2>
 <div class="grid">
 
-<a href="/cores" class="card" id="coresCard">
+<a href="/cores" class="card" id="coresCard" data-key="coresPuzzleProgress" data-total="13">
   <div class="thumb"><img src="thumb_cores.png" alt="Cores" loading="lazy"></div>
   <div class="tags">#caça-palavras #Cores</div>
   <div class="status"></div>

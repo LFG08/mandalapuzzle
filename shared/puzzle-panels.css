@@ -1,0 +1,110 @@
+/* A single, accessible panel layout for all word/element puzzles. */
+#wordMenu.puzzle-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(300px, calc(100vw - 16px));
+  min-width: 0;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px) !important;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #999 #202020;
+  border: 1px solid #777;
+  border-radius: 12px;
+  background: rgba(20, 20, 24, .95);
+  color: #fff;
+  box-shadow: 0 8px 32px #0006;
+  line-height: 1.45;
+}
+#wordMenu.puzzle-panel[hidden] { display: none !important; }
+#wordMenu.puzzle-panel > * { flex-shrink: 0; box-sizing: border-box; max-width: 100%; }
+#wordMenu.puzzle-panel #menuHeader {
+  position: relative;
+  top: 0;
+  z-index: 5;
+  flex: 0 0 auto;
+  background: #202026;
+  border-bottom: 1px solid #ffffff30;
+  flex-direction: column;
+  align-items: stretch;
+  cursor: grab;
+  padding: 4px;
+  touch-action: none;
+}
+#wordMenu.puzzle-panel #menuHeader .title,
+#wordMenu.puzzle-panel #menuHeader .right {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  flex-wrap: wrap;
+  height: auto;
+  min-width: 0;
+  line-height: 1.4;
+}
+#wordMenu.puzzle-panel #wordList {
+  flex: 1 0 auto;
+  min-height: 100px;
+  overflow: visible;
+  padding: 10px 14px;
+  margin: 0;
+  list-style: none;
+}
+#wordMenu.puzzle-panel #wordList li { white-space: normal; overflow-wrap: anywhere; padding: 6px 0; }
+#wordMenu.puzzle-panel button,
+#wordMenu.puzzle-panel select,
+#wordMenu.puzzle-panel input { box-sizing: border-box; max-width: 100%; }
+#wordMenu.puzzle-panel > button { white-space: normal; overflow-wrap: anywhere; height: auto; min-height: 38px; border-color: #ffffff30; }
+#wordMenu.puzzle-panel #menuHeader button,
+#wordMenu.puzzle-panel #menuHeader a {
+  flex-shrink: 0;
+  min-width: 28px;
+  width: auto;
+  height: auto;
+  min-height: 28px;
+  padding: 3px 6px;
+  margin: 0;
+  border-radius: 6px;
+  line-height: 1.2;
+}
+#wordMenu.puzzle-panel :focus-visible,
+.panel-restore:focus-visible { outline: 2px solid #9bd9ff; outline-offset: 2px; }
+#wordMenu.puzzle-panel.collapsed > :not(#menuHeader) { display: none !important; }
+#wordMenu.puzzle-panel.collapsed { height: auto !important; }
+#wordMenu.puzzle-panel .menu-resize-handle { display: none; }
+#wordMenu.puzzle-panel .panel-resize {
+  position: relative;
+  bottom: 0;
+  align-self: flex-end;
+  width: 36px;
+  min-height: 28px;
+  background: #303038;
+  color: white;
+  border: 0;
+  border-radius: 8px 0 0;
+  cursor: nwse-resize;
+  touch-action: none;
+  z-index: 6;
+}
+.panel-restore { position: fixed; left: 8px; top: 8px; z-index: 10000; padding: 10px 14px; background: #202026; color: #fff; border: 1px solid #999; border-radius: 8px; font: 14px system-ui; cursor: pointer; }
+#wordMenu.puzzle-panel .tooltip { position: fixed; box-sizing: border-box; min-width: 0; width: max-content; max-width: min(380px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; font-size: inherit; }
+@media (any-pointer: coarse) {
+  #wordMenu.puzzle-panel #menuHeader button,
+  #wordMenu.puzzle-panel #menuHeader a { min-width: 36px; min-height: 36px; }
+}
+#wordMenu.puzzle-panel #menuBody {
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+#wordMenu.puzzle-panel #menuBody button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  height: auto;
+  min-height: 38px;
+  font: inherit;
+}
+#wordMenu.puzzle-panel .control-row { display: flex; flex-wrap: wrap; gap: 4px; }
+#wordMenu.puzzle-panel .control-row > * { flex: 1 1 100px; min-width: 0; }

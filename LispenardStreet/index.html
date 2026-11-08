@@ -19,6 +19,7 @@
 @media(max-width:900px) and (any-pointer:coarse){#wordMenu{top:8px;left:8px;width:min(500px,calc(100vw - 16px));font-size:calc(1rem * var(--menu-zoom))}.tooltip{left:calc(100% + 6px);right:auto}#clearButton,#toggleClickMode,#rotateMandala,#spoilersToggle,#scrollZoomToggle{font-size:inherit;padding:12px 8px}}
 </style>
 <script src="../shared/puzzle-focus.js" defer></script>
+<link rel="stylesheet" href="../shared/puzzle-panels.css">
 </head>
 <body>
 <div id="wordMenu">
@@ -410,5 +411,6 @@ const navigationKeys={a:[-1,0],s:[0,1],w:[0,-1],d:[1,0]};
 document.addEventListener("keydown",event=>{if(event.ctrlKey||event.metaKey||event.altKey)return;if(event.target.closest("input,textarea,select,[contenteditable='true']"))return;const direction=navigationKeys[event.key.toLowerCase()];if(!direction)return;event.preventDefault();window.scrollBy({left:direction[0]*40,top:direction[1]*40,behavior:"smooth"});});
 
 </script>
+<script charset="utf-8" src="../shared/puzzle-panels.js"></script>
 </body>
 </html>

@@ -61,6 +61,16 @@
   // Keep frequent actions visible; preserve secondary controls and their listeners.
   const title = header.querySelector(':scope > .title');
   const counter = header.querySelector('#counter');
+  if (counter) {
+    const label = document.createElement('span');
+    label.textContent = 'Mostrar menu';
+    const progress = document.createElement('span');
+    progress.className = 'panel-restore-progress';
+    restore.replaceChildren(label, document.createTextNode(' '), progress);
+    const syncProgress = () => { progress.textContent = counter.textContent.trim(); };
+    new MutationObserver(syncProgress).observe(counter, { childList: true, characterData: true, subtree: true });
+    syncProgress();
+  }
   const primary = document.createElement('div');
   primary.className = 'panel-primary';
   if (title && title !== actions) primary.append(title);

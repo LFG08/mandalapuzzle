@@ -268,3 +268,7 @@
   line-height: 1.4;
   white-space: normal;
 }
+
+.panel-restore:not([hidden]) { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; }
+.panel-restore-progress { white-space: nowrap; }
+.panel-restore-progress:empty { display: none; }

@@ -108,3 +108,42 @@
 }
 #wordMenu.puzzle-panel .control-row { display: flex; flex-wrap: wrap; gap: 4px; }
 #wordMenu.puzzle-panel .control-row > * { flex: 1 1 100px; min-width: 0; }
+/* Compact primary controls; secondary actions open only when requested. */
+#wordMenu.puzzle-panel #menuHeader { gap: 4px; padding: 8px; }
+#wordMenu.puzzle-panel .panel-primary { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+#wordMenu.puzzle-panel #menuHeader .panel-primary > .title {
+  margin: 0;
+  padding: 0;
+  font-size: 1em;
+  justify-content: flex-start;
+  line-height: 1.3;
+}
+#wordMenu.puzzle-panel .panel-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+#wordMenu.puzzle-panel #counter { margin-right: auto; font-size: .85em; white-space: normal; overflow-wrap: anywhere; }
+#wordMenu.puzzle-panel #menuHeader button,
+#wordMenu.puzzle-panel #menuHeader a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 26px;
+  padding: 4px 6px;
+  border: 1px solid #ffffff30;
+  background: #ffffff0d;
+  color: #eee;
+  font: 13px/1.2 system-ui, sans-serif;
+  text-decoration: none;
+  border-radius: 5px;
+}
+#wordMenu.puzzle-panel #menuHeader button:hover,
+#wordMenu.puzzle-panel #menuHeader a:hover { background: #ffffff22; }
+#wordMenu.puzzle-panel .panel-options { font: 13px/1.4 system-ui, sans-serif; min-width: 0; }
+#wordMenu.puzzle-panel .panel-options summary { cursor: pointer; padding: 3px 0; color: #ccc; touch-action: manipulation; }
+#wordMenu.puzzle-panel .panel-secondary { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; align-items: center; }
+#wordMenu.puzzle-panel .panel-secondary .menu-font-controls { margin: 0; gap: 4px; }
+#wordMenu.puzzle-panel .panel-secondary .info-wrapper { margin: 0; }
+@media (any-pointer: coarse) {
+  #wordMenu.puzzle-panel #menuHeader button,
+  #wordMenu.puzzle-panel #menuHeader a { min-width: 36px; min-height: 36px; }
+  #wordMenu.puzzle-panel .panel-options summary { min-height: 32px; display: list-item; padding-top: 8px; }
+}

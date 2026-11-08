@@ -187,35 +187,29 @@ animation:goldShine 2.2s linear infinite;
 
 #coresCard .thumb.progress-complete{
 position:relative;
-isolation:isolate;
 overflow:visible;
-border:2px solid transparent;
 box-shadow:none;
-animation:none;
 }
 
 #coresCard .thumb.progress-complete img{
 border-radius:50%;
 }
 
-#coresCard .thumb.progress-complete::before,
-#coresCard .thumb.progress-complete::after{
+#coresCard .thumb.progress-complete::before{
 content:"";
 position:absolute;
-inset:-6px;
+inset:0;
 border-radius:50%;
-background:conic-gradient(#ff3040, #ff9700, #ffe600, #22e66a, #00d9ff, #5260ff, #c440ff, #ff3040);
-mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+box-shadow:
+0 0 12px rgba(255, 215, 0, 0.6),
+0 0 24px rgba(255, 240, 150, 0.45);
 pointer-events:none;
-animation:coresRainbowSpin 4s linear infinite;
+animation:coresRainbowShine 4s linear infinite;
 }
 
-#coresCard .thumb.progress-complete::before{
-filter:blur(8px);
-}
-
-@keyframes coresRainbowSpin{
-to{ transform:rotate(360deg); }
+@keyframes coresRainbowShine{
+from{ filter:hue-rotate(0deg); }
+to{ filter:hue-rotate(360deg); }
 }
 
 .thumb img{

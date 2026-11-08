@@ -20,11 +20,16 @@
     menu.style.bottom = 'auto';
   }
   function remember() {
-    if (menu.hidden) return;
-    const r = menu.getBoundingClientRect();
-    try { localStorage.setItem(key, JSON.stringify({left:r.left, top:r.top, width:r.width, height:menu.style.height, collapsed:menu.classList.contains('collapsed')})); } catch (_) {}
+    const next = { ...saved, hidden: menu.hidden };
+    if (!menu.hidden) {
+      const r = menu.getBoundingClientRect();
+      Object.assign(next, {left:r.left, top:r.top, width:r.width, height:menu.style.height, collapsed:menu.classList.contains('collapsed')});
+    }
+    saved = next;
+    try { localStorage.setItem(key, JSON.stringify(saved)); } catch (_) {}
   }
   function restoreLayout() {
+    menu.hidden = saved.hidden === true;
     for (const prop of ['left', 'top', 'width']) {
       if (Number.isFinite(saved[prop])) menu.style[prop] = `${saved[prop]}px`;
     }
@@ -37,10 +42,12 @@
   hide.type = 'button'; hide.textContent = '\u00d7'; hide.title = 'Ocultar menu'; hide.setAttribute('aria-label', hide.title);
   actions.append(hide);
   const restore = document.createElement('button');
-  restore.type = 'button'; restore.className = 'panel-restore'; restore.textContent = 'Mostrar menu'; restore.hidden = true;
+  restore.type = 'button'; restore.className = 'panel-restore'; restore.textContent = 'Mostrar menu'; restore.hidden = !menu.hidden;
+  restore.style.fontFamily = getComputedStyle(menu).fontFamily;
+  if (Number.isFinite(saved.width)) restore.style.width = `${saved.width}px`;
   document.body.append(restore);
-  hide.onclick = () => { remember(); menu.hidden = true; restore.hidden = false; restore.focus(); };
-  restore.onclick = () => { menu.hidden = false; restore.hidden = true; fit(); hide.focus(); };
+  hide.onclick = () => { remember(); restore.style.width = `${saved.width}px`; menu.hidden = true; remember(); restore.hidden = false; restore.focus(); };
+  restore.onclick = () => { menu.hidden = false; restore.hidden = true; fit(); remember(); hide.focus(); };
   const toggle = document.getElementById('toggleMenu');
   function syncToggle() {
     const collapsed = menu.classList.contains('collapsed');

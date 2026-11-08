@@ -259,3 +259,12 @@
 #wordMenu.puzzle-panel .panel-secondary .ambianceVolumeControl { width: 100%; min-width: 0; padding: 6px 0; flex-wrap: wrap; }
 /* Progress belongs to the expanded menu, not its minimized header. */
 #wordMenu.puzzle-panel.collapsed #counter { display: none; }
+
+.panel-restore {
+  box-sizing: border-box;
+  width: min(300px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  font-size: calc(14px * var(--menu-zoom, 1));
+  line-height: 1.4;
+  white-space: normal;
+}

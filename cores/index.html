@@ -52,10 +52,10 @@ radial-gradient(ellipse at 25% 75%,rgba(100,240,150,.65),transparent 45%),
 radial-gradient(ellipse at 50% 50%,rgba(170,75,255,.5),transparent 50%);
 }
 #colorCelebration.active{animation:colorVeil 3s ease-in-out both;}
-#colorCelebration.active::before{animation:colorDance 3s ease-in-out both;}
+#colorCelebration.active::before{animation:colorDance 6s ease-in-out infinite alternate;}
 @keyframes colorVeil{
-0%,100%{opacity:0;}
-15%,85%{opacity:.8;}
+0%{opacity:0;}
+100%{opacity:.8;}
 }
 @keyframes colorDance{
 0%{transform:translate(-8%,-6%) rotate(-15deg) scale(1);}
@@ -528,7 +528,7 @@ Licença: <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_
 <area shape="poly" coords="733,1758,759,1744,775,1766,748,1785" alt="Ocre" href="#" onclick="toggleAnswer(this,'Ocre');return false;">
 <area shape="poly" coords="856,1195,873,1190,893,1215,884,1237,861,1229,849,1212" alt="Rosa" href="#" onclick="toggleAnswer(this,'Rosa');return false;">
 <area shape="poly" coords="1323,981,1368,985,1373,1008,1356,1019,1324,1007" alt="Verde" href="#" onclick="toggleAnswer(this,'Verde');return false;">
-<area shape="poly" coords="1853,1148,1884,1151,1915,1184,1956,1237,1932,1259,1899,1245,1864,1204,1847,1175" alt="Vermelho" href="#" onclick="toggleAnswer(this,'Vermelho');return false;">
+<area shape="poly" coords="1841,1128,1894,1131,1933,1172,1975,1234,1950,1274,1917,1284,1880,1260,1845,1214,1827,1175" alt="Vermelho" href="#" onclick="toggleAnswer(this,'Vermelho');return false;">
 </map>
 
 
@@ -871,12 +871,16 @@ cancelColorCelebration();
 completionShown = false;
 return;
 }
-if(isBootstrapping || celebrationTimer !== null || completionShown) return;
+// Restoring a completed puzzle keeps its color filter without reopening the popup.
+if(isBootstrapping){
+document.getElementById("colorCelebration").classList.add("active");
+return;
+}
+if(celebrationTimer !== null || completionShown) return;
 
 document.getElementById("colorCelebration").classList.add("active");
 celebrationTimer = setTimeout(function(){
 celebrationTimer = null;
-document.getElementById("colorCelebration").classList.remove("active");
 completionShown = true;
 showCompletionPopup();
 },3000);

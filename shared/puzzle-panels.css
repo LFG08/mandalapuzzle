@@ -118,7 +118,7 @@
   justify-content: flex-start;
   line-height: 1.3;
 }
-#wordMenu.puzzle-panel .panel-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+#wordMenu.puzzle-panel .panel-quick { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; width: 100%; gap: 4px; }
 #wordMenu.puzzle-panel #counter { margin-right: auto; font-size: .85em; white-space: normal; overflow-wrap: anywhere; }
 #wordMenu.puzzle-panel #menuHeader button,
 #wordMenu.puzzle-panel #menuHeader a {
@@ -257,8 +257,8 @@
 #wordMenu.puzzle-panel .panel-volume input { width: 100%; min-width: 0; margin: 0; accent-color: #ddd; touch-action: pan-x; }
 [data-panel-legacy-volume] { display: none !important; }
 #wordMenu.puzzle-panel .panel-secondary .ambianceVolumeControl { width: 100%; min-width: 0; padding: 6px 0; flex-wrap: wrap; }
-/* Progress belongs to the expanded menu, not its minimized header. */
-#wordMenu.puzzle-panel.collapsed #counter { display: none; }
+/* Minimized panels keep progress and navigation; settings stay collapsed. */
+#wordMenu.puzzle-panel.collapsed .panel-options { display: none; }
 
 .panel-restore {
   box-sizing: border-box;

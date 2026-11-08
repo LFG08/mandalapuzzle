@@ -257,3 +257,5 @@
 #wordMenu.puzzle-panel .panel-volume input { width: 100%; min-width: 0; margin: 0; accent-color: #ddd; touch-action: pan-x; }
 [data-panel-legacy-volume] { display: none !important; }
 #wordMenu.puzzle-panel .panel-secondary .ambianceVolumeControl { width: 100%; min-width: 0; padding: 6px 0; flex-wrap: wrap; }
+/* Progress belongs to the expanded menu, not its minimized header. */
+#wordMenu.puzzle-panel.collapsed #counter { display: none; }

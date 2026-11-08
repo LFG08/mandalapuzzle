@@ -4,6 +4,8 @@
   const header = document.getElementById('menuHeader');
   if (!menu || !header) return;
   menu.classList.add('puzzle-panel');
+  const hasList = Boolean(menu.querySelector('#wordList'));
+  menu.classList.toggle('panel-without-list', !hasList);
   const key = `puzzlePanel:${location.pathname}`;
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch (_) {}
@@ -144,7 +146,7 @@
   }, true);
   const resize = document.createElement('button');
   resize.type = 'button'; resize.className = 'panel-resize'; resize.textContent = '\u25e2';
-  resize.title = 'Redimensionar menu: arraste ou use as setas'; resize.setAttribute('aria-label', resize.title);
+  resize.title = hasList ? 'Redimensionar menu: arraste ou use as setas' : 'Redimensionar largura do menu: arraste ou use as setas'; resize.setAttribute('aria-label', resize.title);
   menu.append(resize);
   resize.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
@@ -159,7 +161,7 @@
     const minimumHeight = parseFloat(style.minHeight) || 0;
     const minimumWidth = parseFloat(style.minWidth) || 0;
     menu.style.width = `${clamp(w, minimumWidth, innerWidth - r.left - 8)}px`;
-    menu.style.height = `${clamp(h, minimumHeight, innerHeight - r.top - 8)}px`;
+    if (hasList) menu.style.height = `${clamp(h, minimumHeight, innerHeight - r.top - 8)}px`;
   }
   document.addEventListener('pointermove', e => {
     if (!gesture || e.pointerId !== gesture.id) return;

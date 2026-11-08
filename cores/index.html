@@ -30,6 +30,44 @@ top:0;
 left:0;
 }
 
+/* Color celebration stays aligned with mandala zoom and rotation. */
+#colorCelebration{
+position:absolute;
+inset:0;
+z-index:5;
+pointer-events:none;
+overflow:hidden;
+opacity:0;
+mix-blend-mode:multiply;
+}
+#colorCelebration::before{
+content:"";
+position:absolute;
+inset:-30%;
+background:
+radial-gradient(ellipse at 20% 25%,rgba(255,70,145,.65),transparent 45%),
+radial-gradient(ellipse at 75% 25%,rgba(40,190,255,.65),transparent 45%),
+radial-gradient(ellipse at 70% 75%,rgba(255,215,35,.65),transparent 45%),
+radial-gradient(ellipse at 25% 75%,rgba(100,240,150,.65),transparent 45%),
+radial-gradient(ellipse at 50% 50%,rgba(170,75,255,.5),transparent 50%);
+}
+#colorCelebration.active{animation:colorVeil 3s ease-in-out both;}
+#colorCelebration.active::before{animation:colorDance 3s ease-in-out both;}
+@keyframes colorVeil{
+0%,100%{opacity:0;}
+15%,85%{opacity:.8;}
+}
+@keyframes colorDance{
+0%{transform:translate(-8%,-6%) rotate(-15deg) scale(1);}
+35%{transform:translate(8%,5%) rotate(35deg) scale(1.15);}
+70%{transform:translate(-5%,8%) rotate(75deg) scale(1.05);}
+100%{transform:translate(6%,-5%) rotate(120deg) scale(1.2);}
+}
+@media(prefers-reduced-motion:reduce){
+#colorCelebration.active{animation:none;opacity:.45;}
+#colorCelebration.active::before{animation:none;}
+}
+
 /* ================= ANSWER OVERLAY ================= */
 
 #answersOverlay{
@@ -113,7 +151,7 @@ animation:hintPulse 0.9s ease-in-out 2;
 /* ================= BACKGROUND ================= */
 
 body{
-background:rgb(64, 23, 124);
+background:#000;
 margin:0;
 overflow:auto;
 cursor:grab;
@@ -123,6 +161,15 @@ user-select:none;
 body.dragging{
 cursor:grabbing;
 }
+
+.sound-credits{
+position:relative;
+max-width:60rem;
+padding:20px;
+color:#ccc;
+font: .85rem/1.6 Georgia,serif;
+}
+.sound-credits a{color:inherit;}
 
 /* ================= MENU ================= */
 
@@ -400,8 +447,7 @@ cursor:pointer;
 <span class="info-wrapper">
     <button class="info-btn">i</button>
     <span class="tooltip">
-      Encontre 13 nomes de cores escondidos nesta mandala.<br><br>
-      Star twinkle ding.wav by robinhood76 -- <a href="https://freesound.org/s/819418/" class="highlight" target="_blank" rel="noopener noreferrer">https://freesound.org/s/819418/</a> -- License: Creative Commons 0
+      Encontre 13 nomes de cores escondidos nesta mandala.
     </span>
 </span>
 <span class="info-wrapper">
@@ -452,12 +498,20 @@ cursor:pointer;
 <img src="mandala_cores.png" width="2048" height="2048" alt="Mandala com 13 nomes de cores escondidos" usemap="#image-map">
 
 <div id="answersOverlay"></div>
+<div id="colorCelebration" aria-hidden="true"></div>
 
   <div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
   <div id="regionHint-2" class="hint-region" style="left:1px;top:693px;width:2045px;height:667px;"></div>
   <div id="regionHint-3" class="hint-region" style="left:1px;top:1361px;width:2045px;height:685px;"></div>
 
 </div>
+
+<footer class="sound-credits">
+Som: <cite>Star twinkle ding.wav</cite>, por
+<a href="https://freesound.org/people/robinhood76/" target="_blank" rel="noopener noreferrer">robinhood76</a> —
+<a href="https://freesound.org/s/819418/" target="_blank" rel="noopener noreferrer">Freesound</a>.
+Licença: <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="license noopener noreferrer">Creative Commons 0 (CC0)</a>.
+</footer>
 
 <!-- ================= IMAGE MAP ================= https://www.image-map.net/ -->
 
@@ -792,6 +846,15 @@ updateCounter();
 saveProgress();
 }
 
+let celebrationTimer = null;
+let completionShown = false;
+
+function cancelColorCelebration(){
+if(celebrationTimer !== null) clearTimeout(celebrationTimer);
+celebrationTimer = null;
+document.getElementById("colorCelebration").classList.remove("active");
+}
+
 /*counter*/
 function updateCounter(){
 
@@ -803,13 +866,20 @@ found + " / " + total;
 
   /* PUZZLE COMPLETE MESSAGE */
 
-if(found === total && total > 0){
-if(isBootstrapping) return;
-
-setTimeout(function(){
-showCompletionPopup();
-},200);
+if(found !== total || total === 0){
+cancelColorCelebration();
+completionShown = false;
+return;
 }
+if(isBootstrapping || celebrationTimer !== null || completionShown) return;
+
+document.getElementById("colorCelebration").classList.add("active");
+celebrationTimer = setTimeout(function(){
+celebrationTimer = null;
+document.getElementById("colorCelebration").classList.remove("active");
+completionShown = true;
+showCompletionPopup();
+},3000);
 }
 
 /* SAVE PROGRESS */
@@ -924,7 +994,7 @@ offsetY=e.clientY-menu.offsetTop;
 document.onmousemove=e=>{
 if(!dragging) return;
 menu.style.left=(e.clientX-offsetX)+"px";
-menu.style.top=(e.clientY-offsetY)+"px";
+menu.style.top=Math.max(0,e.clientY-offsetY)+"px";
 };
 
 document.onmouseup=()=>dragging=false;

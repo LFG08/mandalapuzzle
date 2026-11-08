@@ -94,12 +94,25 @@
     }, true);
   });
   secondary.querySelectorAll('a.menu-btn').forEach(link => {
-    link.textContent = 'Início'; link.setAttribute('aria-label', 'Voltar à página inicial');
+    link.textContent = '\u2630'; link.setAttribute('aria-label', 'Voltar ao menu');
+    link.title = 'Voltar ao menu';
+    quick.insertBefore(link, toggle || hide);
   });
   options.append(summary, secondary);
   actions.remove();
   header.append(primary, options);
   options.addEventListener('toggle', () => { fit(); positionHelp(); });
+  const footer = document.createElement('div');
+  footer.className = 'panel-footer';
+  footer.setAttribute('role', 'group');
+  footer.setAttribute('aria-label', 'Controles do jogo');
+  menu.querySelectorAll(':scope > button, :scope > select, #menuBody > button, #menuBody > select, #menuBody > .control-row > button').forEach(control => {
+    footer.append(control);
+  });
+  footer.querySelectorAll('select').forEach(select => footer.append(select));
+  const reset = footer.querySelector('#clearButton');
+  if (reset) footer.append(reset);
+  if (footer.childElementCount) menu.append(footer);
   // Capture legacy drag handlers so one pointer gesture has one owner.
   for (const type of ['mousedown', 'touchstart']) header.addEventListener(type, e => e.stopImmediatePropagation(), true);
   header.tabIndex = 0;

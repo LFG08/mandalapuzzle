@@ -68,6 +68,6 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  assert.equal(piece.rotation,1,'New progress restores 45-degree orientations');
  assert(html.includes('.piece,.piece:focus,.piece:focus-visible{outline:none}'));
 
- piece.placed=true;node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,0);
+ piece.placed=true;const placedRotation=piece.rotation;node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,placedRotation);
  console.log('Right-click rotates through eight orientations, keeps the piece centered, prevents the browser menu, and leaves placed pieces locked. Menu buttons match Alittlepuzzle.');
 })().catch(error=>{console.error(error);process.exitCode=1});

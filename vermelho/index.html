@@ -31,7 +31,7 @@
     .trayTitle{margin:0 0 14px;font-size:1.12rem}
     .tray{position:relative;min-height:710px;height:calc(100vh - 190px);overflow:auto;border-radius:20px;background:linear-gradient(135deg,#120503,#541909),repeating-linear-gradient(45deg,rgba(238,244,216,.045) 0,rgba(238,244,216,.045) 16px,transparent 16px,transparent 32px);border:2px inset #3c1006}
     .piece{position:absolute;border:0;padding:0;margin:0;background:transparent;cursor:grab;touch-action:none;user-select:none;transition:transform .15s ease,filter .15s ease;z-index:2}
-    .piece.selected{outline:2px solid #ffd49a;outline-offset:3px}.piece:focus-visible{outline:2px solid #ffd49a}
+    .piece,.piece:focus,.piece:focus-visible{outline:none}.piece:focus-visible canvas{filter:drop-shadow(0 0 5px #ffd49a)}
     .piece canvas{display:block;filter:drop-shadow(0 12px 22px rgba(0,0,0,.28))}
     .piece.drag{position:fixed;cursor:grabbing;z-index:9999;transition:none}
     .piece.placed{cursor:default}
@@ -61,7 +61,7 @@
       </aside>
     </section>
   </main>
-  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Dica</h2><p>O botão direito do mouse gira qualquer peça solta em 90°. Uma peça pode ocupar outro lugar somente quando for idêntica à peça desse lugar após a rotação. Você também pode selecionar uma peça e pressionar R.</p><form method="dialog"><button class="btn" type="submit">Entendi</button></form></dialog>
+  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Dica</h2><p>O botão direito do mouse gira qualquer peça solta em 45°. Uma peça pode ocupar outro lugar somente quando for idêntica à peça desse lugar após a rotação. Você também pode selecionar uma peça e pressionar R.</p><form method="dialog"><button class="btn" type="submit">Entendi</button></form></dialog>
   <dialog id="aboutDialog" class="infoDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Sobre essa Imagem</h2><p>Vermelho — quebra-cabeça com 190 peças. Peças idênticas após a rotação podem ser encaixadas nos mesmos espaços.</p><form method="dialog"><button class="btn" type="submit">Fechar</button></form></dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
@@ -117,7 +117,7 @@
       };
     }
     function load(){try{const raw=localStorage.getItem(KEY);return raw?JSON.parse(raw):null}catch{return null}}
-    function save(){try{localStorage.setItem(KEY,JSON.stringify({pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot})),soundOn:st.soundOn}))}catch{}}
+    function save(){try{localStorage.setItem(KEY,JSON.stringify({rotationStep:45,pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot})),soundOn:st.soundOn}))}catch{}}
     function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
     function loadImage(src){return new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(new Error(`Image load failed for ${src}`));img.src=src})}
     async function makePiece(data){
@@ -132,16 +132,17 @@
     }
     function selectPiece(piece){selected?.node.classList.remove("selected");selected=piece;piece.node.classList.add("selected")}
     function renderPiece(p){
-      const odd=p.rotation%2;p.can.width=odd?p.img.height:p.img.width;p.can.height=odd?p.img.width:p.img.height;
-      const ctx=p.can.getContext("2d");ctx.translate(p.can.width/2,p.can.height/2);ctx.rotate(p.rotation*Math.PI/2);ctx.drawImage(p.img,-p.img.width/2,-p.img.height/2);
+      const angle=p.rotation*Math.PI/4,c=Math.abs(Math.cos(angle)),s=Math.abs(Math.sin(angle));
+      p.can.width=Math.ceil(p.img.width*c+p.img.height*s-1e-8);p.can.height=Math.ceil(p.img.width*s+p.img.height*c-1e-8);
+      const ctx=p.can.getContext("2d");ctx.translate(p.can.width/2,p.can.height/2);ctx.rotate(angle);ctx.drawImage(p.img,-p.img.width/2,-p.img.height/2);
       p.w=p.can.width*SCALE;p.h=p.can.height*SCALE;
       p.can.style.width=p.node.style.width=`${p.w}px`;p.can.style.height=p.node.style.height=`${p.h}px`;
-      p.node.setAttribute("aria-label",`Peça ${p.id}, ${p.rotation*90} graus`);
+      p.node.setAttribute("aria-label",`Peça ${p.id}, ${p.rotation*45} graus`);
     }
     function rotatePiece(p){
       if(!p||p.placed||st.drag)return;
       const cx=p.sourceX+p.w/2,cy=p.sourceY+p.h/2;
-      p.rotation=(p.rotation+1)%4;renderPiece(p);
+      p.rotation=(p.rotation+1)%8;renderPiece(p);
       p.sourceX=Math.max(12,cx-p.w/2);p.sourceY=Math.max(12,cy-p.h/2);
       p.node.style.left=`${p.sourceX}px`;p.node.style.top=`${p.sourceY}px`;
       rects();p.currentX=st.trayRect.left+p.sourceX-el.tray.scrollLeft;p.currentY=st.trayRect.top+p.sourceY-el.tray.scrollTop;
@@ -153,11 +154,12 @@
     }
     function availableSlot(piece){
       const occupied=new Set(st.pieces.filter(p=>p.placed).map(p=>p.slot));
-      return piece.data.matches[piece.rotation].filter(id=>!occupied.has(id)).map(id=>PIECES.find(p=>p.id===id)).filter(p=>Math.abs(piece.currentX-st.boardRect.left-p.x*SCALE)<=SNAP&&Math.abs(piece.currentY-st.boardRect.top-p.y*SCALE)<=SNAP).sort((a,b)=>Math.hypot(piece.currentX-st.boardRect.left-a.x*SCALE,piece.currentY-st.boardRect.top-a.y*SCALE)-Math.hypot(piece.currentX-st.boardRect.left-b.x*SCALE,piece.currentY-st.boardRect.top-b.y*SCALE))[0];
+      return (piece.rotation%2===0?piece.data.matches[piece.rotation/2]:[]).filter(id=>!occupied.has(id)).map(id=>PIECES.find(p=>p.id===id)).filter(p=>Math.abs(piece.currentX-st.boardRect.left-p.x*SCALE)<=SNAP&&Math.abs(piece.currentY-st.boardRect.top-p.y*SCALE)<=SNAP).sort((a,b)=>Math.hypot(piece.currentX-st.boardRect.left-a.x*SCALE,piece.currentY-st.boardRect.top-a.y*SCALE)-Math.hypot(piece.currentX-st.boardRect.left-b.x*SCALE,piece.currentY-st.boardRect.top-b.y*SCALE))[0];
     }
     function startDrag(e,piece){
       if(piece.placed||st.drag||e.button!==0)return;
       selectPiece(piece);
+      playRotateSound();
       e.preventDefault();rects();
       const r=piece.node.getBoundingClientRect();
       st.drag={piece,ox:e.clientX-r.left,oy:e.clientY-r.top};
@@ -251,10 +253,10 @@
       const occupied=new Set();
       for(const record of saved.pieces){
         const p=st.pieces.find(p=>p.id===record.id);
-        if(!p||!Number.isInteger(record.rotation)||record.rotation<0||record.rotation>3)continue;
-        p.rotation=record.rotation;renderPiece(p);
+        if(!p||!Number.isInteger(record.rotation)||record.rotation<0||record.rotation>(saved.rotationStep===45?7:3))continue;
+        p.rotation=record.rotation*(saved.rotationStep===45?1:2);renderPiece(p);
         const slot=PIECES.find(s=>s.id===record.slot);
-        if(slot&&!occupied.has(slot.id)&&p.data.matches[p.rotation].includes(slot.id)){
+        if(slot&&!occupied.has(slot.id)&&p.rotation%2===0&&p.data.matches[p.rotation/2].includes(slot.id)){
           occupied.add(slot.id);dropOnBoard(p,slot);
         }
       }

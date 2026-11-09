@@ -4,7 +4,8 @@ const manifest=JSON.parse(fs.readFileSync('vermelho/pieces.json'));
 let source=fs.readFileSync('vermelho/index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
 source=source.replace(/    init\(\)\.catch[^\n]+/,'');
 const element=()=>({getBoundingClientRect:()=>({left:0,top:0}),classList:{add(){},remove(){}},style:{},appendChild(){},setAttribute(){}});
-const context={document:{getElementById:element},Audio:function(){},console,localStorage:{setItem(){},getItem(){return null}}};vm.createContext(context);
+const sounds=[];
+const context={addEventListener(){},document:{getElementById:element},Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()};},console,localStorage:{setItem(){},getItem(){return null}}};vm.createContext(context);
 vm.runInContext(source+'\nthis.api={st,el,availableSlot,rotatePiece,makePiece,restore,loadManifest:v=>PIECES=v};',context);
 const {api}=context;api.loadManifest(manifest.pieces);api.st.boardRect={left:20,top:30};
 let checked=0,alternates=0;
@@ -12,7 +13,7 @@ for(const p of manifest.pieces){
  assert(p.matches[0].includes(p.id));
  for(let rotation=0;rotation<4;rotation++)for(const id of p.matches[rotation]){
  const slot=manifest.pieces.find(q=>q.id===id);
- const piece={id:p.id,data:p,rotation,currentX:20+slot.x*SCALE,currentY:30+slot.y*SCALE};
+ const piece={id:p.id,data:p,rotation:rotation*2,currentX:20+slot.x*SCALE,currentY:30+slot.y*SCALE};
  api.st.pieces=[];assert.equal(api.availableSlot(piece).id,id);
  api.st.pieces=[{placed:true,slot:id}];assert.notEqual(api.availableSlot(piece)?.id,id);
  checked++;if(id!==p.id)alternates++;
@@ -44,13 +45,29 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  const center=[piece.sourceX+piece.w/2,piece.sourceY+piece.h/2];
  node.onpointerdown({button:2});assert.equal(api.st.drag,null);
  let prevented=0;
- for(let r=1;r<=4;r++){
+ for(let r=1;r<=8;r++){
   node.oncontextmenu({preventDefault(){prevented++}});
-  assert.equal(piece.rotation,r%4);
+  assert.equal(piece.rotation,r%8);
   assert(Math.abs(piece.sourceX+piece.w/2-center[0])<1e-8);
   assert(Math.abs(piece.sourceY+piece.h/2-center[1])<1e-8);
  }
- assert.equal(prevented,4);
+ assert.equal(prevented,8);
+ for(const rotation of [1,3,5,7])assert.equal(api.availableSlot({...piece,rotation}),undefined);
+ const beforePickup=sounds.length;
+ context.document.body={appendChild(){}};
+ node.onpointerdown({button:0,clientX:10,clientY:10,preventDefault(){}});
+ assert.equal(sounds.length,beforePickup+1);
+ assert(sounds.at(-1).includes('766632__stavsounds__keyboard_tactile_2.ogg'));
+ api.st.drag=null;api.st.soundOn=false;
+ node.onpointerdown({button:0,clientX:10,clientY:10,preventDefault(){}});
+ assert.equal(sounds.length,beforePickup+1);
+ api.st.drag=null;
+ api.restore({pieces:[{id:piece.id,rotation:1,slot:null}]});
+ assert.equal(piece.rotation,2,'Legacy 90-degree rotations retain their orientation');
+ api.restore({rotationStep:45,pieces:[{id:piece.id,rotation:1,slot:null}]});
+ assert.equal(piece.rotation,1,'New progress restores 45-degree orientations');
+ assert(html.includes('.piece,.piece:focus,.piece:focus-visible{outline:none}'));
+
  piece.placed=true;node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,0);
- console.log('Right-click rotates through four orientations, keeps the piece centered, prevents the browser menu, and leaves placed pieces locked. Menu buttons match Alittlepuzzle.');
+ console.log('Right-click rotates through eight orientations, keeps the piece centered, prevents the browser menu, and leaves placed pieces locked. Menu buttons match Alittlepuzzle.');
 })().catch(error=>{console.error(error);process.exitCode=1});

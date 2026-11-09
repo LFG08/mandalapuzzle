@@ -9,11 +9,11 @@
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:#ffe8d8;background:radial-gradient(circle at 50% 0,rgba(231,104,46,.18),transparent 30%),linear-gradient(180deg,#351009,#120503 76%)}
     button,input{font:inherit}
-    .app{width:min(1480px,calc(100vw - 28px));margin:0 auto;padding:22px 0 34px}
-    .layout{display:grid;grid-template-columns:minmax(768px,820px) minmax(320px,1fr);gap:24px;align-items:start}
+    .app{width:min(1940px,calc(100vw - 28px));margin:0 auto;padding:22px 0 34px}
+    .layout{display:grid;grid-template-columns:minmax(1280px,1332px) minmax(320px,1fr);gap:24px;align-items:start}
     .card,.trayWrap,.boardWrap{background:linear-gradient(180deg,rgba(59,18,9,.98),rgba(24,7,4,.98));border:1px solid #a84b2b;border-radius:24px;box-shadow:0 26px 60px rgba(0,0,0,.32)}
     .boardWrap{position:sticky;top:18px;padding:18px}
-    .board{position:relative;width:768px;height:768px;overflow:hidden;background:#290b04 url("background.png") center/100% 100% no-repeat;box-shadow:inset 0 0 0 1px rgba(238,244,216,.12)}
+    .board{position:relative;width:1280px;height:1280px;overflow:hidden;background:#290b04 url("background.png") center/100% 100% no-repeat;box-shadow:inset 0 0 0 1px rgba(238,244,216,.12)}
     .controls label,.small{color:#e8af8d;text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}
     .trayWrap{padding:18px;min-height:850px}
     .card{padding:18px;margin-bottom:18px}
@@ -21,8 +21,13 @@
     .line+.line{margin-top:12px}
     .value{display:inline-block;margin-top:4px;color:#fff0e8}
     .actions{display:grid;gap:8px;margin-top:16px}
-    .btn{width:100%;border:1px solid rgba(238,244,216,.2);border-radius:999px;padding:9px 12px;background:linear-gradient(180deg,rgba(124,45,20,.98),rgba(62,18,8,.98));color:#fff0e8;cursor:pointer}
+    .btn{display:block;text-align:center;text-decoration:none;width:100%;border:1px solid rgba(238,244,216,.2);border-radius:999px;padding:9px 12px;background:linear-gradient(180deg,rgba(124,45,20,.98),rgba(62,18,8,.98));color:#fff0e8;cursor:pointer}
     .btn:hover{filter:brightness(1.08)}
+    #shuffle{border-color:#d7d7d7;background:linear-gradient(180deg,#f1f1f1,#b8b8b8);color:#541909}
+    .infoDialog{width:min(540px,calc(100% - 44px));padding:28px;color:#fff0e8;background:linear-gradient(180deg,#3b1209,#180704);border:1px solid #a84b2b;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.62)}
+    .infoDialog::backdrop{background:rgba(12,3,1,.78);backdrop-filter:blur(7px)}
+    .infoDialog h2{margin:0 0 13px;font-size:1.45rem}.infoDialog p{margin:0 0 22px;line-height:1.6}
+
     .trayTitle{margin:0 0 14px;font-size:1.12rem}
     .tray{position:relative;min-height:710px;height:calc(100vh - 190px);overflow:auto;border-radius:20px;background:linear-gradient(135deg,#120503,#541909),repeating-linear-gradient(45deg,rgba(238,244,216,.045) 0,rgba(238,244,216,.045) 16px,transparent 16px,transparent 32px);border:2px inset #3c1006}
     .piece{position:absolute;border:0;padding:0;margin:0;background:transparent;cursor:grab;touch-action:none;user-select:none;transition:transform .15s ease,filter .15s ease;z-index:2}
@@ -33,7 +38,8 @@
     .piece.placed canvas{filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
     .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#e8af8d}
     .credits{margin:16px 4px 0;color:#e8af8d;font-size:.82rem;line-height:1.5}
-    @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
+    @media (max-width:1800px){.layout{grid-template-columns:1fr}.boardWrap{position:static;overflow:auto}.board{margin:0 auto}.tray{height:min(780px,calc(100vh - 80px))}}
+    @media (max-width:1320px){.board{margin:0}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}.boardWrap{overflow:auto}}
   </style>
 </head>
@@ -47,20 +53,23 @@
         <div class="card">
           <h1 class="title">Vermelho</h1>
           <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 190</strong></div>
-          <div class="actions"><button id="mainMenu" class="btn" type="button">Menu Principal</button><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button">Som: Ligado</button></div>
+          <div class="actions"><a class="btn" href="/">Menu Principal</a><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button" aria-pressed="true">Som: Ligado</button><button id="aboutImage" class="btn" type="button">Sobre essa Imagem</button></div>
         </div>
-        <button id="rotate" class="btn" type="button">Girar peça selecionada ↻ (R)</button><p class="small">Selecione uma peça e gire em 90°. Apenas peças idênticas após a rotação podem ocupar o mesmo lugar.</p>
         <h2 class="trayTitle">Bandeja de Peças</h2>
         <div id="tray" class="tray"></div>
-        <p class="credits">Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0</p>
+        <p class="credits">Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0<br>Keyboard_Tactile_2 by StavSounds -- https://freesound.org/s/766632/ -- License: Creative Commons 0</p>
       </aside>
     </section>
   </main>
+  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Dica</h2><p>O botão direito do mouse gira qualquer peça solta em 90°. Uma peça pode ocupar outro lugar somente quando for idêntica à peça desse lugar após a rotação. Você também pode selecionar uma peça e pressionar R.</p><form method="dialog"><button class="btn" type="submit">Entendi</button></form></dialog>
+  <dialog id="aboutDialog" class="infoDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Sobre essa Imagem</h2><p>Vermelho — quebra-cabeça com 190 peças. Peças idênticas após a rotação podem ser encaixadas nos mesmos espaços.</p><form method="dialog"><button class="btn" type="submit">Fechar</button></form></dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
-    const BOARD=768,SNAP=82,KEY="vermelhoJigsawProgress";
+    const BOARD=1280,SNAP=82,KEY="vermelhoJigsawProgress";
+    const TIP_KEY="vermelhoJigsawTipSeenV1";
+    const ROTATE_SOUND_SRC="../sound_effects/766632__stavsounds__keyboard_tactile_2.ogg";
     const PIECE_PLACE_SOUND_SRC="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
-    let PIECES=[]; const SCALE=768/1280; let selected=null;
+    let PIECES=[]; const SCALE=BOARD/1280; let selected=null;
     const el={
       board:document.getElementById("board"),
       tray:document.getElementById("tray"),
@@ -68,7 +77,9 @@
       placed:document.getElementById("placed"),
       shuffle:document.getElementById("shuffle"),
       reset:document.getElementById("reset"),
-      mainMenu:document.getElementById("mainMenu"),
+      aboutImage:document.getElementById("aboutImage"),
+      aboutDialog:document.getElementById("aboutDialog"),
+      tip:document.getElementById("tip"),
       soundToggle:document.getElementById("soundToggle")
     };
     const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false};
@@ -80,7 +91,10 @@
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
       const manifest=await response.json(); PIECES=manifest.pieces;
       st.pieces=await Promise.all(PIECES.map(makePiece));
-      document.getElementById("rotate").onclick=()=>rotatePiece(selected);
+      el.aboutImage.onclick=()=>el.aboutDialog.showModal();
+      el.tip.addEventListener("close",()=>{try{localStorage.setItem(TIP_KEY,"yes")}catch{}});
+      let tipSeen=false;try{tipSeen=!!localStorage.getItem(TIP_KEY)}catch{}
+      if(!tipSeen)el.tip.showModal();
       addEventListener("keydown",e=>{if(e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
       rects();
       const saved=load();
@@ -89,15 +103,16 @@
         restore(saved);
       }
       el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
+      el.soundToggle.setAttribute("aria-pressed",String(st.soundOn));
       shuffleLoose(true);
       status();
       addEventListener("resize",resize);
       el.shuffle.onclick=()=>shuffleLoose(true);
       el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
-      el.mainMenu.onclick=()=>{location.href="/"};
       el.soundToggle.onclick=()=>{
         st.soundOn=!st.soundOn;
         el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
+      el.soundToggle.setAttribute("aria-pressed",String(st.soundOn));
         save();
       };
     }
@@ -123,7 +138,19 @@
       p.can.style.width=p.node.style.width=`${p.w}px`;p.can.style.height=p.node.style.height=`${p.h}px`;
       p.node.setAttribute("aria-label",`Peça ${p.id}, ${p.rotation*90} graus`);
     }
-    function rotatePiece(p){if(!p||p.placed||st.drag)return;p.rotation=(p.rotation+1)%4;renderPiece(p);compact();save()}
+    function rotatePiece(p){
+      if(!p||p.placed||st.drag)return;
+      const cx=p.sourceX+p.w/2,cy=p.sourceY+p.h/2;
+      p.rotation=(p.rotation+1)%4;renderPiece(p);
+      p.sourceX=Math.max(12,cx-p.w/2);p.sourceY=Math.max(12,cy-p.h/2);
+      p.node.style.left=`${p.sourceX}px`;p.node.style.top=`${p.sourceY}px`;
+      rects();p.currentX=st.trayRect.left+p.sourceX-el.tray.scrollLeft;p.currentY=st.trayRect.top+p.sourceY-el.tray.scrollTop;
+      playRotateSound();save();
+    }
+    function playRotateSound(){
+      if(!st.soundOn)return;
+      try{const audio=new Audio(ROTATE_SOUND_SRC);audio.volume=.38;audio.play().catch(()=>{})}catch{}
+    }
     function availableSlot(piece){
       const occupied=new Set(st.pieces.filter(p=>p.placed).map(p=>p.slot));
       return piece.data.matches[piece.rotation].filter(id=>!occupied.has(id)).map(id=>PIECES.find(p=>p.id===id)).filter(p=>Math.abs(piece.currentX-st.boardRect.left-p.x*SCALE)<=SNAP&&Math.abs(piece.currentY-st.boardRect.top-p.y*SCALE)<=SNAP).sort((a,b)=>Math.hypot(piece.currentX-st.boardRect.left-a.x*SCALE,piece.currentY-st.boardRect.top-a.y*SCALE)-Math.hypot(piece.currentX-st.boardRect.left-b.x*SCALE,piece.currentY-st.boardRect.top-b.y*SCALE))[0];

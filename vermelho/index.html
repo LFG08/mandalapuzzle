@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Vermelho Jigsaw</title>
+  <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:#ffe8d8;background:radial-gradient(circle at 50% 0,rgba(231,104,46,.18),transparent 30%),linear-gradient(180deg,#351009,#120503 76%)}
+    button,input{font:inherit}
+    .app{width:min(1480px,calc(100vw - 28px));margin:0 auto;padding:22px 0 34px}
+    .layout{display:grid;grid-template-columns:minmax(768px,820px) minmax(320px,1fr);gap:24px;align-items:start}
+    .card,.trayWrap,.boardWrap{background:linear-gradient(180deg,rgba(59,18,9,.98),rgba(24,7,4,.98));border:1px solid #a84b2b;border-radius:24px;box-shadow:0 26px 60px rgba(0,0,0,.32)}
+    .boardWrap{position:sticky;top:18px;padding:18px}
+    .board{position:relative;width:768px;height:768px;overflow:hidden;background:#290b04 url("background.png") center/100% 100% no-repeat;box-shadow:inset 0 0 0 1px rgba(238,244,216,.12)}
+    .controls label,.small{color:#e8af8d;text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}
+    .trayWrap{padding:18px;min-height:850px}
+    .card{padding:18px;margin-bottom:18px}
+    .title{margin:0 0 14px;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.34rem}
+    .line+.line{margin-top:12px}
+    .value{display:inline-block;margin-top:4px;color:#fff0e8}
+    .actions{display:grid;gap:8px;margin-top:16px}
+    .btn{width:100%;border:1px solid rgba(238,244,216,.2);border-radius:999px;padding:9px 12px;background:linear-gradient(180deg,rgba(124,45,20,.98),rgba(62,18,8,.98));color:#fff0e8;cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .trayTitle{margin:0 0 14px;font-size:1.12rem}
+    .tray{position:relative;min-height:710px;height:calc(100vh - 190px);overflow:auto;border-radius:20px;background:linear-gradient(135deg,#120503,#541909),repeating-linear-gradient(45deg,rgba(238,244,216,.045) 0,rgba(238,244,216,.045) 16px,transparent 16px,transparent 32px);border:2px inset #3c1006}
+    .piece{position:absolute;border:0;padding:0;margin:0;background:transparent;cursor:grab;touch-action:none;user-select:none;transition:transform .15s ease,filter .15s ease;z-index:2}
+    .piece.selected{outline:2px solid #ffd49a;outline-offset:3px}.piece:focus-visible{outline:2px solid #ffd49a}
+    .piece canvas{display:block;filter:drop-shadow(0 12px 22px rgba(0,0,0,.28))}
+    .piece.drag{position:fixed;cursor:grabbing;z-index:9999;transition:none}
+    .piece.placed{cursor:default}
+    .piece.placed canvas{filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
+    .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#e8af8d}
+    .credits{margin:16px 4px 0;color:#e8af8d;font-size:.82rem;line-height:1.5}
+    @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
+    @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}.boardWrap{overflow:auto}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="layout">
+      <div class="boardWrap">
+        <div id="board" class="board"></div>
+      </div>
+      <aside class="trayWrap">
+        <div class="card">
+          <h1 class="title">Vermelho</h1>
+          <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 190</strong></div>
+          <div class="actions"><button id="mainMenu" class="btn" type="button">Menu Principal</button><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button">Som: Ligado</button></div>
+        </div>
+        <button id="rotate" class="btn" type="button">Girar peça selecionada ↻ (R)</button><p class="small">Selecione uma peça e gire em 90°. Apenas peças idênticas após a rotação podem ocupar o mesmo lugar.</p>
+        <h2 class="trayTitle">Bandeja de Peças</h2>
+        <div id="tray" class="tray"></div>
+        <p class="credits">Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0</p>
+      </aside>
+    </section>
+  </main>
+  <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
+  <script>
+    const BOARD=768,SNAP=82,KEY="vermelhoJigsawProgress";
+    const PIECE_PLACE_SOUND_SRC="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
+    let PIECES=[]; const SCALE=768/1280; let selected=null;
+    const el={
+      board:document.getElementById("board"),
+      tray:document.getElementById("tray"),
+      tpl:document.getElementById("tpl"),
+      placed:document.getElementById("placed"),
+      shuffle:document.getElementById("shuffle"),
+      reset:document.getElementById("reset"),
+      mainMenu:document.getElementById("mainMenu"),
+      soundToggle:document.getElementById("soundToggle")
+    };
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false};
+    const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
+    init().catch(e=>{console.error(e);alert(`Não foi possível iniciar o puzzle. ${e.message||""}`.trim())});
+
+    async function init(){
+      const response=await fetch("pieces.json");
+      if(!response.ok)throw new Error("Não foi possível carregar as peças");
+      const manifest=await response.json(); PIECES=manifest.pieces;
+      st.pieces=await Promise.all(PIECES.map(makePiece));
+      document.getElementById("rotate").onclick=()=>rotatePiece(selected);
+      addEventListener("keydown",e=>{if(e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
+      rects();
+      const saved=load();
+      if(saved){
+        st.soundOn=saved.soundOn!==false;
+        restore(saved);
+      }
+      el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
+      shuffleLoose(true);
+      status();
+      addEventListener("resize",resize);
+      el.shuffle.onclick=()=>shuffleLoose(true);
+      el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+      el.mainMenu.onclick=()=>{location.href="/"};
+      el.soundToggle.onclick=()=>{
+        st.soundOn=!st.soundOn;
+        el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
+        save();
+      };
+    }
+    function load(){try{const raw=localStorage.getItem(KEY);return raw?JSON.parse(raw):null}catch{return null}}
+    function save(){try{localStorage.setItem(KEY,JSON.stringify({pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot})),soundOn:st.soundOn}))}catch{}}
+    function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
+    function loadImage(src){return new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(new Error(`Image load failed for ${src}`));img.src=src})}
+    async function makePiece(data){
+      const img=await loadImage(`peças/${data.file}`),can=document.createElement("canvas");
+      const node=el.tpl.content.firstElementChild.cloneNode(true);node.appendChild(can);
+      const piece={id:data.id,data,img,node,can,rotation:0,slot:null,w:0,h:0,targetX:data.x*SCALE,targetY:data.y*SCALE,currentX:0,currentY:0,sourceX:0,sourceY:0,placed:false};
+      renderPiece(piece);
+      node.onpointerdown=e=>startDrag(e,piece);
+      node.onfocus=()=>selectPiece(piece);
+      node.oncontextmenu=e=>{e.preventDefault();selectPiece(piece);rotatePiece(piece)};
+      el.tray.appendChild(node);return piece;
+    }
+    function selectPiece(piece){selected?.node.classList.remove("selected");selected=piece;piece.node.classList.add("selected")}
+    function renderPiece(p){
+      const odd=p.rotation%2;p.can.width=odd?p.img.height:p.img.width;p.can.height=odd?p.img.width:p.img.height;
+      const ctx=p.can.getContext("2d");ctx.translate(p.can.width/2,p.can.height/2);ctx.rotate(p.rotation*Math.PI/2);ctx.drawImage(p.img,-p.img.width/2,-p.img.height/2);
+      p.w=p.can.width*SCALE;p.h=p.can.height*SCALE;
+      p.can.style.width=p.node.style.width=`${p.w}px`;p.can.style.height=p.node.style.height=`${p.h}px`;
+      p.node.setAttribute("aria-label",`Peça ${p.id}, ${p.rotation*90} graus`);
+    }
+    function rotatePiece(p){if(!p||p.placed||st.drag)return;p.rotation=(p.rotation+1)%4;renderPiece(p);compact();save()}
+    function availableSlot(piece){
+      const occupied=new Set(st.pieces.filter(p=>p.placed).map(p=>p.slot));
+      return piece.data.matches[piece.rotation].filter(id=>!occupied.has(id)).map(id=>PIECES.find(p=>p.id===id)).filter(p=>Math.abs(piece.currentX-st.boardRect.left-p.x*SCALE)<=SNAP&&Math.abs(piece.currentY-st.boardRect.top-p.y*SCALE)<=SNAP).sort((a,b)=>Math.hypot(piece.currentX-st.boardRect.left-a.x*SCALE,piece.currentY-st.boardRect.top-a.y*SCALE)-Math.hypot(piece.currentX-st.boardRect.left-b.x*SCALE,piece.currentY-st.boardRect.top-b.y*SCALE))[0];
+    }
+    function startDrag(e,piece){
+      if(piece.placed||st.drag||e.button!==0)return;
+      selectPiece(piece);
+      e.preventDefault();rects();
+      const r=piece.node.getBoundingClientRect();
+      st.drag={piece,ox:e.clientX-r.left,oy:e.clientY-r.top};
+      piece.node.classList.add("drag");
+      piece.node.style.zIndex=String(st.z++);
+      if(piece.node.parentElement!==document.body){
+        piece.sourceX=r.left-st.trayRect.left+el.tray.scrollLeft;
+        piece.sourceY=r.top-st.trayRect.top+el.tray.scrollTop;
+        document.body.appendChild(piece.node);
+        piece.node.style.position="fixed";
+        placeAt(piece,r.left,r.top);
+      }
+      addEventListener("pointermove",moveDrag);
+      addEventListener("pointerup",endDrag,{once:true});
+      addEventListener("pointercancel",cancelDrag,{once:true});
+    }
+    function cancelDrag(){if(!st.drag)return;const p=st.drag.piece;p.node.classList.remove("drag");backToTray(p);st.drag=null;removeEventListener("pointermove",moveDrag);removeEventListener("pointerup",endDrag)}
+    function moveDrag(e){if(!st.drag)return;placeAt(st.drag.piece,e.clientX-st.drag.ox,e.clientY-st.drag.oy)}
+    function endDrag(){
+      if(!st.drag)return;
+      const {piece}=st.drag;
+      piece.node.classList.remove("drag");
+      rects();
+      const slot=availableSlot(piece);
+      if(slot)dropOnBoard(piece,slot);else backToTray(piece);
+      st.drag=null;
+      removeEventListener("pointercancel",cancelDrag);
+      removeEventListener("pointermove",moveDrag);
+    }
+    function placeAt(piece,left,top){piece.currentX=left;piece.currentY=top;piece.node.style.left=`${left}px`;piece.node.style.top=`${top}px`}
+    function dropOnBoard(piece,slot){
+      piece.slot=slot.id;piece.targetX=slot.x*SCALE;piece.targetY=slot.y*SCALE;
+      el.board.appendChild(piece.node);
+      piece.node.style.position="absolute";
+      piece.node.classList.add("placed");
+      piece.node.style.left=`${piece.targetX}px`;
+      piece.node.style.top=`${piece.targetY}px`;
+      piece.placed=true;
+      piece.currentX=st.boardRect.left+piece.targetX;
+      piece.currentY=st.boardRect.top+piece.targetY;
+      compact();
+      save();
+      status();
+      playPlaceSound();
+    }
+    function backToTray(piece){
+      if(!el.tray.contains(piece.node))el.tray.appendChild(piece.node);
+      const localLeft=piece.currentX-st.trayRect.left+el.tray.scrollLeft,localTop=piece.currentY-st.trayRect.top+el.tray.scrollTop;
+      const inTray=piece.currentX+piece.w*.5>=st.trayRect.left&&piece.currentX+piece.w*.5<=st.trayRect.right&&piece.currentY+piece.h*.5>=st.trayRect.top&&piece.currentY+piece.h*.5<=st.trayRect.bottom;
+      if(inTray){piece.sourceX=Math.max(0,Math.min(el.tray.scrollWidth-piece.w,localLeft));piece.sourceY=Math.max(0,Math.min(el.tray.scrollHeight-piece.h,localTop))}
+      piece.node.style.position="absolute";
+      piece.node.style.left=`${piece.sourceX}px`;
+      piece.node.style.top=`${piece.sourceY}px`;
+      piece.currentX=st.trayRect.left+piece.sourceX;
+      piece.currentY=st.trayRect.top+piece.sourceY;
+      save();
+    }
+    function shuffleLoose(randomize){
+      rects();
+      const loose=st.pieces.filter(p=>!p.placed);
+      if(!loose.length)return empty();
+      clearEmpty();
+      const ordered=randomize?shuffleByTargetZones(loose):loose;
+      layoutTray(ordered);
+      save();
+    }
+    function compact(){
+      rects();
+      const loose=st.pieces.filter(p=>!p.placed).sort((a,b)=>(a.sourceY??0)-(b.sourceY??0)||(a.sourceX??0)-(b.sourceX??0));
+      if(!loose.length)return empty();
+      clearEmpty();
+      layoutTray(loose);
+    }
+    function layoutTray(pieces){
+      const pad=12,max=Math.max(el.tray.clientWidth-pad,180);
+      let x=pad,y=pad,row=0;
+      for(const p of pieces){
+        if(!el.tray.contains(p.node))el.tray.appendChild(p.node);
+        if(x+p.w>max){x=pad;y+=row+pad;row=0}
+        p.node.style.position="absolute";
+        p.node.style.left=`${x}px`;
+        p.node.style.top=`${y}px`;
+        p.sourceX=x;p.sourceY=y;
+        p.currentX=st.trayRect.left+x;p.currentY=st.trayRect.top+y;
+        x+=p.w+pad;row=Math.max(row,p.h);
+      }
+      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;
+    }
+    function restore(saved){
+      if(!Array.isArray(saved.pieces))return;
+      const occupied=new Set();
+      for(const record of saved.pieces){
+        const p=st.pieces.find(p=>p.id===record.id);
+        if(!p||!Number.isInteger(record.rotation)||record.rotation<0||record.rotation>3)continue;
+        p.rotation=record.rotation;renderPiece(p);
+        const slot=PIECES.find(s=>s.id===record.slot);
+        if(slot&&!occupied.has(slot.id)&&p.data.matches[p.rotation].includes(slot.id)){
+          occupied.add(slot.id);dropOnBoard(p,slot);
+        }
+      }
+    }
+    function status(){
+      const placed=st.pieces.filter(p=>p.placed).length;
+      el.placed.textContent=`${placed} / ${st.pieces.length}`;
+      if(placed===st.pieces.length&&!st.completionShown){
+        st.completionShown=true;
+        setTimeout(()=>alert("Puzzle completo!"),120);
+      }
+    }
+    function empty(){clearEmpty();const d=document.createElement("div");d.id="empty";d.className="empty";d.textContent="Todas as peças foram colocadas.";el.tray.appendChild(d)}
+    function clearEmpty(){document.getElementById("empty")?.remove()}
+    function shuffleList(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+    function shuffleByTargetZones(pieces){
+      const zones=[
+        p=>p.targetX<BOARD/3&&p.targetY<BOARD/3,
+        p=>p.targetX>=BOARD/3&&p.targetX<BOARD*2/3&&p.targetY<BOARD/3,
+        p=>p.targetX>=BOARD*2/3&&p.targetY<BOARD/3,
+        p=>p.targetX<BOARD/3&&p.targetY>=BOARD/3&&p.targetY<BOARD*2/3,
+        p=>p.targetX>=BOARD/3&&p.targetX<BOARD*2/3&&p.targetY>=BOARD/3&&p.targetY<BOARD*2/3,
+        p=>p.targetX>=BOARD*2/3&&p.targetY>=BOARD/3&&p.targetY<BOARD*2/3,
+        p=>p.targetX<BOARD/3&&p.targetY>=BOARD*2/3,
+        p=>p.targetX>=BOARD/3&&p.targetX<BOARD*2/3&&p.targetY>=BOARD*2/3,
+        p=>p.targetX>=BOARD*2/3&&p.targetY>=BOARD*2/3
+      ];
+      const buckets=zones.map(()=>[]);
+      for(const piece of pieces){
+        const index=zones.findIndex(test=>test(piece));
+        buckets[index<0?0:index].push(piece);
+      }
+      const mixed=[];
+      const shuffledBuckets=shuffleList(buckets.map(shuffleList));
+      while(shuffledBuckets.some(bucket=>bucket.length)){
+        for(const bucket of shuffleList(shuffledBuckets.filter(v=>v.length)))mixed.push(bucket.pop());
+      }
+      return mixed;
+    }
+    function resize(){rects();for(const p of st.pieces)if(p.placed){p.currentX=st.boardRect.left+p.targetX;p.currentY=st.boardRect.top+p.targetY}}
+    function playPlaceSound(){
+      if(!st.soundOn)return;
+      try{
+        placeSound.currentTime=0;
+        placeSound.play().catch(()=>{});
+      }catch{}
+    }
+  </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const SCALE=1;
 const manifest=JSON.parse(fs.readFileSync('vermelho/pieces.json'));
 let source=fs.readFileSync('vermelho/index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
 source=source.replace(/    init\(\)\.catch[^\n]+/,'');
@@ -11,14 +12,14 @@ for(const p of manifest.pieces){
  assert(p.matches[0].includes(p.id));
  for(let rotation=0;rotation<4;rotation++)for(const id of p.matches[rotation]){
  const slot=manifest.pieces.find(q=>q.id===id);
- const piece={id:p.id,data:p,rotation,currentX:20+slot.x*.6,currentY:30+slot.y*.6};
+ const piece={id:p.id,data:p,rotation,currentX:20+slot.x*SCALE,currentY:30+slot.y*SCALE};
  api.st.pieces=[];assert.equal(api.availableSlot(piece).id,id);
  api.st.pieces=[{placed:true,slot:id}];assert.notEqual(api.availableSlot(piece)?.id,id);
  checked++;if(id!==p.id)alternates++;
  }
 }
 const p=manifest.pieces[0], forbidden=manifest.pieces.find(s=>!p.matches.flat().includes(s.id));
-api.st.pieces=[];const invalid={data:p,rotation:0,currentX:20+forbidden.x*.6,currentY:30+forbidden.y*.6};
+api.st.pieces=[];const invalid={data:p,rotation:0,currentX:20+forbidden.x*SCALE,currentY:30+forbidden.y*SCALE};
 assert.notEqual(api.availableSlot(invalid)?.id,forbidden.id);
 vm.runInContext('save()',context);
 console.log(`Passed ${checked} valid rotation/slot combinations, including ${alternates} interchangeable combinations; occupied and nonidentical slots rejected; save OK.`);
@@ -29,6 +30,9 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  const actions=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];
  assert.deepEqual([...actions.matchAll(/>([^<]+)<\/(?:button|a)>/g)].map(m=>m[1]),['Menu Principal','Reset','Embaralhar Peças','Som: Ligado','Sobre essa Imagem']);
  assert(!html.includes('id="rotate"'));
+ assert(html.includes('width:1280px;height:1280px'));
+ assert(html.includes('minmax(1280px,1332px)'));
+ assert(html.includes('const SCALE=BOARD/1280')); 
  const canvas={style:{},getContext:()=>({translate(){},rotate(){},drawImage(){}})};
  context.document.createElement=()=>canvas;
  const node={...element(),appendChild(){}};

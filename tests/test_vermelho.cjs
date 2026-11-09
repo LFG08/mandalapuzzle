@@ -32,7 +32,7 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  assert(!html.includes('id="rotate"'));
  assert(html.includes('width:1280px;height:1280px'));
  assert(html.includes('minmax(1280px,1332px)'));
- assert(html.includes('const SCALE=BOARD/1280')); 
+ assert(html.includes('const SCALE=BOARD/1280'));
  const canvas={style:{},getContext:()=>({translate(){},rotate(){},drawImage(){}})};
  context.document.createElement=()=>canvas;
  const node={...element(),appendChild(){}};

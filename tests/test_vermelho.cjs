@@ -5,8 +5,8 @@ let source=fs.readFileSync('vermelho/index.html','utf8').match(/<script>([\s\S]*
 source=source.replace(/    init\(\)\.catch[^\n]+/,'');
 const element=()=>({getBoundingClientRect:()=>({left:0,top:0}),classList:{add(){},remove(){}},style:{},appendChild(){},setAttribute(){}});
 const sounds=[];
-const context={addEventListener(){},document:{getElementById:element},Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()};},console,localStorage:{setItem(){},getItem(){return null}}};vm.createContext(context);
-vm.runInContext(source+'\nthis.api={st,el,availableSlot,rotatePiece,makePiece,restore,loadManifest:v=>PIECES=v};',context);
+const context={addEventListener(){},document:{getElementById:element,querySelector:element},Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()};},console,localStorage:{setItem(){},getItem(){return null}}};vm.createContext(context);
+vm.runInContext(source+'\nthis.api={st,el,availableSlot,rotatePiece,makePiece,restore,setupTrayScroll,loadManifest:v=>PIECES=v};',context);
 const {api}=context;api.loadManifest(manifest.pieces);api.st.boardRect={left:20,top:30};
 let checked=0,alternates=0;
 for(const p of manifest.pieces){
@@ -56,11 +56,11 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  const beforePickup=sounds.length;
  context.document.body={appendChild(){}};
  node.onpointerdown({button:0,clientX:10,clientY:10,preventDefault(){}});
- assert.equal(sounds.length,beforePickup+1);
- assert(sounds.at(-1).includes('766632__stavsounds__keyboard_tactile_2.ogg'));
+ assert.equal(sounds.length,beforePickup);
+
  api.st.drag=null;api.st.soundOn=false;
  node.onpointerdown({button:0,clientX:10,clientY:10,preventDefault(){}});
- assert.equal(sounds.length,beforePickup+1);
+ assert.equal(sounds.length,beforePickup);
  api.st.drag=null;
  api.restore({pieces:[{id:piece.id,rotation:1,slot:null}]});
  assert.equal(piece.rotation,2,'Legacy 90-degree rotations retain their orientation');
@@ -71,3 +71,25 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  piece.placed=true;const placedRotation=piece.rotation;node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,placedRotation);
  console.log('Right-click rotates through eight orientations, keeps the piece centered, prevents the browser menu, and leaves placed pieces locked. Menu buttons match Alittlepuzzle.');
 })().catch(error=>{console.error(error);process.exitCode=1});
+
+// Wheel handling is attached only to the board area and tray, never the page.
+const wheelTargets=[];
+for(const target of [api.el.tray,api.el.boardWrap])target.addEventListener=(type,handler,options)=>wheelTargets.push({target,type,handler,options});
+context.matchMedia=()=>({matches:false});
+api.el.tray.clientHeight=400;
+api.el.tray.scrollTop=0;
+api.el.tray.scrollBy=({top})=>{api.el.tray.scrollTop=Math.max(0,Math.min(1000,api.el.tray.scrollTop+top))};
+api.setupTrayScroll();
+assert.equal(wheelTargets.length,2);
+for(const entry of wheelTargets){assert.equal(entry.type,'wheel');assert.equal(entry.options.passive,false)}
+let intercepted=0;
+const wheel=(deltaY,deltaMode=0,ctrlKey=false)=>({deltaY,deltaX:0,deltaMode,ctrlKey,preventDefault(){intercepted++},stopPropagation(){}});
+wheelTargets[0].handler(wheel(100));assert.equal(api.el.tray.scrollTop,100);
+wheelTargets[1].handler(wheel(2,1));assert.equal(api.el.tray.scrollTop,132);
+wheelTargets[1].handler(wheel(1,2));assert.equal(api.el.tray.scrollTop,532);
+api.el.trayUp.onclick();assert.equal(api.el.tray.scrollTop,232);
+api.el.trayDown.onclick();assert.equal(api.el.tray.scrollTop,532);
+wheelTargets[1].handler(wheel(2000));assert.equal(api.el.tray.scrollTop,1000);
+wheelTargets[1].handler(wheel(100));assert.equal(api.el.tray.scrollTop,1000);assert.equal(intercepted,5);
+wheelTargets[1].handler(wheel(100,0,true));assert.equal(intercepted,5);
+console.log('Tray buttons and wheel scrolling pass for pixel, line, and page deltas; wheel stays contained at tray limits and preserves Ctrl+wheel zoom.');

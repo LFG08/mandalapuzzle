@@ -29,7 +29,9 @@
     .infoDialog h2{margin:0 0 13px;font-size:1.45rem}.infoDialog p{margin:0 0 22px;line-height:1.6}
 
     .trayTitle{margin:0 0 14px;font-size:1.12rem}
-    .tray{position:relative;min-height:710px;height:calc(100vh - 190px);overflow:auto;border-radius:20px;background:linear-gradient(135deg,#120503,#541909),repeating-linear-gradient(45deg,rgba(238,244,216,.045) 0,rgba(238,244,216,.045) 16px,transparent 16px,transparent 32px);border:2px inset #3c1006}
+    .tray{--content-height:710px;position:relative;min-height:0;height:clamp(360px,calc(100vh - 240px),900px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;border-radius:20px;background:linear-gradient(135deg,#120503,#541909),repeating-linear-gradient(45deg,rgba(238,244,216,.045) 0,rgba(238,244,216,.045) 16px,transparent 16px,transparent 32px);border:2px inset #3c1006}
+    .tray::after{content:"";display:block;width:1px;height:var(--content-height);pointer-events:none}
+    .trayHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.trayHeading .trayTitle{margin:0}.trayScroll{display:flex;gap:8px}.trayScroll .btn{width:auto;min-width:44px}
     .piece{position:absolute;border:0;padding:0;margin:0;background:transparent;cursor:grab;touch-action:none;user-select:none;transition:transform .15s ease,filter .15s ease;z-index:2}
     .piece,.piece:focus,.piece:focus-visible{outline:none}.piece:focus-visible canvas{filter:drop-shadow(0 0 5px #ffd49a)}
     .piece canvas{display:block;filter:drop-shadow(0 12px 22px rgba(0,0,0,.28))}
@@ -55,7 +57,7 @@
           <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 190</strong></div>
           <div class="actions"><a class="btn" href="/">Menu Principal</a><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button" aria-pressed="true">Som: Ligado</button><button id="aboutImage" class="btn" type="button">Sobre essa Imagem</button></div>
         </div>
-        <h2 class="trayTitle">Bandeja de Peças</h2>
+        <div class="trayHeading"><h2 class="trayTitle">Bandeja de Peças</h2><div class="trayScroll" role="group" aria-label="Rolar bandeja"><button id="trayUp" class="btn" type="button" aria-label="Subir bandeja" aria-controls="tray">↑</button><button id="trayDown" class="btn" type="button" aria-label="Descer bandeja" aria-controls="tray">↓</button></div></div>
         <div id="tray" class="tray"></div>
         <p class="credits">Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0<br>Keyboard_Tactile_2 by StavSounds -- https://freesound.org/s/766632/ -- License: Creative Commons 0</p>
       </aside>
@@ -73,6 +75,9 @@
     const el={
       board:document.getElementById("board"),
       tray:document.getElementById("tray"),
+      boardWrap:document.querySelector(".boardWrap"),
+      trayUp:document.getElementById("trayUp"),
+      trayDown:document.getElementById("trayDown"),
       tpl:document.getElementById("tpl"),
       placed:document.getElementById("placed"),
       shuffle:document.getElementById("shuffle"),
@@ -86,7 +91,23 @@
     const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`Não foi possível iniciar o puzzle. ${e.message||""}`.trim())});
 
+    function setupTrayScroll(){
+      el.trayUp.onclick=()=>scrollTray(-Math.max(120,el.tray.clientHeight*.75),true);
+      el.trayDown.onclick=()=>scrollTray(Math.max(120,el.tray.clientHeight*.75),true);
+      el.tray.addEventListener("wheel",wheelTray,{passive:false});
+      el.boardWrap.addEventListener("wheel",wheelTray,{passive:false});
+    }
+    function scrollTray(delta,smooth=false){
+      el.tray.scrollBy({top:delta,behavior:smooth&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"smooth":"instant"});
+    }
+    function wheelTray(e){
+      if(e.ctrlKey)return;
+      e.preventDefault();e.stopPropagation();
+      const unit=e.deltaMode===1?16:e.deltaMode===2?el.tray.clientHeight:1;
+      scrollTray((e.deltaY||e.deltaX)*unit);
+    }
     async function init(){
+      setupTrayScroll();
       const response=await fetch("pieces.json");
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
       const manifest=await response.json(); PIECES=manifest.pieces;
@@ -159,7 +180,6 @@
     function startDrag(e,piece){
       if(piece.placed||st.drag||e.button!==0)return;
       selectPiece(piece);
-      playRotateSound();
       e.preventDefault();rects();
       const r=piece.node.getBoundingClientRect();
       st.drag={piece,ox:e.clientX-r.left,oy:e.clientY-r.top};
@@ -246,7 +266,7 @@
         p.currentX=st.trayRect.left+x;p.currentY=st.trayRect.top+y;
         x+=p.w+pad;row=Math.max(row,p.h);
       }
-      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;
+      el.tray.style.setProperty("--content-height",`${Math.max(y+row+pad,710)}px`);
     }
     function restore(saved){
       if(!Array.isArray(saved.pieces))return;

@@ -4,7 +4,7 @@ let source=fs.readFileSync('vermelho/index.html','utf8').match(/<script>([\s\S]*
 source=source.replace(/    init\(\)\.catch[^\n]+/,'');
 const element=()=>({getBoundingClientRect:()=>({left:0,top:0}),classList:{add(){},remove(){}},style:{},appendChild(){},setAttribute(){}});
 const context={document:{getElementById:element},Audio:function(){},console,localStorage:{setItem(){},getItem(){return null}}};vm.createContext(context);
-vm.runInContext(source+'\nthis.api={st,el,availableSlot,rotatePiece,restore,loadManifest:v=>PIECES=v};',context);
+vm.runInContext(source+'\nthis.api={st,el,availableSlot,rotatePiece,makePiece,restore,loadManifest:v=>PIECES=v};',context);
 const {api}=context;api.loadManifest(manifest.pieces);api.st.boardRect={left:20,top:30};
 let checked=0,alternates=0;
 for(const p of manifest.pieces){
@@ -22,3 +22,31 @@ api.st.pieces=[];const invalid={data:p,rotation:0,currentX:20+forbidden.x*.6,cur
 assert.notEqual(api.availableSlot(invalid)?.id,forbidden.id);
 vm.runInContext('save()',context);
 console.log(`Passed ${checked} valid rotation/slot combinations, including ${alternates} interchangeable combinations; occupied and nonidentical slots rejected; save OK.`);
+
+// Exercise the actual right-click handlers and ensure rotation keeps other pieces in place.
+(async()=>{
+ const html=fs.readFileSync('vermelho/index.html','utf8');
+ const actions=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];
+ assert.deepEqual([...actions.matchAll(/>([^<]+)<\/(?:button|a)>/g)].map(m=>m[1]),['Menu Principal','Reset','Embaralhar Peças','Som: Ligado','Sobre essa Imagem']);
+ assert(!html.includes('id="rotate"'));
+ const canvas={style:{},getContext:()=>({translate(){},rotate(){},drawImage(){}})};
+ context.document.createElement=()=>canvas;
+ const node={...element(),appendChild(){}};
+ api.el.tpl.content={firstElementChild:{cloneNode:()=>node}};
+ api.el.tray.scrollLeft=api.el.tray.scrollTop=0;
+ vm.runInContext('loadImage=async()=>({width:108,height:234});compact=()=>{throw new Error("Rotation must not rearrange the tray")}',context);
+ const piece=await api.makePiece(p);
+ piece.sourceX=200;piece.sourceY=200;api.st.pieces=[piece];
+ const center=[piece.sourceX+piece.w/2,piece.sourceY+piece.h/2];
+ node.onpointerdown({button:2});assert.equal(api.st.drag,null);
+ let prevented=0;
+ for(let r=1;r<=4;r++){
+  node.oncontextmenu({preventDefault(){prevented++}});
+  assert.equal(piece.rotation,r%4);
+  assert(Math.abs(piece.sourceX+piece.w/2-center[0])<1e-8);
+  assert(Math.abs(piece.sourceY+piece.h/2-center[1])<1e-8);
+ }
+ assert.equal(prevented,4);
+ piece.placed=true;node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,0);
+ console.log('Right-click rotates through four orientations, keeps the piece centered, prevents the browser menu, and leaves placed pieces locked. Menu buttons match Alittlepuzzle.');
+})().catch(error=>{console.error(error);process.exitCode=1});

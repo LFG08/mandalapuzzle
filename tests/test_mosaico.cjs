@@ -40,7 +40,13 @@ async function makePiece(id,owner=ctx){
  console.log(`${checked} valid placements, including ${alternates} interchangeable placements; occupied slots and reciprocal rotations verified.`);
  const groups=[[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44]];
  for(const group of groups)for(const id of group)assert.deepEqual([...new Set(manifest.pieces[id-1].matches.flat())].sort((a,b)=>a-b),group);
- for(const id of [101,102])for(let r=0;r<8;r++)assert.deepEqual(manifest.pieces[id-1].matches[r],[id]);
+ for(const id of [101,102])for(let r=0;r<8;r++){
+  const data=manifest.pieces[id-1];
+  assert.deepEqual(data.matches[r],r%2===0?[id]:[]);
+  const p={data,rotation:r,w:r%2?Math.ceil(data.width*Math.SQRT2):data.width,h:r%2?Math.ceil(data.height*Math.SQRT2):data.height};
+  const target=api.slotTarget(p,data);p.currentX=20+target.x;p.currentY=30+target.y;api.st.pieces=[];
+  assert.equal(api.availableSlot(p)?.id,r%2===0?id:undefined,'Center pieces must reject square/diagonal-tip orientations');
+ }
  const audited=JSON.parse(fs.readFileSync('mosaico/rotation-groups.json','utf8'));
  for(const group of audited.groups)for(const id of group.pieces)for(const deg of group.clockwiseDegreesFromFirst[id])assert(manifest.pieces[group.pieces[0]-1].matches[deg/45].includes(id));
  assert(!manifest.pieces[134].matches.flat().includes(136));
@@ -170,5 +176,13 @@ async function makePiece(id,owner=ctx){
  migrated.api.save();assert.equal(storage.has('mosaicoJigsawProgress'),false,'Unload autosave must not recreate the reset progress');
  const reset=await freshGame();assert.equal(reset.api.st.difficulty,null);assert.equal(reset.api.el.tip.open,true);
  assert(reset.api.st.pieces.every(p=>!p.placed&&p.rotation===0));
- console.log('Mosaico route/title, difficulty choices for all 190 pieces, hard-mode resume, legacy migration and Reset to a fresh difficulty choice passed. All tests passed.');
+ const centerGame=contextFor(),inner=await makePiece(101,centerGame),outer=await makePiece(102,centerGame);
+ centerGame.api.st.pieces=[inner,outer];
+ centerGame.api.restore({difficulty:'hard',rotationStep:45,pieces:[{id:101,rotation:1,slot:101,x:200,y:300},{id:102,rotation:3,slot:102,x:400,y:500}]});
+ assert(!inner.placed&&!outer.placed,'Previously saved invalid center orientations must return to the tray');
+ assert.equal(inner.rotation,1);assert.equal(outer.rotation,3,'Keep saved angles so the player can correct them');
+ centerGame.api.st.boardRect={left:0,top:0};
+ centerGame.api.restore({difficulty:'hard',rotationStep:45,pieces:[{id:101,rotation:2,slot:101},{id:102,rotation:6,slot:102}]});
+ assert(inner.placed&&outer.placed,'Valid rotated center pieces must still restore');
+ console.log('Mosaico modes, resume, migration, Reset, center orientation restrictions and validation of old saved center placements passed. All tests passed.');
 })().catch(error=>{console.error(error);process.exitCode=1});

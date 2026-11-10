@@ -162,7 +162,7 @@
     async function init(){
       setupTrayScroll();
       // Keep rotation rules in sync with this page after a deployment.
-      const response=await fetch("pieces.json?v=rotation-groups-6",{cache:"no-store"});
+      const response=await fetch("pieces.json?v=rotation-groups-7",{cache:"no-store"});
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
       const manifest=await response.json(); PIECES=manifest.pieces;
       st.pieces=await Promise.all(PIECES.map(makePiece));

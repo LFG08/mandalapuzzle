@@ -4,11 +4,12 @@ Run from the repository root: python tests/test_mosaico_alignment.py
 Requires Pillow and NumPy.
 """
 import json
+import math
 from pathlib import Path
 import unittest
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 PIECES = json.loads((ROOT / 'mosaico/pieces.json').read_text())['pieces']
@@ -45,6 +46,45 @@ class RotationAlignmentTests(unittest.TestCase):
                             # Piece 152 has slightly cropped tips; the remaining artwork must align.
                             self.assertGreater(overlap, .98)
                             self.assertLess(rgb_error, .006 if source_id >= 147 else .01)
+
+    def test_spiral_groups_with_diagonal_rasterization(self):
+        for group in ([89, 91, 93, 95, 98, 100], [90, 92, 94, 96, 97, 99]):
+            for source_id in group:
+                source = PIECES[source_id - 1]
+                self.assertEqual(sorted(set(sum(source['matches'], []))), list(group))
+                for r, targets in enumerate(source['matches']):
+                    for target_id in targets:
+                        with self.subTest(source=source_id, target=target_id, degrees=r * 45):
+                            image = Image.open(ROOT / 'mosaico/peças' / source['file']).convert('RGBA')
+                            angle = r * math.pi / 4
+                            c, sn = math.cos(angle), math.sin(angle)
+                            w = math.ceil(abs(image.width*c) + abs(image.height*sn) - 1e-8)
+                            h = math.ceil(abs(image.width*sn) + abs(image.height*c) - 1e-8)
+                            # Same center and bounding box as Canvas rendering; do not scale or reflect.
+                            image = image.transform((w, h), Image.Transform.AFFINE,
+                                (c, sn, image.width/2-c*w/2-sn*h/2,
+                                 -sn, c, image.height/2+sn*w/2-c*h/2), Image.Resampling.BICUBIC)
+                            a = np.asarray(image, dtype=float) / 255
+                            b = pixels(PIECES[target_id - 1])
+                            offset = source['placementOffsets'][r][str(target_id)]
+                            dx, dy = offset['x'], offset['y']
+                            left, top = min(dx, 0), min(dy, 0)
+                            right, bottom = max(dx+w, b.shape[1]), max(dy+h, b.shape[0])
+                            aa = np.zeros((bottom-top, right-left, 4))
+                            bb = np.zeros_like(aa)
+                            aa[dy-top:dy-top+h, dx-left:dx-left+w] = a
+                            bb[-top:-top+b.shape[0], -left:-left+b.shape[1]] = b
+                            # Smooth only to compare exported antialiasing at 45 degrees.
+                            # Premultiply first so invisible RGB pixels cannot affect the comparison.
+                            for array in (aa, bb):
+                                array[:, :, :3] *= array[:, :, 3:]
+                            aa = np.asarray(Image.fromarray(np.uint8(np.round(aa*255))).filter(ImageFilter.GaussianBlur(2)), dtype=float)/255
+                            bb = np.asarray(Image.fromarray(np.uint8(np.round(bb*255))).filter(ImageFilter.GaussianBlur(2)), dtype=float)/255
+                            union = np.maximum(aa[:, :, 3], bb[:, :, 3]).sum()
+                            overlap = np.minimum(aa[:, :, 3], bb[:, :, 3]).sum()/union
+                            error = np.abs(aa[:, :, :3]-bb[:, :, :3]).sum()/(3*union)
+                            self.assertGreater(overlap, .9)
+                            self.assertLess(error, .04)
 
 
 if __name__ == '__main__':

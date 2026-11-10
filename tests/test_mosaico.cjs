@@ -210,7 +210,11 @@ async function makePiece(id,owner=ctx){
  ref.referenceYes.onclick();assert.equal(ref.referencePrompt.textContent,'...certeza?');assert.equal(ref.referenceNo.textContent,'ok vou tentar novamente');assert.equal(ref.referenceYes.textContent,'MOSTRA LOGO DESGRAÇA');assert.equal(ref.referenceImage.src,undefined);
  ref.referenceYes.onclick();assert.equal(ref.referenceImage.hidden,false);assert.equal(ref.referenceImage.src,'/mosaico/mosaico_ref.png');assert.equal(ref.referenceChoices.hidden,true);assert.equal(ref.referenceClose.hidden,false);
  ref.referenceClose.onclick();assert.equal(ref.aboutDialog.open,false);assert.equal(ref.referenceImage.src,undefined);
- ref.aboutImage.onclick();ref.referenceYes.onclick();closed();assert.equal(reference.api.st.referenceStep,0);assert.equal(ref.referenceImage.hidden,true);
+ const referenceSave=JSON.parse(storage.get('mosaicoJigsawProgress'));assert.equal(referenceSave.referenceRevealed,true);
+ ref.aboutImage.onclick();assert.equal(reference.api.st.referenceStep,3);assert.equal(ref.referenceImage.hidden,false);assert.equal(ref.referenceChoices.hidden,true);
+ closed();assert.equal(reference.api.st.referenceStep,0);assert.equal(ref.referenceImage.hidden,true);
+ const referenceReload=contextFor();referenceReload.api.restore(referenceSave);referenceReload.api.setupReferenceDialog();
+ referenceReload.api.el.aboutImage.onclick();assert.equal(referenceReload.api.st.referenceStep,3);assert.equal(referenceReload.api.el.referenceImage.hidden,false);
  console.log('Reference dialog exact text, all three confirmations, cancellation at every step, delayed image loading, close and reopen verified.');
 
  assert(html.includes('<title>Mosaico Jigsaw</title>'));
@@ -242,10 +246,12 @@ async function makePiece(id,owner=ctx){
  const legacySaved={...hardSaved};delete legacySaved.difficulty;
  storage.clear();storage.set('vermelhoJigsawProgress',JSON.stringify(legacySaved));
  const migrated=await freshGame();assert.equal(migrated.api.st.difficulty,'easy');assert.equal(migrated.api.st.pieces[1].rotation,1);
+ migrated.api.st.referenceRevealed=true;migrated.api.save();
  migrated.api.el.reset.onclick();assert.equal(storage.has('mosaicoJigsawProgress'),false);assert.equal(storage.has('vermelhoJigsawProgress'),false);
  migrated.api.save();assert.equal(storage.has('mosaicoJigsawProgress'),false,'Unload autosave must not recreate the reset progress');
  const reset=await freshGame();assert.equal(reset.api.st.difficulty,null);assert.equal(reset.api.el.tip.open,true);
  assert(reset.api.st.pieces.every(p=>!p.placed&&p.rotation===0));
+ assert.equal(reset.api.st.referenceRevealed,false,'Reset starts with reference confirmations enabled');
  const centerGame=contextFor(),inner=await makePiece(101,centerGame),outer=await makePiece(102,centerGame);
  centerGame.api.st.pieces=[inner,outer];
  centerGame.api.restore({difficulty:'hard',rotationStep:45,pieces:[{id:101,rotation:1,slot:101,x:200,y:300},{id:102,rotation:3,slot:102,x:400,y:500}]});

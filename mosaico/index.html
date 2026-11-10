@@ -100,7 +100,7 @@
       hardMode:document.getElementById("hardMode"),
       soundToggle:document.getElementById("soundToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false,trayWidth:0,pendingReflow:false,referenceStep:0,suppressContextMenu:false};
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false,trayWidth:0,pendingReflow:false,referenceStep:0,referenceRevealed:false,suppressContextMenu:false};
     const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`Não foi possível iniciar o puzzle. ${e.message||""}`.trim())});
 
@@ -149,7 +149,7 @@
       el.aboutDialog.setAttribute("data-showing-image",String(showingImage));
       el.referencePrompt.hidden=showingImage;el.referenceChoices.hidden=showingImage;
       el.referenceImage.hidden=!showingImage;el.referenceClose.hidden=!showingImage;
-      if(showingImage){el.referenceImage.src="/mosaico/mosaico_ref.png";el.referenceClose.focus();return}
+      if(showingImage){if(!st.referenceRevealed){st.referenceRevealed=true;save()}el.referenceImage.src="/mosaico/mosaico_ref.png";el.referenceClose.focus();return}
       el.referenceImage.removeAttribute("src");
       const steps=[
         ["Deseja ver imagem completa?","Sim","Não"],
@@ -163,7 +163,7 @@
     }
     function closeReference(){el.aboutDialog.close();renderReferenceStep(0);el.aboutImage.focus()}
     function setupReferenceDialog(){
-      el.aboutImage.onclick=()=>{renderReferenceStep(0);el.aboutDialog.showModal();el.referenceYes.focus()};
+      el.aboutImage.onclick=()=>{renderReferenceStep(st.referenceRevealed?3:0);el.aboutDialog.showModal();(st.referenceRevealed?el.referenceClose:el.referenceYes).focus()};
       el.referenceYes.onclick=()=>{if(st.referenceStep<3)renderReferenceStep(st.referenceStep+1)};
       el.referenceNo.onclick=closeReference;el.referenceClose.onclick=closeReference;
       el.aboutDialog.addEventListener("close",()=>renderReferenceStep(0));
@@ -222,7 +222,7 @@
     }
     function updateMenu(){el.menuActions.hidden=st.menuCollapsed;el.menuToggle.textContent=st.menuCollapsed?"Restaurar":"Minimizar";el.menuToggle.setAttribute("aria-expanded",String(!st.menuCollapsed))}
     function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY);return raw?JSON.parse(raw):null}catch{return null}}
-    function save(){if(st.restoring||st.resetting)return;try{localStorage.setItem(KEY,JSON.stringify({rotationStep:45,difficulty:st.difficulty,trayLayout:1,trayWidth:st.trayWidth||el.tray.clientWidth,menuCollapsed:st.menuCollapsed,trayScroll:{x:el.tray.scrollLeft,y:el.tray.scrollTop},pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot,x:p.sourceX,y:p.sourceY,z:Number(p.node.style.zIndex)||2})),soundOn:st.soundOn}))}catch{}}
+    function save(){if(st.restoring||st.resetting)return;try{localStorage.setItem(KEY,JSON.stringify({rotationStep:45,referenceRevealed:st.referenceRevealed,difficulty:st.difficulty,trayLayout:1,trayWidth:st.trayWidth||el.tray.clientWidth,menuCollapsed:st.menuCollapsed,trayScroll:{x:el.tray.scrollLeft,y:el.tray.scrollTop},pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot,x:p.sourceX,y:p.sourceY,z:Number(p.node.style.zIndex)||2})),soundOn:st.soundOn}))}catch{}}
     function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
     function loadImage(src){return new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(new Error(`Image load failed for ${src}`));img.src=src})}
     async function makePiece(data){
@@ -399,6 +399,7 @@
     function restore(saved){
       if(!Array.isArray(saved.pieces))return;
       st.restoring=true;
+      st.referenceRevealed=saved.referenceRevealed===true;
       st.difficulty=["easy","hard"].includes(saved.difficulty)?saved.difficulty:(Object.hasOwn(saved,"difficulty")?null:"easy");
       st.menuCollapsed=saved.menuCollapsed===true;
       const occupied=new Set();

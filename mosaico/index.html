@@ -69,7 +69,7 @@
       </aside>
     </section>
   </main>
-  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Como Jogar</h2><p>O botão direito do mouse gira qualquer peça solta em 45°. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Você pode girar com o botão direito enquanto segura a peça com o esquerdo. Também pode selecionar uma peça e pressionar R.</p><div class="modeOptions"><div><button id="easyMode" class="btn" type="button" aria-describedby="easyDescription">Modo fácil</button><p id="easyDescription">peças começam no ângulo correto</p></div><div><button id="hardMode" class="btn" type="button" aria-describedby="hardDescription">Modo difícil</button><p id="hardDescription">peças começam em ângulos aleatórios</p></div></div></dialog>
+  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Dica</h2><p>Rotacione as peças com o botão direito do mouse ou R no teclado. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Boa sorte!</p><div class="modeOptions"><div><button id="easyMode" class="btn" type="button" aria-describedby="easyDescription">Modo fácil</button><p id="easyDescription">peças começam no ângulo correto</p></div><div><button id="hardMode" class="btn" type="button" aria-describedby="hardDescription">Modo difícil</button><p id="hardDescription">peças começam em ângulos aleatórios</p></div></div></dialog>
   <dialog id="aboutDialog" class="infoDialog referenceDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Imagem de Referência</h2><p id="referencePrompt" aria-live="polite" tabindex="-1">Deseja ver imagem completa?</p><div id="referenceChoices" class="referenceChoices"><button id="referenceYes" class="btn" type="button">Sim</button><button id="referenceNo" class="btn" type="button">Não</button></div><img id="referenceImage" class="referenceImage" width="1280" height="1280" alt="Imagem completa do puzzle Mosaico" hidden><button id="referenceClose" class="btn" type="button" hidden>Fechar</button></dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
@@ -140,7 +140,7 @@
       el.aboutDialog.setAttribute("data-showing-image",String(showingImage));
       el.referencePrompt.hidden=showingImage;el.referenceChoices.hidden=showingImage;
       el.referenceImage.hidden=!showingImage;el.referenceClose.hidden=!showingImage;
-      if(showingImage){el.referenceImage.src="/mosaico/mosaico.png";el.referenceClose.focus();return}
+      if(showingImage){el.referenceImage.src="/mosaico/mosaico_ref.png";el.referenceClose.focus();return}
       el.referenceImage.removeAttribute("src");
       const steps=[
         ["Deseja ver imagem completa?","Sim","Não"],
@@ -162,7 +162,7 @@
     async function init(){
       setupTrayScroll();
       // Keep rotation rules in sync with this page after a deployment.
-      const response=await fetch("pieces.json?v=rotation-groups-7",{cache:"no-store"});
+      const response=await fetch("pieces.json?v=rotation-groups-8",{cache:"no-store"});
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
       const manifest=await response.json(); PIECES=manifest.pieces;
       st.pieces=await Promise.all(PIECES.map(makePiece));

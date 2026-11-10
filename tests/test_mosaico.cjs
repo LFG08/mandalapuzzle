@@ -38,7 +38,7 @@ async function makePiece(id,owner=ctx){
   }
  }
  console.log(`${checked} valid placements, including ${alternates} interchangeable placements; occupied slots and reciprocal rotations verified.`);
- const groups=[[89,91,93,95,98,100],[90,92,94,96,97,99],[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44],[104,105,113,114],[103,108,109,110],[106,107,111,112],[115,116,117,118],[119,120,121,122],[123,124,125,126]];
+ const groups=[[86,88,89,91,93,95,98,100],[85,87,90,92,94,96,97,99],[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44],[104,105,113,114],[103,108,109,110],[106,107,111,112],[115,116,117,118],[119,120,121,122],[123,124,125,126]];
  for(const group of groups)for(const id of group)assert.deepEqual([...new Set(manifest.pieces[id-1].matches.flat())].sort((a,b)=>a-b),group);
  for(const id of [101,102])for(let r=0;r<8;r++){
   const data=manifest.pieces[id-1];
@@ -162,7 +162,7 @@ async function makePiece(id,owner=ctx){
  let closed;ref.aboutDialog.addEventListener=(type,fn)=>{if(type==='close')closed=fn};
  reference.api.setupReferenceDialog();
  assert(html.includes('>Imagem de Referência</button>'));assert(!html.includes('Sobre essa Imagem'));
- assert(fs.existsSync('mosaico/mosaico.png'));
+ assert(fs.existsSync('mosaico/mosaico_ref.png'));
  for(let abortStep=0;abortStep<3;abortStep++){
   ref.aboutImage.onclick();
   for(let i=0;i<abortStep;i++)ref.referenceYes.onclick();
@@ -172,13 +172,14 @@ async function makePiece(id,owner=ctx){
  ref.aboutImage.onclick();assert.equal(ref.referencePrompt.textContent,'Deseja ver imagem completa?');assert.equal(ref.referenceYes.textContent,'Sim');assert.equal(ref.referenceNo.textContent,'Não');
  ref.referenceYes.onclick();assert.equal(ref.referencePrompt.textContent,'Tem certeza?');assert.equal(ref.referenceNo.textContent,'Não, vou continuar tentando.');assert.equal(ref.referenceYes.textContent,'help please');
  ref.referenceYes.onclick();assert.equal(ref.referencePrompt.textContent,'...certeza?');assert.equal(ref.referenceNo.textContent,'ok vou tentar novamente');assert.equal(ref.referenceYes.textContent,'MOSTRA LOGO DESGRAÇA');assert.equal(ref.referenceImage.src,undefined);
- ref.referenceYes.onclick();assert.equal(ref.referenceImage.hidden,false);assert.equal(ref.referenceImage.src,'/mosaico/mosaico.png');assert.equal(ref.referenceChoices.hidden,true);assert.equal(ref.referenceClose.hidden,false);
+ ref.referenceYes.onclick();assert.equal(ref.referenceImage.hidden,false);assert.equal(ref.referenceImage.src,'/mosaico/mosaico_ref.png');assert.equal(ref.referenceChoices.hidden,true);assert.equal(ref.referenceClose.hidden,false);
  ref.referenceClose.onclick();assert.equal(ref.aboutDialog.open,false);assert.equal(ref.referenceImage.src,undefined);
  ref.aboutImage.onclick();ref.referenceYes.onclick();closed();assert.equal(reference.api.st.referenceStep,0);assert.equal(ref.referenceImage.hidden,true);
  console.log('Reference dialog exact text, all three confirmations, cancellation at every step, delayed image loading, close and reopen verified.');
 
  assert(html.includes('<title>Mosaico Jigsaw</title>'));
- assert(html.includes('<h2 id="tipTitle">Como Jogar</h2>'));
+ assert(html.includes('<h2 id="tipTitle">Dica</h2>'));
+ assert(html.includes('Rotacione as peças com o botão direito do mouse ou R no teclado. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Boa sorte!'));
  assert(html.includes('peças começam no ângulo correto'));
  assert(html.includes('peças começam em ângulos aleatórios'));
  assert(!html.includes('Entendi'));

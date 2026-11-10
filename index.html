@@ -742,6 +742,13 @@ id="yagaCard">
 <h2 class="menu-section-title">quebra-cabeça</h2>
 <div class="grid">
 
+<a href="/mosaico/" class="card" id="mosaicoCard" data-key="mosaicoJigsawProgress" data-total="190" aria-label="Mosaico — quebra-cabeça">
+  <div class="thumb"><img src="mosaico/background.png" loading="lazy" alt="Mosaico"></div>
+  <div class="tags">#mosaico #quebra-cabeça #jigsaw</div>
+  <div class="status"></div>
+</a>
+
+
 </a>
 
 <a href="tyre" class="card"
@@ -907,11 +914,15 @@ return [];
 
 function getStoredProgressCount(key){
 try{
-let parsed = JSON.parse(localStorage.getItem(key) || "[]");
+let raw = localStorage.getItem(key) || (key === "mosaicoJigsawProgress" ? localStorage.getItem("vermelhoJigsawProgress") : null);
+let parsed = JSON.parse(raw || "[]");
 if(Array.isArray(parsed)) return parsed.length;
 if(parsed && Array.isArray(parsed.placed)) return parsed.placed.length;
 if(parsed && Array.isArray(parsed.placedPieceIds)) return parsed.placedPieceIds.length;
 if(parsed && Array.isArray(parsed.pieces)){
+if(key === "mosaicoJigsawProgress"){
+return new Set(parsed.pieces.filter(piece => piece && Number.isInteger(piece.id) && piece.id >= 1 && piece.id <= 190 && Number.isInteger(piece.slot) && piece.slot >= 1 && piece.slot <= 190).map(piece => piece.slot)).size;
+}
 return parsed.pieces.reduce((count, piece) => count + (piece && piece.placed ? 1 : 0), 0);
 }
 return 0;

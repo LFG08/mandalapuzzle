@@ -47,8 +47,12 @@ class RotationAlignmentTests(unittest.TestCase):
                             self.assertGreater(overlap, .98)
                             self.assertLess(rgb_error, .006 if source_id >= 147 else .01)
 
-    def test_spiral_groups_with_diagonal_rasterization(self):
-        for group in ([89, 91, 93, 95, 98, 100], [90, 92, 94, 96, 97, 99]):
+    def test_reviewed_groups_with_diagonal_rasterization(self):
+        for group in ([21,22,23,24,25,26,27,28], [61,62,64,67,70,72,74,76],
+                      [63,65,66,68,69,71,73,75], [77,78,79,80,81,82,83,84],
+                      [85,87,90,92,94,96,97,99], [86,88,89,91,93,95,98,100],
+                      [135,137,140,142], [136,138,139,141],
+                      [167,169,172,174], [168,170,171,173], [175,178,180,182]):
             for source_id in group:
                 source = PIECES[source_id - 1]
                 self.assertEqual(sorted(set(sum(source['matches'], []))), list(group))

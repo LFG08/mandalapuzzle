@@ -103,6 +103,18 @@ async function makePiece(id,owner=ctx){
  api.setTrayWidth(360);api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:1}));
  api.el.trayResize.onpointermove({clientX:150});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'460px');
  api.el.trayResize.onpointermove({clientX:2000});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'598px');api.el.trayResize.onpointerup();
+ // Zooming out increases CSS viewport width; the tray can use all of that extra space.
+ assert(html.includes('.app{width:calc(100% - 28px);'));
+ assert(!html.includes('width:min(1940px'));
+ for(const width of [2400,2880,3840]){
+  appWidth=width;
+  assert.equal(api.setTrayWidth(10000),width-1318-24);
+ }
+ appWidth=2880;api.setTrayWidth(598);
+ api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:3}));
+ api.el.trayResize.onpointermove({clientX:400});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'1198px');
+ api.el.trayResize.onpointermove({clientX:2000});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'1538px');
+ api.el.trayResize.onpointerup();
  appWidth=1810;assert.equal(api.setTrayWidth(800),468);
  stacked=true;appWidth=900;assert.equal(api.setTrayWidth(1200),900);
  api.setTrayWidth(400);api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:2}));api.el.trayResize.onpointermove({clientX:200});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'500px');api.el.trayResize.onpointerup();

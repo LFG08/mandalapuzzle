@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const html=fs.readFileSync('index.html','utf8');
+const section=html.split('<h2 class="menu-section-title">quebra-cabeça</h2>')[1].split('</section>')[0];
+const card=section.match(/<a[^>]*id="mosaicoCard"[\s\S]*?<\/a>/)?.[0];
+assert(card);assert(card.includes('href="/mosaico/"'));assert(card.includes('data-key="mosaicoJigsawProgress"'));assert(card.includes('data-total="190"'));
+for(const tag of ['#mosaico','#quebra-cabeça','#jigsaw'])assert(card.includes(tag));
+assert(card.includes('mosaico/background.png'));assert(fs.existsSync('mosaico/background.png'));
+const start=html.indexOf('function getStoredProgressCount(key){');
+const end=html.indexOf('\nfunction ',start+1);
+const storage=new Map();const ctx={localStorage:{getItem:k=>storage.get(k)||null}};vm.createContext(ctx);vm.runInContext(html.slice(start,end),ctx);
+assert.equal(ctx.getStoredProgressCount('mosaicoJigsawProgress'),0);
+const save={pieces:[{id:1,slot:1},{id:2,slot:null},{id:3,slot:3},{id:4,slot:3},{id:5,slot:999},{id:6,slot:0}]};
+storage.set('mosaicoJigsawProgress',JSON.stringify(save));assert.equal(ctx.getStoredProgressCount('mosaicoJigsawProgress'),2);
+storage.delete('mosaicoJigsawProgress');storage.set('vermelhoJigsawProgress',JSON.stringify(save));assert.equal(ctx.getStoredProgressCount('mosaicoJigsawProgress'),2);
+storage.set('other',JSON.stringify({pieces:[{placed:true},{placed:false}]}));assert.equal(ctx.getStoredProgressCount('other'),1);
+console.log('Mosaico menu section, route, thumbnail, tags, saved-placement count, legacy progress and existing counter behavior pass.');

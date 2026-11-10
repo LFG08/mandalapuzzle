@@ -42,7 +42,7 @@
     .piece,.piece:focus,.piece:focus-visible{outline:none}.piece:focus-visible canvas{filter:drop-shadow(0 0 5px #ffd49a)}
     .piece canvas{display:block;filter:drop-shadow(0 12px 22px rgba(0,0,0,.28))}
     .piece.drag{position:fixed;cursor:grabbing;z-index:9999;transition:none}
-    .piece.placed{cursor:default}
+    .piece.placed{cursor:default}.piece.placed.drag{cursor:grabbing}
     .piece.placed canvas{filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
     .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#e8af8d}
     .credits{margin:16px 4px 0;color:#e8af8d;font-size:.82rem;line-height:1.5}
@@ -69,7 +69,7 @@
       </aside>
     </section>
   </main>
-  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Como Jogar</h2><p>O botão direito do mouse gira qualquer peça solta em 45°. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Você pode girar com o botão direito enquanto segura a peça com o esquerdo. Também pode selecionar uma peça e pressionar R.</p><div class="modeOptions"><div><button id="easyMode" class="btn" type="button" aria-describedby="easyDescription">Modo fácil</button><p id="easyDescription">peças começam no ângulo correto</p></div><div><button id="hardMode" class="btn" type="button" aria-describedby="hardDescription">Modo difícil</button><p id="hardDescription">peças começam em ângulos aleatórios</p></div></div></dialog>
+  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Dica</h2><p>Rotacione as peças com o botão direito do mouse ou R no teclado. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Caso deseje remover uma peça, utilize o cntrl no teclado e arraste a peça para fora do quebra-cabeça. Boa sorte!</p><div class="modeOptions"><div><button id="easyMode" class="btn" type="button" aria-describedby="easyDescription">Modo fácil</button><p id="easyDescription">peças começam no ângulo correto</p></div><div><button id="hardMode" class="btn" type="button" aria-describedby="hardDescription">Modo difícil</button><p id="hardDescription">peças começam em ângulos aleatórios</p></div></div></dialog>
   <dialog id="aboutDialog" class="infoDialog referenceDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Imagem de Referência</h2><p id="referencePrompt" aria-live="polite" tabindex="-1">Deseja ver imagem completa?</p><div id="referenceChoices" class="referenceChoices"><button id="referenceYes" class="btn" type="button">Sim</button><button id="referenceNo" class="btn" type="button">Não</button></div><img id="referenceImage" class="referenceImage" width="1280" height="1280" alt="Imagem completa do puzzle Mosaico" hidden><button id="referenceClose" class="btn" type="button" hidden>Fechar</button></dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
@@ -140,7 +140,7 @@
       el.aboutDialog.setAttribute("data-showing-image",String(showingImage));
       el.referencePrompt.hidden=showingImage;el.referenceChoices.hidden=showingImage;
       el.referenceImage.hidden=!showingImage;el.referenceClose.hidden=!showingImage;
-      if(showingImage){el.referenceImage.src="/mosaico/mosaico.png";el.referenceClose.focus();return}
+      if(showingImage){el.referenceImage.src="/mosaico/mosaico_ref.png";el.referenceClose.focus();return}
       el.referenceImage.removeAttribute("src");
       const steps=[
         ["Deseja ver imagem completa?","Sim","Não"],
@@ -162,7 +162,7 @@
     async function init(){
       setupTrayScroll();
       // Keep rotation rules in sync with this page after a deployment.
-      const response=await fetch("pieces.json?v=rotation-groups-6",{cache:"no-store"});
+      const response=await fetch("pieces.json?v=rotation-groups-9",{cache:"no-store"});
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
       const manifest=await response.json(); PIECES=manifest.pieces;
       st.pieces=await Promise.all(PIECES.map(makePiece));
@@ -170,7 +170,7 @@
       el.easyMode.onclick=()=>chooseDifficulty("easy");
       el.hardMode.onclick=()=>chooseDifficulty("hard");
       el.tip.addEventListener("cancel",e=>{if(st.difficulty===null)e.preventDefault()});
-      addEventListener("keydown",e=>{if(st.difficulty&&!el.aboutDialog.open&&e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
+      addEventListener("keydown",e=>{if(e.key==="Escape"&&st.drag){cancelDrag();return}if(st.difficulty&&!el.aboutDialog.open&&e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
       rects();
       const saved=load();
       if(saved){
@@ -265,16 +265,18 @@
     function startDrag(e,piece){
       if(st.difficulty===null)return;
       if(e.button===2)return;
-      if(piece.placed||st.drag||e.button!==0)return;
+      if(st.drag||e.button!==0||(piece.placed&&!e.ctrlKey))return;
       selectPiece(piece);
       e.preventDefault();rects();
       const r=piece.node.getBoundingClientRect();
-      st.drag={piece,ox:e.clientX-r.left,oy:e.clientY-r.top};
+      st.drag={piece,removing:piece.placed,ox:e.clientX-r.left,oy:e.clientY-r.top};
       piece.node.classList.add("drag");
       piece.node.style.zIndex=String(st.z++);
       if(piece.node.parentElement!==document.body){
-        piece.sourceX=r.left-st.trayRect.left+el.tray.scrollLeft;
-        piece.sourceY=r.top-st.trayRect.top+el.tray.scrollTop;
+        if(!st.drag.removing){
+          piece.sourceX=r.left-st.trayRect.left+el.tray.scrollLeft;
+          piece.sourceY=r.top-st.trayRect.top+el.tray.scrollTop;
+        }
         document.body.appendChild(piece.node);
         piece.node.style.position="fixed";
         placeAt(piece,r.left,r.top);
@@ -283,15 +285,37 @@
       addEventListener("pointerup",endDrag);
       addEventListener("pointercancel",cancelDrag,{once:true});
     }
-    function cancelDrag(){if(!st.drag)return;const p=st.drag.piece;p.node.classList.remove("drag");backToTray(p);st.drag=null;removeEventListener("pointermove",moveDrag);removeEventListener("pointerup",endDrag);reflowTrayIfNeeded()}
+    function returnToPlacedSlot(piece){
+      rects();el.board.appendChild(piece.node);piece.node.style.position="absolute";
+      piece.node.style.left=`${piece.targetX}px`;piece.node.style.top=`${piece.targetY}px`;
+      piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;
+      save();
+    }
+    function cancelDrag(){
+      if(!st.drag)return;
+      const {piece,removing}=st.drag;piece.node.classList.remove("drag");
+      if(removing)returnToPlacedSlot(piece);else backToTray(piece);
+      st.drag=null;removeEventListener("pointermove",moveDrag);removeEventListener("pointerup",endDrag);removeEventListener("pointercancel",cancelDrag);reflowTrayIfNeeded();
+    }
     function moveDrag(e){if(!st.drag)return;placeAt(st.drag.piece,e.clientX-st.drag.ox,e.clientY-st.drag.oy)}
     function endDrag(e){
       if(!st.drag||(e&&((e.buttons&1)!==0||e.button===2)))return;
-      const {piece}=st.drag;
+      const {piece,removing}=st.drag;
       piece.node.classList.remove("drag");
       rects();
-      const slot=availableSlot(piece);
-      if(slot)dropOnBoard(piece,slot);else backToTray(piece);
+      if(removing){
+        const x=e?.clientX??piece.currentX+st.drag.ox,y=e?.clientY??piece.currentY+st.drag.oy;
+        const outside=x<st.boardRect.left||x>=(st.boardRect.right??st.boardRect.left+BOARD)||y<st.boardRect.top||y>=(st.boardRect.bottom??st.boardRect.top+BOARD);
+        if(outside){
+          piece.placed=false;piece.slot=null;piece.node.classList.remove("placed");st.completionShown=false;
+          backToTray(piece);status();
+          el.tray.scrollLeft=Math.max(0,piece.sourceX-12);el.tray.scrollTop=Math.max(0,piece.sourceY-12);
+          save();
+        }else returnToPlacedSlot(piece);
+      }else{
+        const slot=availableSlot(piece);
+        if(slot)dropOnBoard(piece,slot);else backToTray(piece);
+      }
       st.drag=null;
       reflowTrayIfNeeded();
       removeEventListener("pointerup",endDrag);

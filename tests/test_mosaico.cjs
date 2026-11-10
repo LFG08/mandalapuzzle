@@ -15,7 +15,7 @@ function contextFor(){
   Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()}},
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{reload(){}},
   addEventListener:(name,fn)=>{if(!listeners.has(name))listeners.set(name,[]);listeners.get(name).push(fn)},removeEventListener(){},matchMedia:()=>({matches:false})};
- vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,chooseDifficulty,load,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,reflowTrayIfNeeded,setupAutoTrayLayout,resize,setupReferenceDialog,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
+ vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,chooseDifficulty,load,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,reflowTrayIfNeeded,setupAutoTrayLayout,resize,setupReferenceDialog,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,cancelDrag,loadManifest:v=>PIECES=v};',ctx);
  ctx.api.loadManifest(manifest.pieces);ctx.api.st.trayWidth=ctx.api.el.tray.clientWidth;return ctx;
 }
 const ctx=contextFor(),api=ctx.api;api.st.difficulty="easy";
@@ -38,7 +38,7 @@ async function makePiece(id,owner=ctx){
   }
  }
  console.log(`${checked} valid placements, including ${alternates} interchangeable placements; occupied slots and reciprocal rotations verified.`);
- const groups=[[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44],[104,105,113,114],[103,108,109,110],[106,107,111,112],[115,116,117,118],[119,120,121,122],[123,124,125,126]];
+ const groups=[[86,88,89,91,93,95,98,100],[85,87,90,92,94,96,97,99],[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44],[104,105,113,114],[103,108,109,110],[106,107,111,112],[115,116,117,118],[119,120,121,122],[123,124,125,126]];
  for(const group of groups)for(const id of group)assert.deepEqual([...new Set(manifest.pieces[id-1].matches.flat())].sort((a,b)=>a-b),group);
  for(const id of [101,102])for(let r=0;r<8;r++){
   const data=manifest.pieces[id-1];
@@ -53,6 +53,13 @@ async function makePiece(id,owner=ctx){
  assert.equal(correction.x,manifest.pieces[104].x);assert.equal(correction.y,manifest.pieces[104].y-1);
  const redCorrection=api.slotTarget({data:manifest.pieces[118],rotation:6,w:119,h:120},manifest.pieces[119]);
  assert.equal(redCorrection.x,manifest.pieces[119].x+1);assert.equal(redCorrection.y,manifest.pieces[119].y-1);
+ assert.deepEqual(manifest.pieces[91].matches[1],[96]);
+ assert.deepEqual(manifest.pieces[91].matches[2],[97]);
+ assert.deepEqual(manifest.pieces[91].matches[5],[94]);
+ const spiral=api.slotTarget({data:manifest.pieces[91],rotation:1,w:102,h:102},manifest.pieces[95]);
+ assert.equal(spiral.x,manifest.pieces[95].x-12);assert.equal(spiral.y,manifest.pieces[95].y-18);
+ const visualAlignment=api.slotTarget({data:manifest.pieces[48],rotation:5,w:194,h:194},manifest.pieces[49]);
+ assert.equal(visualAlignment.x,manifest.pieces[49].x-35);assert.equal(visualAlignment.y,manifest.pieces[49].y-14);
  const audited=JSON.parse(fs.readFileSync('mosaico/rotation-groups.json','utf8'));
  for(const group of audited.groups)for(const id of group.pieces)for(const deg of group.clockwiseDegreesFromFirst[id])assert(manifest.pieces[group.pieces[0]-1].matches[deg/45].includes(id));
  assert(!manifest.pieces[134].matches.flat().includes(136));
@@ -90,6 +97,27 @@ async function makePiece(id,owner=ctx){
  dispatch('mouseup',event(0,{buttons:2}));assert.equal(api.st.drag,null);
  assert.equal(other.sourceX,700);assert.equal(other.sourceY,900);
  console.log('Mouse chord rotates by 45 degrees without moving the center, jumping on next move, or dropping on right release.');
+ const removal=contextFor(),rp=await makePiece(1,removal),loose=await makePiece(2,removal);
+ removal.api.st.difficulty='easy';removal.api.st.pieces=[rp,loose];
+ rp.placed=true;rp.slot=1;rp.targetX=141;rp.targetY=523;rp.sourceX=150;rp.sourceY=700;removal.api.el.board.appendChild(rp.node);
+ removal.api.el.board.getBoundingClientRect=()=>({left:0,top:0,right:1280,bottom:1280,width:1280,height:1280});
+ rp.node.getBoundingClientRect=()=>({left:141,top:523,right:249,bottom:757,width:108,height:234});
+ rp.node.onmousedown(event(0,{clientX:170,clientY:550}));assert.equal(removal.api.st.drag,null,'Placed pieces stay locked without Ctrl');
+ rp.node.onmousedown(event(0,{ctrlKey:true,clientX:170,clientY:550}));assert(removal.api.st.drag?.removing);
+ assert.equal(rp.sourceX,150);assert.equal(rp.sourceY,700,'Starting a removal preserves its tray return position');
+ removal.api.endDrag(event(0,{buttons:0,clientX:400,clientY:400}));assert(rp.placed);assert.equal(rp.slot,1);assert.equal(rp.node.parentElement,removal.api.el.board);
+ rp.node.onmousedown(event(0,{ctrlKey:true,clientX:170,clientY:550}));removal.api.cancelDrag();assert(rp.placed);assert.equal(rp.slot,1);
+ rp.node.onmousedown(event(0,{ctrlKey:true,clientX:170,clientY:550}));
+ removal.api.endDrag(event(2,{buttons:1,clientX:1400,clientY:550}));assert(removal.api.st.drag,'Right release must not remove the piece during left drag');
+ removal.api.endDrag(event(0,{buttons:0,clientX:1400,clientY:550,ctrlKey:false}));
+ assert.equal(rp.placed,false);assert.equal(rp.slot,null);assert.equal(rp.node.parentElement,removal.api.el.tray);
+ assert.equal(removal.api.el.placed.textContent,'0 / 2');assert.equal(removal.api.st.drag,null);
+ assert.equal(removal.api.availableSlot({data:rp.data,rotation:0,w:rp.w,h:rp.h,currentX:rp.data.x,currentY:rp.data.y}).id,1,'Removed slot becomes available again');
+ assert.equal(JSON.parse(storage.get('mosaicoJigsawProgress')).pieces[0].slot,null);
+ const resumedRemoval=contextFor(),returned=await makePiece(1,resumedRemoval);resumedRemoval.api.st.pieces=[returned];
+ resumedRemoval.api.restore(JSON.parse(storage.get('mosaicoJigsawProgress')));assert.equal(returned.placed,false);assert.equal(returned.slot,null);
+ console.log('Ctrl removal requires an outside drop, preserves inside/cancelled placements, updates progress, frees the slot and survives reload.');
+
 
  piece.sourceX=235;piece.sourceY=975;piece.node.style.zIndex='48';other.sourceX=735;other.sourceY=1175;
  api.el.tray.scrollLeft=40;api.el.tray.scrollTop=300;api.st.menuCollapsed=true;api.save();
@@ -157,7 +185,7 @@ async function makePiece(id,owner=ctx){
  let closed;ref.aboutDialog.addEventListener=(type,fn)=>{if(type==='close')closed=fn};
  reference.api.setupReferenceDialog();
  assert(html.includes('>Imagem de Referência</button>'));assert(!html.includes('Sobre essa Imagem'));
- assert(fs.existsSync('mosaico/mosaico.png'));
+ assert(fs.existsSync('mosaico/mosaico_ref.png'));
  for(let abortStep=0;abortStep<3;abortStep++){
   ref.aboutImage.onclick();
   for(let i=0;i<abortStep;i++)ref.referenceYes.onclick();
@@ -167,13 +195,14 @@ async function makePiece(id,owner=ctx){
  ref.aboutImage.onclick();assert.equal(ref.referencePrompt.textContent,'Deseja ver imagem completa?');assert.equal(ref.referenceYes.textContent,'Sim');assert.equal(ref.referenceNo.textContent,'Não');
  ref.referenceYes.onclick();assert.equal(ref.referencePrompt.textContent,'Tem certeza?');assert.equal(ref.referenceNo.textContent,'Não, vou continuar tentando.');assert.equal(ref.referenceYes.textContent,'help please');
  ref.referenceYes.onclick();assert.equal(ref.referencePrompt.textContent,'...certeza?');assert.equal(ref.referenceNo.textContent,'ok vou tentar novamente');assert.equal(ref.referenceYes.textContent,'MOSTRA LOGO DESGRAÇA');assert.equal(ref.referenceImage.src,undefined);
- ref.referenceYes.onclick();assert.equal(ref.referenceImage.hidden,false);assert.equal(ref.referenceImage.src,'/mosaico/mosaico.png');assert.equal(ref.referenceChoices.hidden,true);assert.equal(ref.referenceClose.hidden,false);
+ ref.referenceYes.onclick();assert.equal(ref.referenceImage.hidden,false);assert.equal(ref.referenceImage.src,'/mosaico/mosaico_ref.png');assert.equal(ref.referenceChoices.hidden,true);assert.equal(ref.referenceClose.hidden,false);
  ref.referenceClose.onclick();assert.equal(ref.aboutDialog.open,false);assert.equal(ref.referenceImage.src,undefined);
  ref.aboutImage.onclick();ref.referenceYes.onclick();closed();assert.equal(reference.api.st.referenceStep,0);assert.equal(ref.referenceImage.hidden,true);
  console.log('Reference dialog exact text, all three confirmations, cancellation at every step, delayed image loading, close and reopen verified.');
 
  assert(html.includes('<title>Mosaico Jigsaw</title>'));
- assert(html.includes('<h2 id="tipTitle">Como Jogar</h2>'));
+ assert(html.includes('<h2 id="tipTitle">Dica</h2>'));
+ assert(html.includes('Rotacione as peças com o botão direito do mouse ou R no teclado. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Caso deseje remover uma peça, utilize o cntrl no teclado e arraste a peça para fora do quebra-cabeça. Boa sorte!'));
  assert(html.includes('peças começam no ângulo correto'));
  assert(html.includes('peças começam em ângulos aleatórios'));
  assert(!html.includes('Entendi'));

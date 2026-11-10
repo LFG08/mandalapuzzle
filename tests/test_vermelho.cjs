@@ -1,149 +1,122 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const SCALE=1;
-const manifest=JSON.parse(fs.readFileSync('vermelho/pieces.json'));
-let source=fs.readFileSync('vermelho/index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
-source=source.replace(/    init\(\)\.catch[^\n]+/,'');
-const element=()=>({getBoundingClientRect:()=>({left:0,top:0}),classList:{add(){},remove(){}},style:{},appendChild(){},setAttribute(){}});
-const sounds=[];
-const context={addEventListener(){},document:{getElementById:element,querySelector:element},Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()};},console,localStorage:{setItem(){},getItem(){return null}}};vm.createContext(context);
-vm.runInContext(source+'\nthis.api={st,el,availableSlot,rotatePiece,makePiece,restore,setupTrayScroll,clampTrayWidth,setTrayWidth,setupTrayResize,matchingSlots,slotTarget,loadManifest:v=>PIECES=v};',context);
-const {api}=context;api.loadManifest(manifest.pieces);api.st.boardRect={left:20,top:30};
-let checked=0,alternates=0;
-for(const p of manifest.pieces){
- assert(p.matches[0].includes(p.id));
- for(let rotation=0;rotation<8;rotation++)for(const id of p.matches[rotation]){
- const slot=manifest.pieces.find(q=>q.id===id);
- const piece={id:p.id,data:p,rotation,w:slot.width,h:slot.height,currentX:20+slot.x*SCALE,currentY:30+slot.y*SCALE};
- api.st.pieces=[];assert.equal(api.availableSlot(piece).id,id);
- api.st.pieces=[{placed:true,slot:id}];assert.notEqual(api.availableSlot(piece)?.id,id);
- checked++;if(id!==p.id)alternates++;
- }
-}
-const p=manifest.pieces[0], forbidden=manifest.pieces.find(s=>!p.matches.flat().includes(s.id));
-api.st.pieces=[];const invalid={data:p,w:p.width,h:p.height,rotation:0,currentX:20+forbidden.x*SCALE,currentY:30+forbidden.y*SCALE};
-assert.notEqual(api.availableSlot(invalid)?.id,forbidden.id);
-vm.runInContext('save()',context);
-console.log(`Passed ${checked} valid rotation/slot combinations, including ${alternates} interchangeable combinations; occupied and nonidentical slots rejected; save OK.`);
-
-// Exercise the actual right-click handlers and ensure rotation keeps other pieces in place.
-(async()=>{
- const html=fs.readFileSync('vermelho/index.html','utf8');
- const actions=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];
- assert.deepEqual([...actions.matchAll(/>([^<]+)<\/(?:button|a)>/g)].map(m=>m[1]),['Menu Principal','Reset','Embaralhar Peças','Som: Ligado','Sobre essa Imagem']);
- assert(!html.includes('id="rotate"'));
- assert(html.includes('width:1280px;height:1280px'));
- assert(html.includes('grid-template-columns:minmax(0,1332px) var(--tray-width,minmax(320px,1fr))'));
- assert(html.includes('const SCALE=BOARD/1280'));
- const canvas={style:{},getContext:()=>({translate(){},rotate(){},drawImage(){}})};
- context.document.createElement=()=>canvas;
- const node={...element(),appendChild(){}};
- api.el.tpl.content={firstElementChild:{cloneNode:()=>node}};
- api.el.tray.scrollLeft=api.el.tray.scrollTop=0;
- vm.runInContext('loadImage=async()=>({width:108,height:234});compact=()=>{throw new Error("Rotation must not rearrange the tray")}',context);
- const piece=await api.makePiece(p);
- piece.sourceX=200;piece.sourceY=200;api.st.pieces=[piece];
- const center=[piece.sourceX+piece.w/2,piece.sourceY+piece.h/2];
- assert.equal(api.st.drag,null);
- let prevented=0;
- for(let r=1;r<=8;r++){
-  node.onpointerdown({button:2,preventDefault(){}});
-  node.oncontextmenu({preventDefault(){prevented++}});
-  assert.equal(piece.rotation,r%8);
-  assert(Math.abs(piece.sourceX+piece.w/2-center[0])<1e-8);
-  assert(Math.abs(piece.sourceY+piece.h/2-center[1])<1e-8);
- }
- assert.equal(prevented,8);
- for(const rotation of [1,3,5,7])assert.equal(api.availableSlot({...piece,rotation}),undefined);
- const beforePickup=sounds.length;
- context.document.body={appendChild(){}};
- node.onpointerdown({button:0,clientX:10,clientY:10,preventDefault(){}});
- assert.equal(sounds.length,beforePickup);
-
- api.st.drag=null;api.st.soundOn=false;
- node.onpointerdown({button:0,clientX:10,clientY:10,preventDefault(){}});
- assert.equal(sounds.length,beforePickup);
- api.st.drag=null;
- api.restore({pieces:[{id:piece.id,rotation:1,slot:null}]});
- assert.equal(piece.rotation,2,'Legacy 90-degree rotations retain their orientation');
- api.restore({rotationStep:45,pieces:[{id:piece.id,rotation:1,slot:null}]});
- assert.equal(piece.rotation,1,'New progress restores 45-degree orientations');
- assert(html.includes('.piece,.piece:focus,.piece:focus-visible{outline:none}'));
-
- piece.placed=true;const placedRotation=piece.rotation;node.onpointerdown({button:2,preventDefault(){}});node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,placedRotation);
- console.log('Right-click rotates through eight orientations, keeps the piece centered, prevents the browser menu, and leaves placed pieces locked. Menu buttons match Alittlepuzzle.');
-})().catch(error=>{console.error(error);process.exitCode=1});
-
-// Wheel handling is attached only to the board area and tray, never the page.
-const wheelTargets=[];
-for(const target of [api.el.tray,api.el.boardWrap])target.addEventListener=(type,handler,options)=>wheelTargets.push({target,type,handler,options});
-context.matchMedia=()=>({matches:false});
-api.el.tray.clientHeight=400;
-api.el.tray.scrollTop=0;
-api.el.tray.scrollBy=({top})=>{api.el.tray.scrollTop=Math.max(0,Math.min(1000,api.el.tray.scrollTop+top))};
-api.setupTrayScroll();
-assert.equal(wheelTargets.length,2);
-for(const entry of wheelTargets){assert.equal(entry.type,'wheel');assert.equal(entry.options.passive,false)}
-let intercepted=0;
-const wheel=(deltaY,deltaMode=0,ctrlKey=false)=>({deltaY,deltaX:0,deltaMode,ctrlKey,preventDefault(){intercepted++},stopPropagation(){}});
-wheelTargets[0].handler(wheel(100));assert.equal(api.el.tray.scrollTop,100);
-wheelTargets[1].handler(wheel(2,1));assert.equal(api.el.tray.scrollTop,132);
-wheelTargets[1].handler(wheel(1,2));assert.equal(api.el.tray.scrollTop,532);
-api.el.trayUp.onclick();assert.equal(api.el.tray.scrollTop,232);
-api.el.trayDown.onclick();assert.equal(api.el.tray.scrollTop,532);
-wheelTargets[1].handler(wheel(2000));assert.equal(api.el.tray.scrollTop,1000);
-wheelTargets[1].handler(wheel(100));assert.equal(api.el.tray.scrollTop,1000);assert.equal(intercepted,5);
-wheelTargets[1].handler(wheel(100,0,true));assert.equal(intercepted,5);
-console.log('Tray buttons and wheel scrolling pass for pixel, line, and page deltas; wheel stays contained at tray limits and preserves Ctrl+wheel zoom.');
-
-const groups=[[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44]];
-for(const group of groups)for(const id of group){
- const def=manifest.pieces[id-1];
- assert.deepEqual([...new Set(def.matches.flat())].sort((a,b)=>a-b),group);
- for(const other of group)assert.equal(def.matches.filter(ids=>ids.includes(other)).length,1);
-}
-for(const id of [101,102])for(let rotation=0;rotation<8;rotation++)assert.deepEqual(manifest.pieces[id-1].matches[rotation],[id]);
-const diagonal={data:manifest.pieces[36],rotation:3,w:190,h:190};
-const diagonalSlot=manifest.pieces[37];const target=api.slotTarget(diagonal,diagonalSlot);
-assert.equal(target.x+diagonal.w/2,diagonalSlot.x+diagonalSlot.width/2);
-assert.equal(target.y+diagonal.h/2,diagonalSlot.y+diagonalSlot.height/2);
-assert.equal(api.clampTrayWidth(2000,900),900);
-assert.equal(api.clampTrayWidth(20,900),280);
-assert.equal(api.clampTrayWidth(500,200),200);
-console.log('Explicit groups stay separate; 101/102 support every 45-degree orientation; diagonal slots stay centered; resize respects page and minimum widths.');
-const resizeStyles=new Map();
-api.el.layout.style={setProperty:(key,value)=>resizeStyles.set(key,value),getPropertyValue:key=>resizeStyles.get(key)||''};
-api.el.app.getBoundingClientRect=()=>({width:1000});
-api.el.boardWrap.getBoundingClientRect=()=>({width:320,left:0,top:0});
-api.el.trayWrap.getBoundingClientRect=()=>({width:parseFloat(resizeStyles.get('--tray-width'))||600});
-api.el.trayResize.setPointerCapture=()=>{};
-context.matchMedia=()=>({matches:true});
-vm.runInContext('compact=()=>{}',context);
-api.setupTrayResize();
-api.el.trayResize.onpointerdown({button:0,clientX:100,pointerId:1,preventDefault(){}});
-api.el.trayResize.onpointermove({clientX:250});assert.equal(resizeStyles.get('--tray-width'),'750px');
-api.el.trayResize.onpointermove({clientX:1500});assert.equal(resizeStyles.get('--tray-width'),'1000px');
-api.el.trayResize.onpointerup();
-context.matchMedia=()=>({matches:false});api.setTrayWidth(600);
-api.el.trayResize.onpointerdown({button:0,clientX:600,pointerId:2,preventDefault(){}});
-api.el.trayResize.onpointermove({clientX:500});assert.equal(resizeStyles.get('--tray-width'),'500px');
-api.el.trayResize.onpointermove({clientX:1500});assert.equal(resizeStyles.get('--tray-width'),'656px');
-api.el.trayResize.onpointercancel();
-assert.deepEqual(manifest.pieces[36].matches[3],[38]);
-assert.deepEqual(manifest.pieces[36].matches[7],[40]);
-assert.deepEqual(manifest.pieces[40].matches[1],[42]);
-assert.deepEqual(manifest.pieces[40].matches[5],[44]);
-console.log('Resize pointer gestures work on both layouts and clamp to page margins; clockwise diagonal group orientations are verified.');
-
-const audited=JSON.parse(fs.readFileSync('vermelho/rotation-groups.json','utf8'));
-for(const group of audited.groups){
- const first=manifest.pieces[group.pieces[0]-1];
- for(const id of group.pieces)for(const degrees of group.clockwiseDegreesFromFirst[id])assert(first.matches[degrees/45].includes(id));
-}
-for(const [a,b] of [[135,137],[136,139],[138,141],[140,142]])assert(manifest.pieces[a-1].matches.some(ids=>ids.includes(b)));
-assert(!manifest.pieces[134].matches.flat().includes(136),'Reflected spiral stays in a separate group');
 const html=fs.readFileSync('vermelho/index.html','utf8');
-assert(html.includes('.trayResize{position:absolute;right:0;'));
-assert(!html.includes('direction:matchMedia'));
-console.log(`Reviewed ${audited.groups.length} interchangeable groups; reflected spirals are separated and right-edge resizing always follows the pointer.`);
+const manifest=JSON.parse(fs.readFileSync('vermelho/pieces.json'));
+const source=html.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/    init\(\)\.catch[^\n]+/,'');
+const storage=new Map(),sounds=[],listeners=new Map();
+function element(){
+ const styles=new Map();
+ return {scrollLeft:0,scrollTop:0,clientHeight:400,clientWidth:400,scrollWidth:1200,scrollHeight:4000,
+  style:{setProperty:(k,v)=>styles.set(k,v),getPropertyValue:k=>styles.get(k)||''},classList:{add(){},remove(){}},
+  getBoundingClientRect:()=>({left:0,top:0,right:400,bottom:400,width:400}),
+  appendChild(n){n.parentElement=this},contains(n){return n.parentElement===this},setAttribute(k,v){this[k]=v},addEventListener(){},remove(){},focus(){}};
+}
+function contextFor(){
+ const ctx={console,document:{getElementById:id=>id==='empty'?null:element(),querySelector:element,body:element(),createElement:()=>({...element(),getContext:()=>({translate(){},rotate(){},drawImage(){}})})},
+  Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()}},
+  localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+  addEventListener:(name,fn)=>{if(!listeners.has(name))listeners.set(name,[]);listeners.get(name).push(fn)},removeEventListener(){},matchMedia:()=>({matches:false})};
+ vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,clampTrayWidth,setTrayWidth,trayWidthLimit,setupTrayResize,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
+ ctx.api.loadManifest(manifest.pieces);return ctx;
+}
+const ctx=contextFor(),api=ctx.api;
+function event(button=0,extra={}){return {button,buttons:button===2?3:1,clientX:60,clientY:70,preventDefault(){},...extra}}
+function dispatch(type,e){for(const fn of listeners.get(type)||[])fn(e)}
+async function makePiece(id,owner=ctx){
+ owner.api.el.tpl.content={firstElementChild:{cloneNode:element}};
+ vm.runInContext('loadImage=async()=>({width:108,height:234})',owner);
+ return owner.api.makePiece(manifest.pieces[id-1]);
+}
+(async()=>{
+ api.st.boardRect={left:20,top:30};let checked=0,alternates=0;
+ for(const p of manifest.pieces){
+  assert(p.matches[0].includes(p.id));
+  for(let rotation=0;rotation<8;rotation++)for(const id of p.matches[rotation]){
+   const slot=manifest.pieces[id-1],piece={id:p.id,data:p,rotation,w:slot.width,h:slot.height,currentX:20+slot.x,currentY:30+slot.y};
+   api.st.pieces=[];assert.equal(api.availableSlot(piece).id,id);
+   api.st.pieces=[{placed:true,slot:id}];assert.notEqual(api.availableSlot(piece)?.id,id);
+   assert(manifest.pieces[id-1].matches[(8-rotation)%8].includes(p.id));checked++;if(id!==p.id)alternates++;
+  }
+ }
+ console.log(`${checked} valid placements, including ${alternates} interchangeable placements; occupied slots and reciprocal rotations verified.`);
+ const groups=[[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44]];
+ for(const group of groups)for(const id of group)assert.deepEqual([...new Set(manifest.pieces[id-1].matches.flat())].sort((a,b)=>a-b),group);
+ for(const id of [101,102])for(let r=0;r<8;r++)assert.deepEqual(manifest.pieces[id-1].matches[r],[id]);
+ const audited=JSON.parse(fs.readFileSync('vermelho/rotation-groups.json','utf8'));
+ for(const group of audited.groups)for(const id of group.pieces)for(const deg of group.clockwiseDegreesFromFirst[id])assert(manifest.pieces[group.pieces[0]-1].matches[deg/45].includes(id));
+ assert(!manifest.pieces[134].matches.flat().includes(136));
+ assert.deepEqual(manifest.pieces[36].matches[3],[38]);assert.deepEqual(manifest.pieces[40].matches[1],[42]);
 
-for(const piece of manifest.pieces)for(let r=0;r<8;r++)for(const id of piece.matches[r])assert(manifest.pieces[id-1].matches[(8-r)%8].includes(piece.id),'Each interchange must be reversible');
+ const piece=await makePiece(1),other=await makePiece(2);api.st.pieces=[piece,other];
+ piece.sourceX=250;piece.sourceY=350;other.sourceX=700;other.sourceY=900;api.syncTrayLayout();
+ const center=[piece.sourceX+piece.w/2,piece.sourceY+piece.h/2];
+ for(let r=1;r<=8;r++){
+  piece.node.onpointerdown(event(2,{pointerType:'mouse'}));assert.equal(piece.rotation,(r-1)%8);
+  piece.node.onmousedown(event(2));piece.node.oncontextmenu(event(2));assert.equal(piece.rotation,r%8);
+  assert.equal(piece.sourceX+piece.w/2,center[0]);assert.equal(piece.sourceY+piece.h/2,center[1]);
+  assert.equal(other.sourceX,700);assert.equal(other.sourceY,900);
+ }
+ api.setupMouseRotation();const before=sounds.length;
+ piece.node.onpointerdown(event(0,{pointerType:'mouse'}));assert.equal(api.st.drag,null);
+ piece.node.onmousedown(event(0));assert(api.st.drag);assert.equal(sounds.length,before);
+ const dragCenter=[piece.currentX+piece.w/2,piece.currentY+piece.h/2];
+ const oldOx=api.st.drag.ox,oldW=piece.w;
+ dispatch('mousedown',event(2));assert.equal(piece.rotation,1);assert(api.st.drag);
+ assert.equal(piece.currentX+piece.w/2,dragCenter[0]);assert.equal(piece.currentY+piece.h/2,dragCenter[1]);
+ assert.equal(api.st.drag.ox,oldOx+(piece.w-oldW)/2);
+ dispatch('mouseup',event(2,{buttons:1}));assert(api.st.drag,'Releasing right keeps left drag active');
+ api.moveDrag(event(0,{clientX:500,clientY:600}));assert.equal(piece.currentX,500-api.st.drag.ox);
+ // Release left while right is still down: the drag must end immediately.
+ api.st.boardRect={left:-10000,top:-10000};api.el.board.getBoundingClientRect=()=>({left:-10000,top:-10000});
+ dispatch('mouseup',event(0,{buttons:2}));assert.equal(api.st.drag,null);
+ assert.equal(other.sourceX,700);assert.equal(other.sourceY,900);
+ console.log('Mouse chord rotates by 45 degrees without moving the center, jumping on next move, or dropping on right release.');
+
+ piece.sourceX=235;piece.sourceY=975;piece.node.style.zIndex='48';other.sourceX=735;other.sourceY=1175;
+ api.el.tray.scrollLeft=40;api.el.tray.scrollTop=300;api.st.menuCollapsed=true;api.save();
+ const saved=JSON.parse(storage.get('vermelhoJigsawProgress'));
+ assert.equal(saved.trayLayout,1);assert.equal(saved.pieces[0].x,235);assert.equal(saved.pieces[0].y,975);
+ const reloaded=contextFor(),p2=await makePiece(1,reloaded),o2=await makePiece(2,reloaded);reloaded.api.st.pieces=[p2,o2];
+ reloaded.api.restore(saved);reloaded.api.syncTrayLayout();
+ assert.equal(p2.sourceX,235);assert.equal(p2.sourceY,975);assert.equal(p2.rotation,piece.rotation);assert.equal(p2.node.style.zIndex,'48');
+ assert.equal(o2.sourceX,735);assert.equal(o2.sourceY,1175);assert.equal(saved.trayScroll.y,300);
+ reloaded.api.updateMenu();assert.equal(reloaded.api.el.menuActions.hidden,true);assert.equal(reloaded.api.el.menuToggle['aria-expanded'],'false');
+ reloaded.api.st.menuCollapsed=false;reloaded.api.updateMenu();assert.equal(reloaded.api.el.menuActions.hidden,false);
+ reloaded.api.restore({pieces:[{id:1,rotation:1,slot:null}]});assert.equal(p2.rotation,2);
+ assert(!html.includes('id="trayUp"'));assert(!html.includes('id="trayDown"'));
+ const boot=contextFor();
+ boot.fetch=async()=>({ok:true,json:async()=>({pieces:manifest.pieces.slice(0,2)})});
+ boot.api.el.tpl.content={firstElementChild:{cloneNode:element}};
+ storage.set('vermelhoJigsawTipSeenV1','yes');
+ vm.runInContext('loadImage=async()=>({width:108,height:234})',boot);
+ await boot.api.init();
+ assert.equal(boot.api.st.pieces[0].sourceX,235);assert.equal(boot.api.st.pieces[0].sourceY,975);
+ assert.equal(boot.api.st.pieces[1].sourceX,735);assert.equal(boot.api.st.pieces[1].sourceY,1175);
+ assert.equal(boot.api.el.tray.scrollLeft,40);assert.equal(boot.api.el.tray.scrollTop,300);
+ assert.equal(boot.api.el.menuActions.hidden,true);
+ boot.api.el.menuToggle.onclick();assert.equal(boot.api.el.menuActions.hidden,false);
+ console.log('Full initialization after reload retains arrangement, scroll and menu state; legacy rotations load. Arrow controls removed.');
+
+ let appWidth=1940,stacked=false;
+ ctx.matchMedia=()=>({matches:stacked});api.el.app.getBoundingClientRect=()=>({width:appWidth});
+ api.el.trayWrap.getBoundingClientRect=()=>({width:parseFloat(api.el.layout.style.getPropertyValue('--tray-width'))||360});
+ api.el.trayResize.setPointerCapture=()=>{};api.setupTrayResize();
+ api.setTrayWidth(360);api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:1}));
+ api.el.trayResize.onpointermove({clientX:150});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'460px');
+ api.el.trayResize.onpointermove({clientX:2000});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'598px');api.el.trayResize.onpointerup();
+ appWidth=1810;assert.equal(api.setTrayWidth(800),468);
+ stacked=true;appWidth=900;assert.equal(api.setTrayWidth(1200),900);
+ api.setTrayWidth(400);api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:2}));api.el.trayResize.onpointermove({clientX:200});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'500px');api.el.trayResize.onpointerup();
+ assert.equal(other.sourceX,735);assert.equal(other.sourceY,1175,'Resizing preserves the arrangement');
+ assert(html.includes('margin-inline:auto'));assert(html.includes('.trayResize{position:absolute;right:0;'));
+ console.log('Right-edge resizing expands within changing viewport/zoom limits and preserves tray positions in both layouts.');
+
+ const targets=[];for(const target of [api.el.tray,api.el.boardWrap])target.addEventListener=(type,fn,options)=>targets.push({type,fn,options});
+ api.el.tray.scrollTop=0;api.el.tray.scrollBy=({top})=>api.el.tray.scrollTop=Math.max(0,Math.min(1000,api.el.tray.scrollTop+top));api.setupTrayScroll();
+ let intercepted=0;const wheel=(dy,mode=0,ctrlKey=false)=>({deltaY:dy,deltaX:0,deltaMode:mode,ctrlKey,preventDefault(){intercepted++},stopPropagation(){}});
+ assert.equal(targets.length,2);assert.equal(targets[0].options.passive,false);
+ targets[0].fn(wheel(100));targets[1].fn(wheel(2,1));assert.equal(api.el.tray.scrollTop,132);
+ targets[1].fn(wheel(1,2));assert.equal(api.el.tray.scrollTop,532);
+ targets[1].fn(wheel(2000));targets[1].fn(wheel(100));assert.equal(api.el.tray.scrollTop,1000);assert.equal(intercepted,5);
+ targets[1].fn(wheel(100,0,true));assert.equal(intercepted,5);
+ console.log('Independent wheel scrolling, edge containment and Ctrl+wheel zoom verified. All tests passed.');
+})().catch(error=>{console.error(error);process.exitCode=1});

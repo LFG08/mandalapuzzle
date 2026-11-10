@@ -38,7 +38,7 @@ async function makePiece(id,owner=ctx){
   }
  }
  console.log(`${checked} valid placements, including ${alternates} interchangeable placements; occupied slots and reciprocal rotations verified.`);
- const groups=[[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44]];
+ const groups=[[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44],[104,105,113,114],[103,108,109,110],[106,107,111,112],[115,116,117,118],[119,120,121,122],[123,124,125,126]];
  for(const group of groups)for(const id of group)assert.deepEqual([...new Set(manifest.pieces[id-1].matches.flat())].sort((a,b)=>a-b),group);
  for(const id of [101,102])for(let r=0;r<8;r++){
   const data=manifest.pieces[id-1];
@@ -47,6 +47,12 @@ async function makePiece(id,owner=ctx){
   const target=api.slotTarget(p,data);p.currentX=20+target.x;p.currentY=30+target.y;api.st.pieces=[];
   assert.equal(api.availableSlot(p)?.id,r%2===0?id:undefined,'Center pieces must reject square/diagonal-tip orientations');
  }
+ assert.deepEqual(manifest.pieces[103].matches[4],[105]);
+ assert.deepEqual(manifest.pieces[103].matches[6],[113]);
+ const correction=api.slotTarget({data:manifest.pieces[103],rotation:4,w:93,h:79},manifest.pieces[104]);
+ assert.equal(correction.x,manifest.pieces[104].x);assert.equal(correction.y,manifest.pieces[104].y-1);
+ const redCorrection=api.slotTarget({data:manifest.pieces[118],rotation:6,w:119,h:120},manifest.pieces[119]);
+ assert.equal(redCorrection.x,manifest.pieces[119].x+1);assert.equal(redCorrection.y,manifest.pieces[119].y-1);
  const audited=JSON.parse(fs.readFileSync('mosaico/rotation-groups.json','utf8'));
  for(const group of audited.groups)for(const id of group.pieces)for(const deg of group.clockwiseDegreesFromFirst[id])assert(manifest.pieces[group.pieces[0]-1].matches[deg/45].includes(id));
  assert(!manifest.pieces[134].matches.flat().includes(136));

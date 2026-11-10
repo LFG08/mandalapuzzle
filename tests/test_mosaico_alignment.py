@@ -1,4 +1,4 @@
-"""Verify the reviewed 147–154 rotation groups against their source artwork.
+"""Verify the reviewed rotation groups against their source artwork.
 
 Run from the repository root: python tests/test_mosaico_alignment.py
 Requires Pillow and NumPy.
@@ -20,7 +20,7 @@ def pixels(piece):
 
 class RotationAlignmentTests(unittest.TestCase):
     def test_artwork_matches_after_rotation_and_translation(self):
-        for group in ([147, 149, 152, 154], [148, 150, 151, 153]):
+        for group in ([147, 149, 152, 154], [148, 150, 151, 153], [104, 105, 113, 114], [103, 108, 109, 110], [106, 107, 111, 112], [115, 116, 117, 118], [119, 120, 121, 122], [123, 124, 125, 126]):
             for source_id in group:
                 source = PIECES[source_id - 1]
                 self.assertEqual(sorted(set(sum(source['matches'], []))), sorted(group))
@@ -44,7 +44,7 @@ class RotationAlignmentTests(unittest.TestCase):
                             rgb_error = np.abs(aligned_a[:, :, :3] * aligned_a[:, :, 3:] - aligned_b[:, :, :3] * aligned_b[:, :, 3:]).sum() / (3 * union)
                             # Piece 152 has slightly cropped tips; the remaining artwork must align.
                             self.assertGreater(overlap, .98)
-                            self.assertLess(rgb_error, .006)
+                            self.assertLess(rgb_error, .006 if source_id >= 147 else .01)
 
 
 if __name__ == '__main__':

@@ -582,27 +582,21 @@
     {
       "pieces": [
         104,
+        105,
+        113,
         114
       ],
       "clockwiseDegreesFromFirst": {
         "104": [
           0
         ],
-        "114": [
-          90
-        ]
-      }
-    },
-    {
-      "pieces": [
-        105,
-        113
-      ],
-      "clockwiseDegreesFromFirst": {
         "105": [
-          0
+          180
         ],
         "113": [
+          270
+        ],
+        "114": [
           90
         ]
       }

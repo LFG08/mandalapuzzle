@@ -1106,6 +1106,51 @@ return { found, total, thumb };
 }
 
 
+let mosaicoManifestPromise;
+async function getMosaicoStatus(total){
+const saved = getStoredObjectFromKeys(["mosaicoJigsawProgress", "vermelhoJigsawProgress"]);
+const board = await loadMenuImage("mosaico/background.png");
+const canvas = document.createElement("canvas");
+canvas.width = 1280; canvas.height = 1280;
+const ctx = canvas.getContext("2d");
+ctx.drawImage(board, 0, 0, 1280, 1280);
+let placements = [];
+if(saved && Array.isArray(saved.pieces) && saved.pieces.some(piece => piece && piece.slot != null)){
+if(!mosaicoManifestPromise){
+mosaicoManifestPromise = fetch("mosaico/pieces.json", {cache:"no-store"}).then(response => {
+if(!response.ok) throw new Error("Mosaico piece rules could not be loaded");
+return response.json();
+}).catch(error => { mosaicoManifestPromise = null; throw error; });
+}
+const manifest = await mosaicoManifestPromise;
+const pieces = new Map(manifest.pieces.map(piece => [piece.id, piece]));
+const occupied = new Set(), used = new Set();
+for(const record of saved.pieces){
+if(!record) continue;
+const piece = pieces.get(record.id), slot = pieces.get(record.slot);
+const rotation = record.rotation * (saved.rotationStep === 45 ? 1 : 2);
+if(!piece || !slot || !Number.isInteger(rotation) || rotation < 0 || rotation > 7 || !piece.matches[rotation]?.includes(slot.id) || occupied.has(slot.id) || used.has(piece.id)) continue;
+occupied.add(slot.id); used.add(piece.id);
+placements.push({piece,slot,rotation,z:Number.isSafeInteger(record.z)?record.z:2});
+}
+placements.sort((a,b) => a.z-b.z);
+const images = await Promise.all(placements.map(p => loadMenuImage(`mosaico/peças/${p.piece.file}`)));
+for(let i=0;i<placements.length;i++){
+const {piece,slot,rotation} = placements[i], img = images[i];
+const angle = rotation*Math.PI/4, c = Math.abs(Math.cos(angle)), sn = Math.abs(Math.sin(angle));
+const w = Math.ceil(img.width*c+img.height*sn-1e-8), h = Math.ceil(img.width*sn+img.height*c-1e-8);
+const turned = document.createElement("canvas"); turned.width=w; turned.height=h;
+const drawing = turned.getContext("2d");
+drawing.translate(w/2,h/2); drawing.rotate(angle); drawing.drawImage(img,-img.width/2,-img.height/2);
+const offset = piece.placementOffsets?.[rotation]?.[slot.id];
+ctx.drawImage(turned,slot.x+(offset?offset.x:(slot.width-w)/2),slot.y+(offset?offset.y:(slot.height-h)/2));
+}
+}
+const thumb = document.createElement("canvas"); thumb.width=512; thumb.height=512;
+thumb.getContext("2d").drawImage(canvas,0,0,512,512);
+return {found:placements.length,total,thumb:thumb.toDataURL("image/png")};
+}
+
 function setYagaCardHref(card, lastLevelUnlocked){
 if(!card) return;
 card.href = lastLevelUnlocked ? "yaga/index_abruxa.html" : "yaga";
@@ -1722,6 +1767,27 @@ setCardProgressMeta(card, flowerStatus.found, flowerStatus.total);
 renderStatus(statusEl, flowerStatus.found, flowerStatus.total);
 let percentage = flowerStatus.total > 0 ? (flowerStatus.found / flowerStatus.total) * 100 : 0;
 applyThumbBorder(card, percentage);
+return;
+}
+
+if(card.id === "mosaicoCard"){
+const total = parseInt(card.dataset.total), statusEl = card.querySelector(".status"), thumbEl = card.querySelector(".thumb img");
+let request = 0;
+async function refreshMosaico(){
+const current = ++request;
+let status;
+try{ status = await getMosaicoStatus(total); }
+catch{ status = {found:getStoredProgressCount("mosaicoJigsawProgress"),total,thumb:"mosaico/background.png"}; }
+if(current !== request) return;
+setCardProgressMeta(card,status.found,status.total); renderStatus(statusEl,status.found,status.total);
+if(thumbEl) thumbEl.src=status.thumb;
+applyThumbBorder(card,total>0?status.found/total*100:0); applyMenuFilter(); applyMenuOrdering();
+}
+refreshMosaico();
+window.addEventListener("pageshow",refreshMosaico);
+window.addEventListener("storage",event => {
+if(event.key === null || ["mosaicoJigsawProgress","vermelhoJigsawProgress"].includes(event.key)) refreshMosaico();
+});
 return;
 }
 

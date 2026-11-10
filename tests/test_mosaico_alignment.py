@@ -90,6 +90,42 @@ class RotationAlignmentTests(unittest.TestCase):
                             self.assertGreater(overlap, .9)
                             self.assertLess(error, .04)
 
+    def test_finished_compositions_against_reference(self):
+        reference = Image.open(ROOT / 'mosaico/mosaico_ref.png').convert('RGBA')
+        board = Image.open(ROOT / 'mosaico/background.png').convert('RGBA')
+        images = {p['id']: Image.open(ROOT / 'mosaico/peças' / p['file']).convert('RGBA') for p in PIECES}
+        complete = board.copy()
+        for p in PIECES:
+            complete.alpha_composite(images[p['id']], (p['x'], p['y']))
+        difference = np.abs(np.asarray(complete, dtype=float)[:, :, :3] - np.asarray(reference, dtype=float)[:, :, :3]).mean()
+        self.assertLess(difference, .1, 'Original piece positions must reconstruct the reference')
+        for source_id in range(45, 53):
+            source = PIECES[source_id-1]
+            for r, targets in enumerate(source['matches']):
+                im = images[source_id]
+                angle = r*math.pi/4
+                c, sn = math.cos(angle), math.sin(angle)
+                w = math.ceil(abs(im.width*c)+abs(im.height*sn)-1e-8)
+                h = math.ceil(abs(im.width*sn)+abs(im.height*c)-1e-8)
+                turned = im.transform((w,h), Image.Transform.AFFINE,
+                    (c,sn,im.width/2-c*w/2-sn*h/2,-sn,c,im.height/2+sn*w/2-c*h/2), Image.Resampling.BICUBIC)
+                for target_id in targets:
+                    with self.subTest(source=source_id, target=target_id, degrees=r*45):
+                        target = PIECES[target_id-1]
+                        offset = source['placementOffsets'][r][str(target_id)]
+                        x, y = target['x']+offset['x'], target['y']+offset['y']
+                        actual = board.copy()
+                        for p in PIECES:
+                            actual.alpha_composite(turned if p['id']==target_id else images[p['id']],
+                                (x,y) if p['id']==target_id else (p['x'],p['y']))
+                        box = (min(x,target['x'])-4,min(y,target['y'])-4,
+                               max(x+w,target['x']+target['width'])+4,max(y+h,target['y']+target['height'])+4)
+                        a = np.asarray(actual.crop(box).filter(ImageFilter.GaussianBlur(1.5)),dtype=float)[:,:,:3]/255
+                        b = np.asarray(reference.crop(box).filter(ImageFilter.GaussianBlur(1.5)),dtype=float)[:,:,:3]/255
+                        area = np.asarray(images[target_id])[:,:,3].sum()/255
+                        self.assertLess(np.abs(a-b).sum()/(3*area), .025,
+                            'Swapped artwork must remain aligned with the reference and neighboring pieces')
+
 
 if __name__ == '__main__':
     unittest.main()

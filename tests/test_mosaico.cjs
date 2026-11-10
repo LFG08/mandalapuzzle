@@ -58,6 +58,8 @@ async function makePiece(id,owner=ctx){
  assert.deepEqual(manifest.pieces[91].matches[5],[94]);
  const spiral=api.slotTarget({data:manifest.pieces[91],rotation:1,w:102,h:102},manifest.pieces[95]);
  assert.equal(spiral.x,manifest.pieces[95].x-12);assert.equal(spiral.y,manifest.pieces[95].y-18);
+ const visualAlignment=api.slotTarget({data:manifest.pieces[48],rotation:5,w:194,h:194},manifest.pieces[49]);
+ assert.equal(visualAlignment.x,manifest.pieces[49].x-35);assert.equal(visualAlignment.y,manifest.pieces[49].y-14);
  const audited=JSON.parse(fs.readFileSync('mosaico/rotation-groups.json','utf8'));
  for(const group of audited.groups)for(const id of group.pieces)for(const deg of group.clockwiseDegreesFromFirst[id])assert(manifest.pieces[group.pieces[0]-1].matches[deg/45].includes(id));
  assert(!manifest.pieces[134].matches.flat().includes(136));

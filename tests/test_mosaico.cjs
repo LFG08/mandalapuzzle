@@ -15,8 +15,8 @@ function contextFor(){
   Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()}},
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{reload(){}},
   addEventListener:(name,fn)=>{if(!listeners.has(name))listeners.set(name,[]);listeners.get(name).push(fn)},removeEventListener(){},matchMedia:()=>({matches:false})};
- vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,chooseDifficulty,load,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,clampTrayWidth,setTrayWidth,trayWidthLimit,setupTrayResize,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
- ctx.api.loadManifest(manifest.pieces);return ctx;
+ vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,chooseDifficulty,load,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,reflowTrayIfNeeded,setupAutoTrayLayout,resize,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
+ ctx.api.loadManifest(manifest.pieces);ctx.api.st.trayWidth=ctx.api.el.tray.clientWidth;return ctx;
 }
 const ctx=contextFor(),api=ctx.api;api.st.difficulty="easy";
 function event(button=0,extra={}){return {button,buttons:button===2?3:1,clientX:60,clientY:70,preventDefault(){},...extra}}
@@ -109,31 +109,34 @@ async function makePiece(id,owner=ctx){
  boot.api.el.menuToggle.onclick();assert.equal(boot.api.el.menuActions.hidden,false);
  console.log('Full initialization after reload retains arrangement, scroll and menu state; legacy rotations load. Arrow controls removed.');
 
- let appWidth=1940,stacked=false;
- ctx.matchMedia=()=>({matches:stacked});api.el.app.getBoundingClientRect=()=>({width:appWidth});
- api.el.trayWrap.getBoundingClientRect=()=>({width:parseFloat(api.el.layout.style.getPropertyValue('--tray-width'))||360});
- api.el.trayResize.setPointerCapture=()=>{};api.setupTrayResize();
- api.setTrayWidth(360);api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:1}));
- api.el.trayResize.onpointermove({clientX:150});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'460px');
- api.el.trayResize.onpointermove({clientX:2000});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'598px');api.el.trayResize.onpointerup();
- // Zooming out increases CSS viewport width; the tray can use all of that extra space.
- assert(html.includes('.app{width:calc(100% - 28px);'));
- assert(!html.includes('width:min(1940px'));
- for(const width of [2400,2880,3840]){
-  appWidth=width;
-  assert.equal(api.setTrayWidth(10000),width-1318-24);
- }
- appWidth=2880;api.setTrayWidth(598);
- api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:3}));
- api.el.trayResize.onpointermove({clientX:400});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'1198px');
- api.el.trayResize.onpointermove({clientX:2000});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'1538px');
- api.el.trayResize.onpointerup();
- appWidth=1810;assert.equal(api.setTrayWidth(800),468);
- stacked=true;appWidth=900;assert.equal(api.setTrayWidth(1200),900);
- api.setTrayWidth(400);api.el.trayResize.onpointerdown(event(0,{clientX:100,pointerId:2}));api.el.trayResize.onpointermove({clientX:200});assert.equal(api.el.layout.style.getPropertyValue('--tray-width'),'500px');api.el.trayResize.onpointerup();
- assert.equal(other.sourceX,735);assert.equal(other.sourceY,1175,'Resizing preserves the arrangement');
- assert(html.includes('margin-inline:auto'));assert(html.includes('.trayResize{position:absolute;right:0;'));
- console.log('Right-edge resizing expands within changing viewport/zoom limits and preserves tray positions in both layouts.');
+ assert(html.includes('.layout{display:grid;width:100%;grid-template-columns:1318px minmax(320px,1fr)'));
+ assert(!html.includes('trayResize'));assert(!html.includes('--tray-width'));
+ const packing=contextFor(),pack=[];
+ for(let id=3;id<=8;id++)pack.push(await makePiece(id,packing));
+ packing.api.st.pieces=pack;packing.api.el.tray.clientWidth=280;
+ pack[1].rotation=2;pack[1].w=234;pack[1].h=108;
+ packing.api.reflowTrayIfNeeded();
+ const beforeWidth=pack.map(p=>[p.sourceX,p.sourceY]);
+ pack[5].placed=true;pack[5].node.style.left='777px';
+ const rotations=pack.map(p=>p.rotation);
+ packing.api.el.tray.clientWidth=800;packing.api.resize();
+ assert(pack.slice(0,5).every(p=>p.sourceY===12),'Larger viewport should use the new horizontal space');
+ assert(pack[4].sourceX>pack[3].sourceX);assert(beforeWidth[4][1]>pack[4].sourceY);
+ assert.deepEqual(pack.map(p=>p.rotation),rotations);assert.equal(pack[5].node.style.left,'777px');
+ packing.api.el.tray.clientWidth=280;packing.api.resize();
+ for(const p of pack.slice(0,5))assert(p.sourceX+p.w<=268);
+ const held=pack.slice(0,5).map(p=>[p.sourceX,p.sourceY]);
+ packing.api.st.drag={piece:pack[0],ox:0,oy:0};packing.api.el.tray.clientWidth=1000;
+ packing.api.reflowTrayIfNeeded();assert.equal(packing.api.st.pendingReflow,true);
+ assert.deepEqual(pack.slice(0,5).map(p=>[p.sourceX,p.sourceY]),held,'Resizing must not move a held piece');
+ packing.api.st.drag=null;packing.api.reflowTrayIfNeeded();assert.equal(packing.api.st.pendingReflow,false);
+ assert(pack.slice(0,5).every(p=>p.sourceY===12));
+ let observed,notify;packing.ResizeObserver=class{constructor(callback){notify=callback}observe(target){observed=target}};
+ packing.api.setupAutoTrayLayout();assert.equal(observed,packing.api.el.tray);
+ packing.api.el.tray.clientWidth=320;notify();assert(pack[4].sourceY>12);
+ pack[0].sourceX=91;notify();assert.equal(pack[0].sourceX,91,'Same-width notifications preserve manual organization');
+ assert.equal(JSON.parse(storage.get('mosaicoJigsawProgress')).trayWidth,320);
+ console.log('Automatic packing uses available width, preserves order and rotations, defers during drag and observes viewport/zoom changes. Manual resize removed.');
 
  const targets=[];for(const target of [api.el.tray,api.el.boardWrap])target.addEventListener=(type,fn,options)=>targets.push({type,fn,options});
  api.el.tray.scrollTop=0;api.el.tray.scrollBy=({top})=>api.el.tray.scrollTop=Math.max(0,Math.min(1000,api.el.tray.scrollTop+top));api.setupTrayScroll();

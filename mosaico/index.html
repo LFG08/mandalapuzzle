@@ -10,14 +10,13 @@
     body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:#ffe8d8;background:radial-gradient(circle at 50% 0,rgba(231,104,46,.18),transparent 30%),linear-gradient(180deg,#351009,#120503 76%)}
     button,input{font:inherit}
     .app{width:calc(100% - 28px);margin:0 auto;padding:22px 0 34px}
-    .layout{display:grid;width:min(100%,calc(1318px + var(--tray-width,360px) + 24px));margin-inline:auto;grid-template-columns:minmax(0,1318px) var(--tray-width,360px);gap:24px;align-items:start}
+    .layout{display:grid;width:100%;grid-template-columns:1318px minmax(320px,1fr);gap:24px;align-items:start}
     .card,.trayWrap,.boardWrap{background:linear-gradient(180deg,rgba(59,18,9,.98),rgba(24,7,4,.98));border:1px solid #a84b2b;border-radius:24px;box-shadow:0 26px 60px rgba(0,0,0,.32)}
     .boardWrap{position:sticky;top:18px;padding:18px;min-width:0;overflow:auto}
     .board{position:relative;width:1280px;height:1280px;overflow:hidden;background:#290b04 url("background.png") center/100% 100% no-repeat;box-shadow:inset 0 0 0 1px rgba(238,244,216,.12)}
     .controls label,.small{color:#e8af8d;text-transform:uppercase;letter-spacing:.14em;font-size:.76rem}
     .trayWrap{position:relative;min-width:0;padding:18px;min-height:850px}
     .trayShell{position:relative;min-width:0}
-    .trayResize{position:absolute;right:0;top:18px;bottom:18px;width:16px;padding:0;border:0;border-radius:8px;background:transparent;cursor:ew-resize;touch-action:none;z-index:10}.trayResize::after{content:"";position:absolute;top:35%;bottom:35%;left:6px;width:4px;border-radius:4px;background:#e8af8d}.trayResize:focus-visible{outline:2px solid #ffd49a}
     .card{padding:18px;margin-bottom:18px}
     .title{margin:0 0 14px;font-family:"Baskerville Old Face","Palatino Linotype",Georgia,serif;font-size:1.34rem}
     .line+.line{margin-top:12px}
@@ -46,7 +45,7 @@
     .piece.placed canvas{filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
     .empty{display:grid;place-items:center;min-height:100%;text-align:center;padding:24px;color:#e8af8d}
     .credits{margin:16px 4px 0;color:#e8af8d;font-size:.82rem;line-height:1.5}
-    @media (max-width:1800px){.layout{width:100%;grid-template-columns:1fr}.trayWrap{width:min(100%,var(--tray-width,100%))}.trayResize{right:0}.boardWrap{position:static;overflow:auto}.board{margin:0 auto}.tray{height:min(780px,calc(100vh - 80px))}}
+    @media (max-width:1690px){.layout{grid-template-columns:minmax(0,1fr)}.trayWrap{width:100%}.boardWrap{position:static;overflow:auto}.board{margin:0 auto}.tray{height:min(780px,calc(100vh - 80px))}}
     @media (max-width:1320px){.board{margin:0}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}.boardWrap{overflow:auto}}
   </style>
@@ -64,7 +63,7 @@
           <div class="actions" id="menuActions"><a class="btn" href="/">Menu Principal</a><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button" aria-pressed="true">Som: Ligado</button><button id="aboutImage" class="btn" type="button">Sobre essa Imagem</button></div>
         </div>
         <div class="trayHeading"><h2 class="trayTitle">Bandeja de Peças</h2></div>
-        <div class="trayShell"><div id="tray" class="tray"></div><button id="trayResize" class="trayResize" type="button" aria-label="Redimensionar largura da bandeja" title="Arraste para redimensionar a bandeja"></button></div>
+        <div class="trayShell"><div id="tray" class="tray"></div></div>
         <p class="credits">Keyboard tactile 9 by StavSounds -- https://freesound.org/s/766640/ -- License: Attribution 4.0<br>Keyboard_Tactile_2 by StavSounds -- https://freesound.org/s/766632/ -- License: Creative Commons 0</p>
       </aside>
     </section>
@@ -80,10 +79,6 @@
     const el={
       board:document.getElementById("board"),
       tray:document.getElementById("tray"),
-      trayResize:document.getElementById("trayResize"),
-      trayWrap:document.querySelector(".trayWrap"),
-      layout:document.querySelector(".layout"),
-      app:document.querySelector(".app"),
       boardWrap:document.querySelector(".boardWrap"),
       menuToggle:document.getElementById("menuToggle"),
       menuActions:document.getElementById("menuActions"),
@@ -98,7 +93,7 @@
       hardMode:document.getElementById("hardMode"),
       soundToggle:document.getElementById("soundToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false};
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false,trayWidth:0,pendingReflow:false};
     const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`Não foi possível iniciar o puzzle. ${e.message||""}`.trim())});
 
@@ -115,30 +110,18 @@
       const unit=e.deltaMode===1?16:e.deltaMode===2?el.tray.clientHeight:1;
       scrollTray((e.deltaY||e.deltaX)*unit);
     }
-    function trayWidthLimit(){
-      const width=el.app.getBoundingClientRect().width;
-      return Math.max(0,matchMedia("(max-width:1800px)").matches?width:width-(BOARD+38)-24);
+    function reflowTrayIfNeeded(){
+      const width=el.tray.clientWidth;
+      if(width<=0||width===st.trayWidth)return;
+      if(st.drag){st.pendingReflow=true;return}
+      st.pendingReflow=false;
+      const loose=st.pieces.filter(p=>!p.placed).sort((a,b)=>a.sourceY-b.sourceY||a.sourceX-b.sourceX);
+      rects();layoutTray(loose);save();
     }
-    function clampTrayWidth(width,max){return Math.max(Math.min(280,max),Math.min(max,width))}
-    function setTrayWidth(width){
-      const value=clampTrayWidth(width,trayWidthLimit());
-      el.layout.style.setProperty("--tray-width",`${value}px`);
-      return value;
-    }
-    function setupTrayResize(){
-      let drag=null;
-      try{const width=Number((localStorage.getItem("mosaicoTrayWidth")||localStorage.getItem("vermelhoTrayWidth")));if(width>0)setTrayWidth(width)}catch{}
-      function finish(){if(!drag)return;drag=null;if(!st.drag)syncTrayLayout();try{localStorage.setItem("mosaicoTrayWidth",String(el.trayWrap.getBoundingClientRect().width))}catch{}}
-      el.trayResize.onpointerdown=e=>{
-        if(e.button!==0||st.drag)return;e.preventDefault();
-        drag={x:e.clientX,width:el.trayWrap.getBoundingClientRect().width,direction:matchMedia("(max-width:1800px)").matches?1:2};
-        el.trayResize.setPointerCapture(e.pointerId);
-      };
-      el.trayResize.onpointermove=e=>{if(drag)setTrayWidth(drag.width+(e.clientX-drag.x)*drag.direction)};
-      el.trayResize.onpointerup=finish;el.trayResize.onpointercancel=finish;
-      el.trayResize.onlostpointercapture=finish;
-      el.trayResize.onkeydown=e=>{if(!["ArrowLeft","ArrowRight"].includes(e.key))return;e.preventDefault();setTrayWidth(el.trayWrap.getBoundingClientRect().width+(e.key==="ArrowRight"?32:-32));if(!st.drag)compact()};
-      addEventListener("resize",()=>{const width=parseFloat(el.layout.style.getPropertyValue("--tray-width"));if(width>0)setTrayWidth(width);if(!st.drag)compact()});
+    function setupAutoTrayLayout(){
+      if(typeof ResizeObserver!=="undefined"){
+        st.trayObserver=new ResizeObserver(reflowTrayIfNeeded);st.trayObserver.observe(el.tray);
+      }
     }
     function setupMouseRotation(){
       addEventListener("mousedown",e=>{if(e.button===2&&st.drag){e.preventDefault();rotatePiece(st.drag.piece)}});
@@ -146,7 +129,6 @@
     }
     async function init(){
       setupTrayScroll();
-      setupTrayResize();
       // Keep rotation rules in sync with this page after a deployment.
       const response=await fetch("pieces.json?v=rotation-groups-5",{cache:"no-store"});
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
@@ -165,7 +147,9 @@
       }
       el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
       el.soundToggle.setAttribute("aria-pressed",String(st.soundOn));
-      if(saved?.trayLayout===1)syncTrayLayout();else shuffleLoose(true);
+      if(saved?.trayLayout===1){
+        syncTrayLayout();st.trayWidth=Number(saved.trayWidth)||0;reflowTrayIfNeeded();
+      }else shuffleLoose(true);
       if(saved?.trayLayout===1){el.tray.scrollLeft=saved.trayScroll?.x||0;el.tray.scrollTop=saved.trayScroll?.y||0}
       updateMenu();
       el.menuToggle.onclick=()=>{st.menuCollapsed=!st.menuCollapsed;updateMenu();save()};
@@ -175,6 +159,7 @@
       status();
       if(st.difficulty===null)el.tip.showModal();
       addEventListener("resize",resize);
+      setupAutoTrayLayout();
       el.shuffle.onclick=()=>shuffleLoose(true);
       el.reset.onclick=()=>{st.resetting=true;localStorage.removeItem(KEY);localStorage.removeItem(LEGACY_KEY);location.reload()};
       el.soundToggle.onclick=()=>{
@@ -196,7 +181,7 @@
     }
     function updateMenu(){el.menuActions.hidden=st.menuCollapsed;el.menuToggle.textContent=st.menuCollapsed?"Restaurar":"Minimizar";el.menuToggle.setAttribute("aria-expanded",String(!st.menuCollapsed))}
     function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY);return raw?JSON.parse(raw):null}catch{return null}}
-    function save(){if(st.restoring||st.resetting)return;try{localStorage.setItem(KEY,JSON.stringify({rotationStep:45,difficulty:st.difficulty,trayLayout:1,menuCollapsed:st.menuCollapsed,trayScroll:{x:el.tray.scrollLeft,y:el.tray.scrollTop},pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot,x:p.sourceX,y:p.sourceY,z:Number(p.node.style.zIndex)||2})),soundOn:st.soundOn}))}catch{}}
+    function save(){if(st.restoring||st.resetting)return;try{localStorage.setItem(KEY,JSON.stringify({rotationStep:45,difficulty:st.difficulty,trayLayout:1,trayWidth:st.trayWidth||el.tray.clientWidth,menuCollapsed:st.menuCollapsed,trayScroll:{x:el.tray.scrollLeft,y:el.tray.scrollTop},pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot,x:p.sourceX,y:p.sourceY,z:Number(p.node.style.zIndex)||2})),soundOn:st.soundOn}))}catch{}}
     function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
     function loadImage(src){return new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(new Error(`Image load failed for ${src}`));img.src=src})}
     async function makePiece(data){
@@ -266,7 +251,7 @@
       addEventListener("pointerup",endDrag);
       addEventListener("pointercancel",cancelDrag,{once:true});
     }
-    function cancelDrag(){if(!st.drag)return;const p=st.drag.piece;p.node.classList.remove("drag");backToTray(p);st.drag=null;removeEventListener("pointermove",moveDrag);removeEventListener("pointerup",endDrag)}
+    function cancelDrag(){if(!st.drag)return;const p=st.drag.piece;p.node.classList.remove("drag");backToTray(p);st.drag=null;removeEventListener("pointermove",moveDrag);removeEventListener("pointerup",endDrag);reflowTrayIfNeeded()}
     function moveDrag(e){if(!st.drag)return;placeAt(st.drag.piece,e.clientX-st.drag.ox,e.clientY-st.drag.oy)}
     function endDrag(e){
       if(!st.drag||(e&&((e.buttons&1)!==0||e.button===2)))return;
@@ -276,6 +261,7 @@
       const slot=availableSlot(piece);
       if(slot)dropOnBoard(piece,slot);else backToTray(piece);
       st.drag=null;
+      reflowTrayIfNeeded();
       removeEventListener("pointerup",endDrag);
       removeEventListener("pointercancel",cancelDrag);
       removeEventListener("pointermove",moveDrag);
@@ -330,6 +316,7 @@
     }
     function compact(){syncTrayLayout()}
     function layoutTray(pieces){
+      st.trayWidth=el.tray.clientWidth;
       const pad=12,max=Math.max(el.tray.clientWidth-pad,180);
       let x=pad,y=pad,row=0;
       for(const p of pieces){
@@ -397,7 +384,7 @@
       }
       return mixed;
     }
-    function resize(){rects();for(const p of st.pieces)if(p.placed){p.currentX=st.boardRect.left+p.targetX;p.currentY=st.boardRect.top+p.targetY}}
+    function resize(){reflowTrayIfNeeded();rects();for(const p of st.pieces)if(p.placed){p.currentX=st.boardRect.left+p.targetX;p.currentY=st.boardRect.top+p.targetY}}
     function playPlaceSound(){
       if(!st.soundOn)return;
       try{

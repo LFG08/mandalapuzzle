@@ -1,6 +1,6 @@
 """Verify the reviewed 147–154 rotation groups against their source artwork.
 
-Run from the repository root: python tests/test_vermelho_alignment.py
+Run from the repository root: python tests/test_mosaico_alignment.py
 Requires Pillow and NumPy.
 """
 import json
@@ -11,11 +11,11 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-PIECES = json.loads((ROOT / 'vermelho/pieces.json').read_text())['pieces']
+PIECES = json.loads((ROOT / 'mosaico/pieces.json').read_text())['pieces']
 
 
 def pixels(piece):
-    return np.asarray(Image.open(ROOT / 'vermelho/peças' / piece['file']).convert('RGBA'), dtype=float) / 255
+    return np.asarray(Image.open(ROOT / 'mosaico/peças' / piece['file']).convert('RGBA'), dtype=float) / 255
 
 
 class RotationAlignmentTests(unittest.TestCase):

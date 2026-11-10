@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const html=fs.readFileSync('vermelho/index.html','utf8');
-const manifest=JSON.parse(fs.readFileSync('vermelho/pieces.json'));
+const html=fs.readFileSync('mosaico/index.html','utf8');
+const manifest=JSON.parse(fs.readFileSync('mosaico/pieces.json'));
 const source=html.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/    init\(\)\.catch[^\n]+/,'');
 const storage=new Map(),sounds=[],listeners=new Map();
 function element(){
@@ -8,17 +8,17 @@ function element(){
  return {scrollLeft:0,scrollTop:0,clientHeight:400,clientWidth:400,scrollWidth:1200,scrollHeight:4000,
   style:{setProperty:(k,v)=>styles.set(k,v),getPropertyValue:k=>styles.get(k)||''},classList:{add(){},remove(){}},
   getBoundingClientRect:()=>({left:0,top:0,right:400,bottom:400,width:400}),
-  appendChild(n){n.parentElement=this},contains(n){return n.parentElement===this},setAttribute(k,v){this[k]=v},addEventListener(){},remove(){},focus(){}};
+  showModal(){this.open=true},close(){this.open=false},appendChild(n){n.parentElement=this},contains(n){return n.parentElement===this},setAttribute(k,v){this[k]=v},addEventListener(){},remove(){},focus(){}};
 }
 function contextFor(){
  const ctx={console,document:{getElementById:id=>id==='empty'?null:element(),querySelector:element,body:element(),createElement:()=>({...element(),getContext:()=>({translate(){},rotate(){},drawImage(){}})})},
   Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()}},
-  localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+  localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{reload(){}},
   addEventListener:(name,fn)=>{if(!listeners.has(name))listeners.set(name,[]);listeners.get(name).push(fn)},removeEventListener(){},matchMedia:()=>({matches:false})};
- vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,clampTrayWidth,setTrayWidth,trayWidthLimit,setupTrayResize,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
+ vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,chooseDifficulty,load,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,clampTrayWidth,setTrayWidth,trayWidthLimit,setupTrayResize,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
  ctx.api.loadManifest(manifest.pieces);return ctx;
 }
-const ctx=contextFor(),api=ctx.api;
+const ctx=contextFor(),api=ctx.api;api.st.difficulty="easy";
 function event(button=0,extra={}){return {button,buttons:button===2?3:1,clientX:60,clientY:70,preventDefault(){},...extra}}
 function dispatch(type,e){for(const fn of listeners.get(type)||[])fn(e)}
 async function makePiece(id,owner=ctx){
@@ -41,7 +41,7 @@ async function makePiece(id,owner=ctx){
  const groups=[[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44]];
  for(const group of groups)for(const id of group)assert.deepEqual([...new Set(manifest.pieces[id-1].matches.flat())].sort((a,b)=>a-b),group);
  for(const id of [101,102])for(let r=0;r<8;r++)assert.deepEqual(manifest.pieces[id-1].matches[r],[id]);
- const audited=JSON.parse(fs.readFileSync('vermelho/rotation-groups.json','utf8'));
+ const audited=JSON.parse(fs.readFileSync('mosaico/rotation-groups.json','utf8'));
  for(const group of audited.groups)for(const id of group.pieces)for(const deg of group.clockwiseDegreesFromFirst[id])assert(manifest.pieces[group.pieces[0]-1].matches[deg/45].includes(id));
  assert(!manifest.pieces[134].matches.flat().includes(136));
  assert.deepEqual(manifest.pieces[36].matches[3],[38]);assert.deepEqual(manifest.pieces[40].matches[1],[42]);
@@ -81,7 +81,7 @@ async function makePiece(id,owner=ctx){
 
  piece.sourceX=235;piece.sourceY=975;piece.node.style.zIndex='48';other.sourceX=735;other.sourceY=1175;
  api.el.tray.scrollLeft=40;api.el.tray.scrollTop=300;api.st.menuCollapsed=true;api.save();
- const saved=JSON.parse(storage.get('vermelhoJigsawProgress'));
+ const saved=JSON.parse(storage.get('mosaicoJigsawProgress'));
  assert.equal(saved.trayLayout,1);assert.equal(saved.pieces[0].x,235);assert.equal(saved.pieces[0].y,975);
  const reloaded=contextFor(),p2=await makePiece(1,reloaded),o2=await makePiece(2,reloaded);reloaded.api.st.pieces=[p2,o2];
  reloaded.api.restore(saved);reloaded.api.syncTrayLayout();
@@ -94,7 +94,6 @@ async function makePiece(id,owner=ctx){
  const boot=contextFor();
  boot.fetch=async()=>({ok:true,json:async()=>({pieces:manifest.pieces.slice(0,2)})});
  boot.api.el.tpl.content={firstElementChild:{cloneNode:element}};
- storage.set('vermelhoJigsawTipSeenV1','yes');
  vm.runInContext('loadImage=async()=>({width:108,height:234})',boot);
  await boot.api.init();
  assert.equal(boot.api.st.pieces[0].sourceX,235);assert.equal(boot.api.st.pieces[0].sourceY,975);
@@ -138,5 +137,38 @@ async function makePiece(id,owner=ctx){
  targets[1].fn(wheel(1,2));assert.equal(api.el.tray.scrollTop,532);
  targets[1].fn(wheel(2000));targets[1].fn(wheel(100));assert.equal(api.el.tray.scrollTop,1000);assert.equal(intercepted,5);
  targets[1].fn(wheel(100,0,true));assert.equal(intercepted,5);
- console.log('Independent wheel scrolling, edge containment and Ctrl+wheel zoom verified. All tests passed.');
+ console.log('Independent wheel scrolling, edge containment and Ctrl+wheel zoom verified.');
+ assert(html.includes('<title>Mosaico Jigsaw</title>'));
+ assert(html.includes('<h2 id="tipTitle">Como Jogar</h2>'));
+ assert(html.includes('peças começam no ângulo correto'));
+ assert(html.includes('peças começam em ângulos aleatórios'));
+ assert(!html.includes('Entendi'));
+ assert(!fs.existsSync('vermelho/index.html'));
+ async function freshGame(){
+  const game=contextFor();game.fetch=async()=>({ok:true,json:async()=>manifest});
+  game.api.el.tpl.content={firstElementChild:{cloneNode:element}};
+  vm.runInContext('loadImage=async()=>({width:108,height:234})',game);
+  await game.api.init();return game;
+ }
+ storage.clear();
+ const easy=await freshGame();assert.equal(easy.api.st.difficulty,null);assert.equal(easy.api.el.tip.open,true);
+ easy.api.el.easyMode.onclick();assert.equal(easy.api.st.difficulty,'easy');assert.equal(easy.api.el.tip.open,false);
+ assert(easy.api.st.pieces.every(p=>p.rotation===0));
+ storage.clear();
+ const hard=await freshGame();let sequence=0;hard.Math=Object.create(Math);hard.Math.random=()=>((sequence++%8)+.1)/8;
+ hard.api.el.hardMode.onclick();assert.equal(hard.api.st.difficulty,'hard');assert.equal(hard.api.el.tip.open,false);
+ assert.deepEqual(Array.from(hard.api.st.pieces,p=>p.rotation),Array.from({length:190},(_,i)=>i%8));
+ const hardSaved=JSON.parse(storage.get('mosaicoJigsawProgress'));assert.equal(hardSaved.difficulty,'hard');
+ hard.api.chooseDifficulty('easy');assert.equal(hard.api.st.difficulty,'hard','A second click must not reset an active game');
+ const resumed=await freshGame();assert.equal(resumed.api.el.tip.open,undefined);assert.equal(resumed.api.st.difficulty,'hard');
+ assert.deepEqual(Array.from(resumed.api.st.pieces,p=>p.rotation),Array.from(hard.api.st.pieces,p=>p.rotation));
+ assert.deepEqual(Array.from(resumed.api.st.pieces,p=>[p.sourceX,p.sourceY]),Array.from(hard.api.st.pieces,p=>[p.sourceX,p.sourceY]));
+ const legacySaved={...hardSaved};delete legacySaved.difficulty;
+ storage.clear();storage.set('vermelhoJigsawProgress',JSON.stringify(legacySaved));
+ const migrated=await freshGame();assert.equal(migrated.api.st.difficulty,'easy');assert.equal(migrated.api.st.pieces[1].rotation,1);
+ migrated.api.el.reset.onclick();assert.equal(storage.has('mosaicoJigsawProgress'),false);assert.equal(storage.has('vermelhoJigsawProgress'),false);
+ migrated.api.save();assert.equal(storage.has('mosaicoJigsawProgress'),false,'Unload autosave must not recreate the reset progress');
+ const reset=await freshGame();assert.equal(reset.api.st.difficulty,null);assert.equal(reset.api.el.tip.open,true);
+ assert(reset.api.st.pieces.every(p=>!p.placed&&p.rotation===0));
+ console.log('Mosaico route/title, difficulty choices for all 190 pieces, hard-mode resume, legacy migration and Reset to a fresh difficulty choice passed. All tests passed.');
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Vermelho Jigsaw</title>
+  <title>Mosaico Jigsaw</title>
   <link rel="icon" type="image/png" href="/VN.png" sizes="32x32">
   <style>
     *{box-sizing:border-box}
@@ -28,9 +28,12 @@
     .btn:hover{filter:brightness(1.08)}
     #shuffle{border-color:#d7d7d7;background:linear-gradient(180deg,#f1f1f1,#b8b8b8);color:#541909}
     .infoDialog{width:min(540px,calc(100% - 44px));padding:28px;color:#fff0e8;background:linear-gradient(180deg,#3b1209,#180704);border:1px solid #a84b2b;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.62)}
+    .modeOptions{display:grid;grid-template-columns:1fr 1fr;gap:16px}.modeOptions .btn{height:44px}
+    @media(max-width:480px){.modeOptions{grid-template-columns:1fr}}
     .infoDialog::backdrop{background:rgba(12,3,1,.78);backdrop-filter:blur(7px)}
     .infoDialog h2{margin:0 0 13px;font-size:1.45rem}.infoDialog p{margin:0 0 22px;line-height:1.6}
 
+    .modeOptions p{margin:10px 0 0;font-size:.9rem}
     .trayTitle{margin:0 0 14px;font-size:1.12rem}
     .tray{--content-height:710px;position:relative;min-height:0;height:clamp(360px,calc(100vh - 240px),900px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;border-radius:20px;background:linear-gradient(135deg,#120503,#541909),repeating-linear-gradient(45deg,rgba(238,244,216,.045) 0,rgba(238,244,216,.045) 16px,transparent 16px,transparent 32px);border:2px inset #3c1006}
     .tray::after{content:"";display:block;width:var(--content-width,1px);height:var(--content-height);pointer-events:none}
@@ -56,7 +59,7 @@
       </div>
       <aside class="trayWrap">
         <div class="card">
-          <div class="menuHeader"><h1 class="title">Vermelho</h1><button id="menuToggle" class="btn" type="button" aria-expanded="true" aria-controls="menuActions">Minimizar</button></div>
+          <div class="menuHeader"><h1 class="title">Mosaico</h1><button id="menuToggle" class="btn" type="button" aria-expanded="true" aria-controls="menuActions">Minimizar</button></div>
           <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 190</strong></div>
           <div class="actions" id="menuActions"><a class="btn" href="/">Menu Principal</a><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button" aria-pressed="true">Som: Ligado</button><button id="aboutImage" class="btn" type="button">Sobre essa Imagem</button></div>
         </div>
@@ -66,12 +69,11 @@
       </aside>
     </section>
   </main>
-  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Dica</h2><p>O botão direito do mouse gira qualquer peça solta em 45°. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Você pode girar com o botão direito enquanto segura a peça com o esquerdo. Também pode selecionar uma peça e pressionar R.</p><form method="dialog"><button class="btn" type="submit">Entendi</button></form></dialog>
-  <dialog id="aboutDialog" class="infoDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Sobre essa Imagem</h2><p>Vermelho — quebra-cabeça com 190 peças. Peças do mesmo grupo podem trocar de lugar com a rotação correta.</p><form method="dialog"><button class="btn" type="submit">Fechar</button></form></dialog>
+  <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Como Jogar</h2><p>O botão direito do mouse gira qualquer peça solta em 45°. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Você pode girar com o botão direito enquanto segura a peça com o esquerdo. Também pode selecionar uma peça e pressionar R.</p><div class="modeOptions"><div><button id="easyMode" class="btn" type="button" aria-describedby="easyDescription">Modo fácil</button><p id="easyDescription">peças começam no ângulo correto</p></div><div><button id="hardMode" class="btn" type="button" aria-describedby="hardDescription">Modo difícil</button><p id="hardDescription">peças começam em ângulos aleatórios</p></div></div></dialog>
+  <dialog id="aboutDialog" class="infoDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Sobre essa Imagem</h2><p>Mosaico — quebra-cabeça com 190 peças. Peças do mesmo grupo podem trocar de lugar com a rotação correta.</p><form method="dialog"><button class="btn" type="submit">Fechar</button></form></dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
-    const BOARD=1280,SNAP=82,KEY="vermelhoJigsawProgress";
-    const TIP_KEY="vermelhoJigsawTipSeenV1";
+    const BOARD=1280,SNAP=82,KEY="mosaicoJigsawProgress",LEGACY_KEY="vermelhoJigsawProgress";
     const ROTATE_SOUND_SRC="../sound_effects/766632__stavsounds__keyboard_tactile_2.ogg";
     const PIECE_PLACE_SOUND_SRC="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     let PIECES=[]; const SCALE=BOARD/1280; let selected=null;
@@ -92,9 +94,11 @@
       aboutImage:document.getElementById("aboutImage"),
       aboutDialog:document.getElementById("aboutDialog"),
       tip:document.getElementById("tip"),
+      easyMode:document.getElementById("easyMode"),
+      hardMode:document.getElementById("hardMode"),
       soundToggle:document.getElementById("soundToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false};
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false};
     const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`Não foi possível iniciar o puzzle. ${e.message||""}`.trim())});
 
@@ -123,8 +127,8 @@
     }
     function setupTrayResize(){
       let drag=null;
-      try{const width=Number(localStorage.getItem("vermelhoTrayWidth"));if(width>0)setTrayWidth(width)}catch{}
-      function finish(){if(!drag)return;drag=null;if(!st.drag)syncTrayLayout();try{localStorage.setItem("vermelhoTrayWidth",String(el.trayWrap.getBoundingClientRect().width))}catch{}}
+      try{const width=Number((localStorage.getItem("mosaicoTrayWidth")||localStorage.getItem("vermelhoTrayWidth")));if(width>0)setTrayWidth(width)}catch{}
+      function finish(){if(!drag)return;drag=null;if(!st.drag)syncTrayLayout();try{localStorage.setItem("mosaicoTrayWidth",String(el.trayWrap.getBoundingClientRect().width))}catch{}}
       el.trayResize.onpointerdown=e=>{
         if(e.button!==0||st.drag)return;e.preventDefault();
         drag={x:e.clientX,width:el.trayWrap.getBoundingClientRect().width,direction:matchMedia("(max-width:1800px)").matches?1:2};
@@ -149,10 +153,10 @@
       const manifest=await response.json(); PIECES=manifest.pieces;
       st.pieces=await Promise.all(PIECES.map(makePiece));
       el.aboutImage.onclick=()=>el.aboutDialog.showModal();
-      el.tip.addEventListener("close",()=>{try{localStorage.setItem(TIP_KEY,"yes")}catch{}});
-      let tipSeen=false;try{tipSeen=!!localStorage.getItem(TIP_KEY)}catch{}
-      if(!tipSeen)el.tip.showModal();
-      addEventListener("keydown",e=>{if(e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
+      el.easyMode.onclick=()=>chooseDifficulty("easy");
+      el.hardMode.onclick=()=>chooseDifficulty("hard");
+      el.tip.addEventListener("cancel",e=>{if(st.difficulty===null)e.preventDefault()});
+      addEventListener("keydown",e=>{if(st.difficulty&&e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
       rects();
       const saved=load();
       if(saved){
@@ -169,9 +173,10 @@
       addEventListener("beforeunload",save);
       setupMouseRotation();
       status();
+      if(st.difficulty===null)el.tip.showModal();
       addEventListener("resize",resize);
       el.shuffle.onclick=()=>shuffleLoose(true);
-      el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+      el.reset.onclick=()=>{st.resetting=true;localStorage.removeItem(KEY);localStorage.removeItem(LEGACY_KEY);location.reload()};
       el.soundToggle.onclick=()=>{
         st.soundOn=!st.soundOn;
         el.soundToggle.textContent=`Som: ${st.soundOn?"Ligado":"Desligado"}`;
@@ -179,9 +184,19 @@
         save();
       };
     }
+    function chooseDifficulty(mode){
+      if(st.difficulty!==null||!["easy","hard"].includes(mode))return;
+      st.difficulty=mode;
+      for(const piece of st.pieces){
+        if(piece.placed)continue;
+        piece.rotation=mode==="hard"?Math.floor(Math.random()*8):0;
+        renderPiece(piece);
+      }
+      shuffleLoose(true);save();el.tip.close();
+    }
     function updateMenu(){el.menuActions.hidden=st.menuCollapsed;el.menuToggle.textContent=st.menuCollapsed?"Restaurar":"Minimizar";el.menuToggle.setAttribute("aria-expanded",String(!st.menuCollapsed))}
-    function load(){try{const raw=localStorage.getItem(KEY);return raw?JSON.parse(raw):null}catch{return null}}
-    function save(){if(st.restoring)return;try{localStorage.setItem(KEY,JSON.stringify({rotationStep:45,trayLayout:1,menuCollapsed:st.menuCollapsed,trayScroll:{x:el.tray.scrollLeft,y:el.tray.scrollTop},pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot,x:p.sourceX,y:p.sourceY,z:Number(p.node.style.zIndex)||2})),soundOn:st.soundOn}))}catch{}}
+    function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY);return raw?JSON.parse(raw):null}catch{return null}}
+    function save(){if(st.restoring||st.resetting)return;try{localStorage.setItem(KEY,JSON.stringify({rotationStep:45,difficulty:st.difficulty,trayLayout:1,menuCollapsed:st.menuCollapsed,trayScroll:{x:el.tray.scrollLeft,y:el.tray.scrollTop},pieces:st.pieces.map(p=>({id:p.id,rotation:p.rotation,slot:p.slot,x:p.sourceX,y:p.sourceY,z:Number(p.node.style.zIndex)||2})),soundOn:st.soundOn}))}catch{}}
     function rects(){st.boardRect=el.board.getBoundingClientRect();st.trayRect=el.tray.getBoundingClientRect()}
     function loadImage(src){return new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(new Error(`Image load failed for ${src}`));img.src=src})}
     async function makePiece(data){
@@ -231,6 +246,7 @@
       return matchingSlots(piece).filter(id=>!occupied.has(id)).map(id=>slotTarget(piece,PIECES.find(p=>p.id===id))).filter(p=>Math.abs(piece.currentX-st.boardRect.left-p.x*SCALE)<=SNAP&&Math.abs(piece.currentY-st.boardRect.top-p.y*SCALE)<=SNAP).sort((a,b)=>Math.hypot(piece.currentX-st.boardRect.left-a.x*SCALE,piece.currentY-st.boardRect.top-a.y*SCALE)-Math.hypot(piece.currentX-st.boardRect.left-b.x*SCALE,piece.currentY-st.boardRect.top-b.y*SCALE))[0];
     }
     function startDrag(e,piece){
+      if(st.difficulty===null)return;
       if(e.button===2)return;
       if(piece.placed||st.drag||e.button!==0)return;
       selectPiece(piece);
@@ -331,6 +347,7 @@
     function restore(saved){
       if(!Array.isArray(saved.pieces))return;
       st.restoring=true;
+      st.difficulty=["easy","hard"].includes(saved.difficulty)?saved.difficulty:(Object.hasOwn(saved,"difficulty")?null:"easy");
       st.menuCollapsed=saved.menuCollapsed===true;
       const occupied=new Set();
       try{for(const record of saved.pieces){

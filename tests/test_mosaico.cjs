@@ -97,6 +97,19 @@ async function makePiece(id,owner=ctx){
  dispatch('mouseup',event(0,{buttons:2}));assert.equal(api.st.drag,null);
  assert.equal(other.sourceX,700);assert.equal(other.sourceY,900);
  console.log('Mouse chord rotates by 45 degrees without moving the center, jumping on next move, or dropping on right release.');
+ const menuCase=contextFor(),mouseHandlers={};
+ menuCase.addEventListener=(type,handler,options)=>{mouseHandlers[type]={handler,options}};
+ menuCase.api.setupMouseRotation();assert.equal(mouseHandlers.contextmenu.options.capture,true);
+ let menusPrevented=0;const menuEvent=inside=>({target:{closest:()=>inside?{}:null},preventDefault(){menusPrevented++}});
+ mouseHandlers.contextmenu.handler(menuEvent(true));assert.equal(menusPrevented,1,'Board and tray background must not open the browser menu');
+ mouseHandlers.contextmenu.handler(menuEvent(false));assert.equal(menusPrevented,1,'Normal page context menus stay available outside the game');
+ menuCase.api.st.drag={piece:{}};mouseHandlers.contextmenu.handler(menuEvent(false));assert.equal(menusPrevented,2,'Dragging suppresses the menu even outside the piece');
+ menuCase.api.st.drag=null;menuCase.api.st.suppressContextMenu=true;
+ mouseHandlers.contextmenu.handler(menuEvent(false));assert.equal(menusPrevented,3,'A delayed menu after the drag ends must also be suppressed');
+ mouseHandlers.contextmenu.handler(menuEvent(false));assert.equal(menusPrevented,3,'Gesture suppression is cleared after its context menu event');
+ menuCase.api.st.suppressContextMenu=true;mouseHandlers.mousedown.handler(event(0));assert.equal(menuCase.api.st.suppressContextMenu,false);
+ console.log('Capture-phase context-menu suppression covers board/tray, outside drags and delayed right-button release without blocking ordinary page menus.');
+
  const removal=contextFor(),rp=await makePiece(1,removal),loose=await makePiece(2,removal);
  removal.api.st.difficulty='easy';removal.api.st.pieces=[rp,loose];
  rp.placed=true;rp.slot=1;rp.targetX=141;rp.targetY=523;rp.sourceX=150;rp.sourceY=700;removal.api.el.board.appendChild(rp.node);

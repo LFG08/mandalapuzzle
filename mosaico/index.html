@@ -100,7 +100,7 @@
       hardMode:document.getElementById("hardMode"),
       soundToggle:document.getElementById("soundToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false,trayWidth:0,pendingReflow:false,referenceStep:0};
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false,trayWidth:0,pendingReflow:false,referenceStep:0,suppressContextMenu:false};
     const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`Não foi possível iniciar o puzzle. ${e.message||""}`.trim())});
 
@@ -131,7 +131,16 @@
       }
     }
     function setupMouseRotation(){
-      addEventListener("mousedown",e=>{if(e.button===2&&st.drag){e.preventDefault();rotatePiece(st.drag.piece)}});
+      // Capture the menu even when the pointer has left the canvas or the drag just ended.
+      addEventListener("contextmenu",e=>{
+        if(st.drag||st.suppressContextMenu||e.target?.closest?.(".piece,.boardWrap,.tray")){
+          e.preventDefault();st.suppressContextMenu=false;
+        }
+      },{capture:true});
+      addEventListener("mousedown",e=>{
+        if(e.button===0)st.suppressContextMenu=false;
+        if(e.button===2&&st.drag){e.preventDefault();st.suppressContextMenu=true;rotatePiece(st.drag.piece)}
+      });
       addEventListener("mouseup",e=>{if(e.button===0&&st.drag)endDrag(e)});
     }
     function renderReferenceStep(step){
@@ -223,7 +232,7 @@
       renderPiece(piece);
       // Mouse chords emit mousedown, not a second pointerdown. Keep native mouse events available.
       node.onpointerdown=e=>{if(e.pointerType!=="mouse")startDrag(e,piece)};
-      node.onmousedown=e=>{if(e.button===0)startDrag(e,piece);else if(e.button===2&&!st.drag){e.preventDefault();selectPiece(piece);rotatePiece(piece)}};
+      node.onmousedown=e=>{if(e.button===0)startDrag(e,piece);else if(e.button===2&&!st.drag){e.preventDefault();st.suppressContextMenu=true;selectPiece(piece);rotatePiece(piece)}};
       node.onfocus=()=>selectPiece(piece);
       node.oncontextmenu=e=>e.preventDefault();
       el.tray.appendChild(node);return piece;

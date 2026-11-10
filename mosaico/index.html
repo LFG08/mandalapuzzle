@@ -29,6 +29,7 @@
     .infoDialog{width:min(540px,calc(100% - 44px));padding:28px;color:#fff0e8;background:linear-gradient(180deg,#3b1209,#180704);border:1px solid #a84b2b;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.62)}
     .modeOptions{display:grid;grid-template-columns:1fr 1fr;gap:16px}.modeOptions .btn{height:44px}
     @media(max-width:480px){.modeOptions{grid-template-columns:1fr}}
+    .referenceDialog{max-height:calc(100dvh - 44px);overflow:auto}.referenceDialog[data-showing-image="true"]{width:min(1320px,calc(100% - 44px))}.referenceChoices{display:grid;gap:10px}.referenceImage{display:block;width:100%;height:auto;margin-bottom:16px}.referenceDialog [hidden]{display:none}
     .infoDialog::backdrop{background:rgba(12,3,1,.78);backdrop-filter:blur(7px)}
     .infoDialog h2{margin:0 0 13px;font-size:1.45rem}.infoDialog p{margin:0 0 22px;line-height:1.6}
 
@@ -60,7 +61,7 @@
         <div class="card">
           <div class="menuHeader"><h1 class="title">Mosaico</h1><button id="menuToggle" class="btn" type="button" aria-expanded="true" aria-controls="menuActions">Minimizar</button></div>
           <div class="line"><span class="small">Peças colocadas</span><br><strong id="placed" class="value">0 / 190</strong></div>
-          <div class="actions" id="menuActions"><a class="btn" href="/">Menu Principal</a><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button" aria-pressed="true">Som: Ligado</button><button id="aboutImage" class="btn" type="button">Sobre essa Imagem</button></div>
+          <div class="actions" id="menuActions"><a class="btn" href="/">Menu Principal</a><button id="reset" class="btn" type="button">Reset</button><button id="shuffle" class="btn" type="button">Embaralhar Peças</button><button id="soundToggle" class="btn" type="button" aria-pressed="true">Som: Ligado</button><button id="aboutImage" class="btn" type="button">Imagem de Referência</button></div>
         </div>
         <div class="trayHeading"><h2 class="trayTitle">Bandeja de Peças</h2></div>
         <div class="trayShell"><div id="tray" class="tray"></div></div>
@@ -69,7 +70,7 @@
     </section>
   </main>
   <dialog id="tip" class="infoDialog" aria-labelledby="tipTitle"><h2 id="tipTitle">Como Jogar</h2><p>O botão direito do mouse gira qualquer peça solta em 45°. Uma peça pode ocupar outro lugar quando pertencer ao mesmo grupo e estiver rotacionada corretamente. Você pode girar com o botão direito enquanto segura a peça com o esquerdo. Também pode selecionar uma peça e pressionar R.</p><div class="modeOptions"><div><button id="easyMode" class="btn" type="button" aria-describedby="easyDescription">Modo fácil</button><p id="easyDescription">peças começam no ângulo correto</p></div><div><button id="hardMode" class="btn" type="button" aria-describedby="hardDescription">Modo difícil</button><p id="hardDescription">peças começam em ângulos aleatórios</p></div></div></dialog>
-  <dialog id="aboutDialog" class="infoDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Sobre essa Imagem</h2><p>Mosaico — quebra-cabeça com 190 peças. Peças do mesmo grupo podem trocar de lugar com a rotação correta.</p><form method="dialog"><button class="btn" type="submit">Fechar</button></form></dialog>
+  <dialog id="aboutDialog" class="infoDialog referenceDialog" aria-labelledby="aboutTitle"><h2 id="aboutTitle">Imagem de Referência</h2><p id="referencePrompt" aria-live="polite" tabindex="-1">Deseja ver imagem completa?</p><div id="referenceChoices" class="referenceChoices"><button id="referenceYes" class="btn" type="button">Sim</button><button id="referenceNo" class="btn" type="button">Não</button></div><img id="referenceImage" class="referenceImage" width="1280" height="1280" alt="Imagem completa do puzzle Mosaico" hidden><button id="referenceClose" class="btn" type="button" hidden>Fechar</button></dialog>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
     const BOARD=1280,SNAP=82,KEY="mosaicoJigsawProgress",LEGACY_KEY="vermelhoJigsawProgress";
@@ -88,12 +89,18 @@
       reset:document.getElementById("reset"),
       aboutImage:document.getElementById("aboutImage"),
       aboutDialog:document.getElementById("aboutDialog"),
+      referencePrompt:document.getElementById("referencePrompt"),
+      referenceChoices:document.getElementById("referenceChoices"),
+      referenceYes:document.getElementById("referenceYes"),
+      referenceNo:document.getElementById("referenceNo"),
+      referenceImage:document.getElementById("referenceImage"),
+      referenceClose:document.getElementById("referenceClose"),
       tip:document.getElementById("tip"),
       easyMode:document.getElementById("easyMode"),
       hardMode:document.getElementById("hardMode"),
       soundToggle:document.getElementById("soundToggle")
     };
-    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false,trayWidth:0,pendingReflow:false};
+    const st={boardRect:null,trayRect:null,pieces:[],drag:null,z:2,soundOn:true,completionShown:false,restoring:false,menuCollapsed:false,difficulty:null,resetting:false,trayWidth:0,pendingReflow:false,referenceStep:0};
     const placeSound=new Audio(PIECE_PLACE_SOUND_SRC);
     init().catch(e=>{console.error(e);alert(`Não foi possível iniciar o puzzle. ${e.message||""}`.trim())});
 
@@ -127,6 +134,31 @@
       addEventListener("mousedown",e=>{if(e.button===2&&st.drag){e.preventDefault();rotatePiece(st.drag.piece)}});
       addEventListener("mouseup",e=>{if(e.button===0&&st.drag)endDrag(e)});
     }
+    function renderReferenceStep(step){
+      st.referenceStep=step;
+      const showingImage=step===3;
+      el.aboutDialog.setAttribute("data-showing-image",String(showingImage));
+      el.referencePrompt.hidden=showingImage;el.referenceChoices.hidden=showingImage;
+      el.referenceImage.hidden=!showingImage;el.referenceClose.hidden=!showingImage;
+      if(showingImage){el.referenceImage.src="/mosaico/mosaico.png";el.referenceClose.focus();return}
+      el.referenceImage.removeAttribute("src");
+      const steps=[
+        ["Deseja ver imagem completa?","Sim","Não"],
+        ["Tem certeza?","help please","Não, vou continuar tentando."],
+        ["...certeza?","MOSTRA LOGO DESGRAÇA","ok vou tentar novamente"]
+      ];
+      const [prompt,yes,no]=steps[step];
+      el.referencePrompt.textContent=prompt;el.referenceYes.textContent=yes;el.referenceNo.textContent=no;
+      el.referenceChoices.appendChild(step===0?el.referenceNo:el.referenceYes);
+      el.referencePrompt.focus();
+    }
+    function closeReference(){el.aboutDialog.close();renderReferenceStep(0);el.aboutImage.focus()}
+    function setupReferenceDialog(){
+      el.aboutImage.onclick=()=>{renderReferenceStep(0);el.aboutDialog.showModal();el.referenceYes.focus()};
+      el.referenceYes.onclick=()=>{if(st.referenceStep<3)renderReferenceStep(st.referenceStep+1)};
+      el.referenceNo.onclick=closeReference;el.referenceClose.onclick=closeReference;
+      el.aboutDialog.addEventListener("close",()=>renderReferenceStep(0));
+    }
     async function init(){
       setupTrayScroll();
       // Keep rotation rules in sync with this page after a deployment.
@@ -134,11 +166,11 @@
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
       const manifest=await response.json(); PIECES=manifest.pieces;
       st.pieces=await Promise.all(PIECES.map(makePiece));
-      el.aboutImage.onclick=()=>el.aboutDialog.showModal();
+      setupReferenceDialog();
       el.easyMode.onclick=()=>chooseDifficulty("easy");
       el.hardMode.onclick=()=>chooseDifficulty("hard");
       el.tip.addEventListener("cancel",e=>{if(st.difficulty===null)e.preventDefault()});
-      addEventListener("keydown",e=>{if(st.difficulty&&e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
+      addEventListener("keydown",e=>{if(st.difficulty&&!el.aboutDialog.open&&e.key.toLowerCase()==="r"&&selected){e.preventDefault();rotatePiece(selected)}});
       rects();
       const saved=load();
       if(saved){

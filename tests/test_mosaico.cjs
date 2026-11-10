@@ -8,14 +8,14 @@ function element(){
  return {scrollLeft:0,scrollTop:0,clientHeight:400,clientWidth:400,scrollWidth:1200,scrollHeight:4000,
   style:{setProperty:(k,v)=>styles.set(k,v),getPropertyValue:k=>styles.get(k)||''},classList:{add(){},remove(){}},
   getBoundingClientRect:()=>({left:0,top:0,right:400,bottom:400,width:400}),
-  showModal(){this.open=true},close(){this.open=false},appendChild(n){n.parentElement=this},contains(n){return n.parentElement===this},setAttribute(k,v){this[k]=v},addEventListener(){},remove(){},focus(){}};
+  showModal(){this.open=true},close(){this.open=false},appendChild(n){n.parentElement=this},contains(n){return n.parentElement===this},setAttribute(k,v){this[k]=v},removeAttribute(k){delete this[k]},addEventListener(){},remove(){},focus(){}};
 }
 function contextFor(){
  const ctx={console,document:{getElementById:id=>id==='empty'?null:element(),querySelector:element,body:element(),createElement:()=>({...element(),getContext:()=>({translate(){},rotate(){},drawImage(){}})})},
   Audio:function(src){this.play=()=>{sounds.push(src);return Promise.resolve()}},
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{reload(){}},
   addEventListener:(name,fn)=>{if(!listeners.has(name))listeners.set(name,[]);listeners.get(name).push(fn)},removeEventListener(){},matchMedia:()=>({matches:false})};
- vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,chooseDifficulty,load,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,reflowTrayIfNeeded,setupAutoTrayLayout,resize,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
+ vm.createContext(ctx);vm.runInContext(source+'\nthis.api={st,el,init,chooseDifficulty,load,availableSlot,rotatePiece,makePiece,restore,save,setupTrayScroll,reflowTrayIfNeeded,setupAutoTrayLayout,resize,setupReferenceDialog,setupMouseRotation,matchingSlots,slotTarget,syncTrayLayout,updateMenu,moveDrag,endDrag,loadManifest:v=>PIECES=v};',ctx);
  ctx.api.loadManifest(manifest.pieces);ctx.api.st.trayWidth=ctx.api.el.tray.clientWidth;return ctx;
 }
 const ctx=contextFor(),api=ctx.api;api.st.difficulty="easy";
@@ -153,6 +153,25 @@ async function makePiece(id,owner=ctx){
  targets[1].fn(wheel(2000));targets[1].fn(wheel(100));assert.equal(api.el.tray.scrollTop,1000);assert.equal(intercepted,5);
  targets[1].fn(wheel(100,0,true));assert.equal(intercepted,5);
  console.log('Independent wheel scrolling, edge containment and Ctrl+wheel zoom verified.');
+ const reference=contextFor(),ref=reference.api.el;
+ let closed;ref.aboutDialog.addEventListener=(type,fn)=>{if(type==='close')closed=fn};
+ reference.api.setupReferenceDialog();
+ assert(html.includes('>Imagem de Referência</button>'));assert(!html.includes('Sobre essa Imagem'));
+ assert(fs.existsSync('mosaico/mosaico.png'));
+ for(let abortStep=0;abortStep<3;abortStep++){
+  ref.aboutImage.onclick();
+  for(let i=0;i<abortStep;i++)ref.referenceYes.onclick();
+  assert.equal(ref.referenceImage.hidden,true);assert.equal(ref.referenceImage.src,undefined);
+  ref.referenceNo.onclick();assert.equal(ref.aboutDialog.open,false);assert.equal(reference.api.st.referenceStep,0);
+ }
+ ref.aboutImage.onclick();assert.equal(ref.referencePrompt.textContent,'Deseja ver imagem completa?');assert.equal(ref.referenceYes.textContent,'Sim');assert.equal(ref.referenceNo.textContent,'Não');
+ ref.referenceYes.onclick();assert.equal(ref.referencePrompt.textContent,'Tem certeza?');assert.equal(ref.referenceNo.textContent,'Não, vou continuar tentando.');assert.equal(ref.referenceYes.textContent,'help please');
+ ref.referenceYes.onclick();assert.equal(ref.referencePrompt.textContent,'...certeza?');assert.equal(ref.referenceNo.textContent,'ok vou tentar novamente');assert.equal(ref.referenceYes.textContent,'MOSTRA LOGO DESGRAÇA');assert.equal(ref.referenceImage.src,undefined);
+ ref.referenceYes.onclick();assert.equal(ref.referenceImage.hidden,false);assert.equal(ref.referenceImage.src,'/mosaico/mosaico.png');assert.equal(ref.referenceChoices.hidden,true);assert.equal(ref.referenceClose.hidden,false);
+ ref.referenceClose.onclick();assert.equal(ref.aboutDialog.open,false);assert.equal(ref.referenceImage.src,undefined);
+ ref.aboutImage.onclick();ref.referenceYes.onclick();closed();assert.equal(reference.api.st.referenceStep,0);assert.equal(ref.referenceImage.hidden,true);
+ console.log('Reference dialog exact text, all three confirmations, cancellation at every step, delayed image loading, close and reopen verified.');
+
  assert(html.includes('<title>Mosaico Jigsaw</title>'));
  assert(html.includes('<h2 id="tipTitle">Como Jogar</h2>'));
  assert(html.includes('peças começam no ângulo correto'));

@@ -32,7 +32,7 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  assert.deepEqual([...actions.matchAll(/>([^<]+)<\/(?:button|a)>/g)].map(m=>m[1]),['Menu Principal','Reset','Embaralhar Peças','Som: Ligado','Sobre essa Imagem']);
  assert(!html.includes('id="rotate"'));
  assert(html.includes('width:1280px;height:1280px'));
- assert(html.includes('grid-template-columns:minmax(0,1fr) var(--tray-width,minmax(320px,1fr))'));
+ assert(html.includes('grid-template-columns:minmax(0,1332px) var(--tray-width,minmax(320px,1fr))'));
  assert(html.includes('const SCALE=BOARD/1280'));
  const canvas={style:{},getContext:()=>({translate(){},rotate(){},drawImage(){}})};
  context.document.createElement=()=>canvas;
@@ -43,9 +43,10 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  const piece=await api.makePiece(p);
  piece.sourceX=200;piece.sourceY=200;api.st.pieces=[piece];
  const center=[piece.sourceX+piece.w/2,piece.sourceY+piece.h/2];
- node.onpointerdown({button:2});assert.equal(api.st.drag,null);
+ assert.equal(api.st.drag,null);
  let prevented=0;
  for(let r=1;r<=8;r++){
+  node.onpointerdown({button:2,preventDefault(){}});
   node.oncontextmenu({preventDefault(){prevented++}});
   assert.equal(piece.rotation,r%8);
   assert(Math.abs(piece.sourceX+piece.w/2-center[0])<1e-8);
@@ -68,7 +69,7 @@ console.log(`Passed ${checked} valid rotation/slot combinations, including ${alt
  assert.equal(piece.rotation,1,'New progress restores 45-degree orientations');
  assert(html.includes('.piece,.piece:focus,.piece:focus-visible{outline:none}'));
 
- piece.placed=true;const placedRotation=piece.rotation;node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,placedRotation);
+ piece.placed=true;const placedRotation=piece.rotation;node.onpointerdown({button:2,preventDefault(){}});node.oncontextmenu({preventDefault(){}});assert.equal(piece.rotation,placedRotation);
  console.log('Right-click rotates through eight orientations, keeps the piece centered, prevents the browser menu, and leaves placed pieces locked. Menu buttons match Alittlepuzzle.');
 })().catch(error=>{console.error(error);process.exitCode=1});
 
@@ -112,6 +113,7 @@ console.log('Explicit groups stay separate; 101/102 support every 45-degree orie
 const resizeStyles=new Map();
 api.el.layout.style={setProperty:(key,value)=>resizeStyles.set(key,value),getPropertyValue:key=>resizeStyles.get(key)||''};
 api.el.app.getBoundingClientRect=()=>({width:1000});
+api.el.boardWrap.getBoundingClientRect=()=>({width:320,left:0,top:0});
 api.el.trayWrap.getBoundingClientRect=()=>({width:parseFloat(resizeStyles.get('--tray-width'))||600});
 api.el.trayResize.setPointerCapture=()=>{};
 context.matchMedia=()=>({matches:true});
@@ -123,11 +125,25 @@ api.el.trayResize.onpointermove({clientX:1500});assert.equal(resizeStyles.get('-
 api.el.trayResize.onpointerup();
 context.matchMedia=()=>({matches:false});api.setTrayWidth(600);
 api.el.trayResize.onpointerdown({button:0,clientX:600,pointerId:2,preventDefault(){}});
-api.el.trayResize.onpointermove({clientX:700});assert.equal(resizeStyles.get('--tray-width'),'500px');
-api.el.trayResize.onpointermove({clientX:-500});assert.equal(resizeStyles.get('--tray-width'),'656px');
+api.el.trayResize.onpointermove({clientX:500});assert.equal(resizeStyles.get('--tray-width'),'500px');
+api.el.trayResize.onpointermove({clientX:1500});assert.equal(resizeStyles.get('--tray-width'),'656px');
 api.el.trayResize.onpointercancel();
 assert.deepEqual(manifest.pieces[36].matches[3],[38]);
 assert.deepEqual(manifest.pieces[36].matches[7],[40]);
 assert.deepEqual(manifest.pieces[40].matches[1],[42]);
 assert.deepEqual(manifest.pieces[40].matches[5],[44]);
 console.log('Resize pointer gestures work on both layouts and clamp to page margins; clockwise diagonal group orientations are verified.');
+
+const audited=JSON.parse(fs.readFileSync('vermelho/rotation-groups.json','utf8'));
+for(const group of audited.groups){
+ const first=manifest.pieces[group.pieces[0]-1];
+ for(const id of group.pieces)for(const degrees of group.clockwiseDegreesFromFirst[id])assert(first.matches[degrees/45].includes(id));
+}
+for(const [a,b] of [[135,137],[136,139],[138,141],[140,142]])assert(manifest.pieces[a-1].matches.some(ids=>ids.includes(b)));
+assert(!manifest.pieces[134].matches.flat().includes(136),'Reflected spiral stays in a separate group');
+const html=fs.readFileSync('vermelho/index.html','utf8');
+assert(html.includes('.trayResize{position:absolute;right:0;'));
+assert(!html.includes('direction:matchMedia'));
+console.log(`Reviewed ${audited.groups.length} interchangeable groups; reflected spirals are separated and right-edge resizing always follows the pointer.`);
+
+for(const piece of manifest.pieces)for(let r=0;r<8;r++)for(const id of piece.matches[r])assert(manifest.pieces[id-1].matches[(8-r)%8].includes(piece.id),'Each interchange must be reversible');

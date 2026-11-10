@@ -1,5 +1,5 @@
 {
-  "note": "Reviewed rotation groups. Reflected artwork remains separate. Previously user-defined groups 37–40 and 41–44 are preserved. Pieces 101 and 102 rotate freely in their own slots.",
+  "note": "Reviewed rotation groups. Reflected artwork remains separate. Previously user-defined groups 37–40 and 41–44 are preserved. Pieces 101 and 102 can rotate in 45-degree steps, but snap only at 0, 90, 180 or 270 degrees: white tips of 102 stay on the cardinal axes, with diamond-shaped 101 inside.",
   "groups": [
     {
       "pieces": [
@@ -582,27 +582,21 @@
     {
       "pieces": [
         104,
+        105,
+        113,
         114
       ],
       "clockwiseDegreesFromFirst": {
         "104": [
           0
         ],
-        "114": [
-          90
-        ]
-      }
-    },
-    {
-      "pieces": [
-        105,
-        113
-      ],
-      "clockwiseDegreesFromFirst": {
         "105": [
-          0
+          180
         ],
         "113": [
+          270
+        ],
+        "114": [
           90
         ]
       }

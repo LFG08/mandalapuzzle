@@ -46,6 +46,14 @@ async function makePiece(id,owner=ctx){
  assert(!manifest.pieces[134].matches.flat().includes(136));
  assert.deepEqual(manifest.pieces[36].matches[3],[38]);assert.deepEqual(manifest.pieces[40].matches[1],[42]);
 
+ for(const group of [[147,149,152,154],[148,150,151,153]])for(const id of group){
+  const def=manifest.pieces[id-1];
+  assert.deepEqual([...new Set(def.matches.flat())].sort((a,b)=>a-b),[...group].sort((a,b)=>a-b));
+ }
+ const aligned=api.slotTarget({data:manifest.pieces[146],rotation:4,w:157,h:286},manifest.pieces[153]);
+ assert.equal(aligned.x,80);assert.equal(aligned.y,137,'Use artwork offset rather than canvas center');
+ const clipped=api.slotTarget({data:manifest.pieces[146],rotation:6,w:286,h:157},manifest.pieces[151]);
+ assert.equal(clipped.x,857);assert.equal(clipped.y,80,'Cropped tips retain their artwork alignment');
  const piece=await makePiece(1),other=await makePiece(2);api.st.pieces=[piece,other];
  piece.sourceX=250;piece.sourceY=350;other.sourceX=700;other.sourceY=900;api.syncTrayLayout();
  const center=[piece.sourceX+piece.w/2,piece.sourceY+piece.h/2];

@@ -144,7 +144,7 @@
       setupTrayScroll();
       setupTrayResize();
       // Keep rotation rules in sync with this page after a deployment.
-      const response=await fetch("pieces.json?v=rotation-groups-3",{cache:"no-store"});
+      const response=await fetch("pieces.json?v=rotation-groups-4",{cache:"no-store"});
       if(!response.ok)throw new Error("Não foi possível carregar as peças");
       const manifest=await response.json(); PIECES=manifest.pieces;
       st.pieces=await Promise.all(PIECES.map(makePiece));
@@ -221,7 +221,11 @@
       try{const audio=new Audio(ROTATE_SOUND_SRC);audio.volume=.38;audio.play().catch(()=>{})}catch{}
     }
     function matchingSlots(piece){return piece.data.matches[piece.rotation]||[]}
-    function slotTarget(piece,slot){return {...slot,x:slot.x+(slot.width-piece.w/SCALE)/2,y:slot.y+(slot.height-piece.h/SCALE)/2}}
+    function slotTarget(piece,slot){
+      // Some exports have different transparent margins: align the artwork rather than the canvas center.
+      const offset=piece.data.placementOffsets?.[piece.rotation]?.[slot.id];
+      return {...slot,x:slot.x+(offset?offset.x:(slot.width-piece.w/SCALE)/2),y:slot.y+(offset?offset.y:(slot.height-piece.h/SCALE)/2)};
+    }
     function availableSlot(piece){
       const occupied=new Set(st.pieces.filter(p=>p.placed).map(p=>p.slot));
       return matchingSlots(piece).filter(id=>!occupied.has(id)).map(id=>slotTarget(piece,PIECES.find(p=>p.id===id))).filter(p=>Math.abs(piece.currentX-st.boardRect.left-p.x*SCALE)<=SNAP&&Math.abs(piece.currentY-st.boardRect.top-p.y*SCALE)<=SNAP).sort((a,b)=>Math.hypot(piece.currentX-st.boardRect.left-a.x*SCALE,piece.currentY-st.boardRect.top-a.y*SCALE)-Math.hypot(piece.currentX-st.boardRect.left-b.x*SCALE,piece.currentY-st.boardRect.top-b.y*SCALE))[0];

@@ -1,0 +1,17 @@
+/* Shared Mosaico dimensions; puzzle artwork and controls keep their own theme. */
+.app, .app-shell { width:calc(100% - 28px); max-width:none; }
+.layout, .game-layout { display:grid; width:100%; grid-template-columns:1318px minmax(320px,1fr); gap:24px; align-items:start; }
+.boardWrap, .board-wrap { position:sticky; top:18px; padding:18px; min-width:0; overflow:auto; align-items:flex-start; }
+.board { flex:none; width:1280px; height:1280px; max-width:none; max-height:none; margin:0; aspect-ratio:1; }
+.trayWrap, .tray-wrap, aside.side { position:relative; display:flex; flex-direction:column; min-width:0; min-height:0; height:1318px; padding:18px; }
+.trayWrap > :not(.tray), .tray-wrap > :not(.tray), aside.side > :not(.tray) { flex-shrink:0; }
+#tray.tray { flex:1 1 0; min-width:0; min-height:0; height:auto; max-height:none; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+#tray::after { content:""; display:block; width:var(--content-width,1px); height:var(--content-height,710px); pointer-events:none; }
+@media(max-width:1690px) {
+  .layout, .game-layout { grid-template-columns:minmax(0,1fr); }
+  .trayWrap, .tray-wrap, aside.side { width:100%; }
+  .boardWrap, .board-wrap { position:static; overflow:auto; }
+  .board { margin:0 auto; }
+}
+@media(max-width:1320px) { .board { margin:0; } }
+@media(max-width:860px) { .app, .app-shell { width:min(100vw - 18px,100%); } }

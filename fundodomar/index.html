@@ -840,6 +840,8 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="../shared/jigsaw-layout.css">
+  <script src="../shared/jigsaw-tray.js"></script>
 </head>
 <body>
   <main id="jigsawShell" class="app-shell">
@@ -1322,7 +1324,7 @@
     function placePiece(piece){board.appendChild(piece.element);piece.element.style.position="absolute";piece.element.classList.add("placed");piece.element.style.left=`${piece.targetX}px`;piece.element.style.top=`${piece.targetY}px`;piece.currentX=(state.boardRect?.left??0)+piece.targetX;piece.currentY=(state.boardRect?.top??0)+piece.targetY;piece.placed=true;updatePieceAppearance(piece);playPlaceSound();compactTrayPieces();updateJigsawStatus();saveProgress();checkJigsawCompletion()}
     function returnPieceToTray(piece){if(!tray.contains(piece.element))tray.appendChild(piece.element);piece.element.classList.remove("placed");piece.placed=false;updatePieceAppearance(piece);const trayLeft=state.trayRect?.left??0,trayTop=state.trayRect?.top??0,trayRight=state.trayRect?.right??0,trayBottom=state.trayRect?.bottom??0,localLeft=piece.currentX-trayLeft+tray.scrollLeft,localTop=piece.currentY-trayTop+tray.scrollTop,maxLeft=Math.max(0,tray.scrollWidth-piece.width),maxTop=Math.max(0,tray.scrollHeight-piece.height),droppedInsideTray=piece.currentX+piece.width*.5>=trayLeft&&piece.currentX+piece.width*.5<=trayRight&&piece.currentY+piece.height*.5>=trayTop&&piece.currentY+piece.height*.5<=trayBottom;if(droppedInsideTray){piece.sourceX=Math.max(0,Math.min(maxLeft,localLeft));piece.sourceY=Math.max(0,Math.min(maxTop,localTop))}piece.element.style.position="absolute";piece.element.style.left=`${piece.sourceX??0}px`;piece.element.style.top=`${piece.sourceY??0}px`;piece.currentX=trayLeft+(piece.sourceX??0);piece.currentY=trayTop+(piece.sourceY??0)}
     function shuffleUnplacedPieces(){layoutTrayPieces(shuffle(state.pieces.filter(piece=>!piece.placed)),true);saveProgress()}
-    function compactTrayPieces(){layoutTrayPieces(shuffle(state.pieces.filter(piece=>!piece.placed)),false)}
+    function compactTrayPieces(){layoutTrayPieces(state.pieces.filter(piece=>!piece.placed).sort((a,b)=>a.sourceY-b.sourceY||a.sourceX-b.sourceX),false)}
     function layoutTrayPieces(pieces,allowJitter){if(!pieces.length){renderTrayEmptyState();traySizer.style.height="100%";return}clearTrayMessage();const padding=12,maxWidth=Math.max(tray.clientWidth-padding,240);let cursorX=padding,cursorY=padding,rowHeight=0;pieces.forEach(piece=>{if(!tray.contains(piece.element))tray.appendChild(piece.element);piece.element.style.position="absolute";if(cursorX+piece.width>maxWidth){cursorX=padding;cursorY+=rowHeight+padding;rowHeight=0}const jitterX=allowJitter?Math.round((Math.random()-.5)*14):Math.round((Math.random()-.5)*8),jitterY=allowJitter?Math.round((Math.random()-.5)*10):Math.round((Math.random()-.5)*6),left=Math.max(padding,cursorX+jitterX),top=Math.max(padding,cursorY+jitterY);piece.element.style.left=`${left}px`;piece.element.style.top=`${top}px`;piece.sourceX=left;piece.sourceY=top;cursorX+=piece.width+padding;rowHeight=Math.max(rowHeight,piece.height)});traySizer.style.height=`${Math.max(cursorY+rowHeight+padding,1220)}px`}
     function shuffle(list){const copy=[...list];for(let i=copy.length-1;i>0;i-=1){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
     function renderTrayEmptyState(){clearTrayMessage();const message=document.createElement("div");message.id="tray-empty";message.className="tray-empty";message.textContent="Todas as pecas ativas ja foram colocadas.";tray.appendChild(message)}
@@ -1355,6 +1357,7 @@
     function resetJourney() {
       if (!confirm("Reiniciar toda a jornada?")) return;
 
+      dispatchEvent(new Event("jigsaw-reset"));
       JOURNEY_SAVE_KEYS.forEach((key) => localStorage.removeItem(key));
       LEVEL_THREE_SAVE_KEYS.forEach((key) => localStorage.removeItem(key));
       state.currentLevelIndex = 0;
@@ -1432,6 +1435,10 @@
     function onHiddenPanPointerDown(event){if(state.stage!=="hidden"||![0,1].includes(event.button))return;state.hiddenPanDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPanX:state.hiddenPan.x,startPanY:state.hiddenPan.y,moved:false};hiddenViewport.setPointerCapture(event.pointerId);hiddenContent.classList.add("dragging")}
     function onHiddenPanPointerMove(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;const deltaX=event.clientX-state.hiddenPanDrag.startX,deltaY=event.clientY-state.hiddenPanDrag.startY;if(Math.abs(deltaX)>3||Math.abs(deltaY)>3)state.hiddenPanDrag.moved=true;state.hiddenPan=clampHiddenPan(state.hiddenPanDrag.startPanX+deltaX,state.hiddenPanDrag.startPanY+deltaY);applyHiddenViewTransform()}
     function onHiddenPanPointerUp(event){if(!state.hiddenPanDrag||event.pointerId!==state.hiddenPanDrag.pointerId)return;if(hiddenViewport.hasPointerCapture(event.pointerId))hiddenViewport.releasePointerCapture(event.pointerId);state.hiddenPanDrag=null;hiddenContent.classList.remove("dragging")}
+
+    const notifyTrayLayout = installJigsawTray({tray:tray, getPieces:()=>state.pieces, isBusy:()=>!!state.drag || !!state.intro || !!state.transitioning});
+    const originalTraySave = saveProgress;
+    saveProgress = function (...args) { const result=originalTraySave(...args); notifyTrayLayout(); return result; };
   </script>
 </body>
 </html>

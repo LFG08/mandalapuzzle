@@ -22,4 +22,17 @@
   document.addEventListener("pointerdown", usePointer, true);
   document.addEventListener("mousedown", usePointer, true);
   document.addEventListener("touchstart", usePointer, { capture: true, passive: true });
+
+  // Mouse side buttons pan the puzzle instead of navigating browser history.
+  const sideButtonDown = window.PointerEvent ? "pointerdown" : "mousedown";
+  for (const type of ["pointerdown", "pointerup", "mousedown", "mouseup", "auxclick"]) {
+    document.addEventListener(type, function (event) {
+      if (event.button !== 3 && event.button !== 4) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (type === sideButtonDown) {
+        window.scrollBy({ left: event.button === 3 ? -160 : 160, top: 0, behavior: "smooth" });
+      }
+    }, { capture: true, passive: false });
+  }
 })();

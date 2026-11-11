@@ -38,7 +38,7 @@ async function makePiece(id,owner=ctx){
   }
  }
  console.log(`${checked} valid placements, including ${alternates} interchangeable placements; occupied slots and reciprocal rotations verified.`);
- const groups=[[86,88,89,91,93,95,98,100],[85,87,90,92,94,96,97,99],[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44],[104,105,113,114],[103,108,109,110],[106,107,111,112],[115,116,117,118],[119,120,121,122],[123,124,125,126]];
+ const groups=[[53,54,55,56,57,58,59,60],[77,78,79,80,81,82,83,84],[86,88,89,91,93,95,98,100],[85,87,90,92,94,96,97,99],[29,31,33,35],[30,32,34,36],[37,38,39,40],[41,42,43,44],[104,105,113,114],[103,108,109,110],[106,107,111,112],[115,116,117,118],[119,120,121,122],[123,124,125,126]];
  for(const group of groups)for(const id of group)assert.deepEqual([...new Set(manifest.pieces[id-1].matches.flat())].sort((a,b)=>a-b),group);
  for(const id of [101,102])for(let r=0;r<8;r++){
   const data=manifest.pieces[id-1];
@@ -60,6 +60,10 @@ async function makePiece(id,owner=ctx){
  assert.equal(spiral.x,manifest.pieces[95].x-12);assert.equal(spiral.y,manifest.pieces[95].y-18);
  const visualAlignment=api.slotTarget({data:manifest.pieces[48],rotation:5,w:194,h:194},manifest.pieces[49]);
  assert.equal(visualAlignment.x,manifest.pieces[49].x-35);assert.equal(visualAlignment.y,manifest.pieces[49].y-14);
+ assert.deepEqual(manifest.pieces[52].matches[1],[54]);
+ assert.deepEqual(manifest.pieces[52].matches[3],[57]);
+ const diagonal53=api.slotTarget({data:manifest.pieces[52],rotation:1,w:167,h:167},manifest.pieces[53]);
+ assert.equal(diagonal53.x,manifest.pieces[53].x-26);assert.equal(diagonal53.y,manifest.pieces[53].y-33);
  const audited=JSON.parse(fs.readFileSync('mosaico/rotation-groups.json','utf8'));
  for(const group of audited.groups)for(const id of group.pieces)for(const deg of group.clockwiseDegreesFromFirst[id])assert(manifest.pieces[group.pieces[0]-1].matches[deg/45].includes(id));
  assert(!manifest.pieces[134].matches.flat().includes(136));

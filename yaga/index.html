@@ -387,6 +387,8 @@
       .controls{flex-wrap:wrap}
     }
   </style>
+  <link rel="stylesheet" href="../shared/jigsaw-layout.css">
+  <script src="../shared/jigsaw-tray.js"></script>
 </head>
 <body>
   <main class="app">
@@ -457,7 +459,7 @@
     ];
     const TRANSITION_NOTE_DELAY = 0;
     const TRANSITION_NOTE_DURATION_MS = 4500;
-    const IMAGE_SIZE = 768;
+    const IMAGE_SIZE = 768, BOARD_SIZE = 1280;
     const SNAP = 34;
     const LEVELS = [
       {name:"Baba Yaga", image:"baba_witch.png", guideMaxOpacity:0.3, cols:11, rows:6},
@@ -758,7 +760,7 @@
     }
 
     function getTab(level = getLevel()){
-      return Math.round(Math.min(IMAGE_SIZE / level.cols, IMAGE_SIZE / level.rows) * 0.24);
+      return Math.round(Math.min(BOARD_SIZE / level.cols, BOARD_SIZE / level.rows) * 0.24);
     }
 
     function buildLevel(levelIndex, preserveTransition = false){
@@ -805,8 +807,8 @@
 
     function createPieces(){
       const level = getLevel();
-      const pw = IMAGE_SIZE / level.cols;
-      const ph = IMAGE_SIZE / level.rows;
+      const pw = BOARD_SIZE / level.cols;
+      const ph = BOARD_SIZE / level.rows;
       const tab = getTab(level);
       for(let row = 0; row < level.rows; row++){
         for(let col = 0; col < level.cols; col++){
@@ -859,8 +861,8 @@
       const ctx = canvas.getContext("2d");
       const sx = tab;
       const sy = tab;
-      const sourceScaleX = state.image.naturalWidth / IMAGE_SIZE;
-      const sourceScaleY = state.image.naturalHeight / IMAGE_SIZE;
+      const sourceScaleX = state.image.naturalWidth / BOARD_SIZE;
+      const sourceScaleY = state.image.naturalHeight / BOARD_SIZE;
       ctx.save();
       ctx.beginPath();
       tracePiece(ctx, sx, sy, pw, ph, tab, edge);
@@ -1058,7 +1060,7 @@
       const columns = Math.max(1, Math.floor((trayWidth - pad) / cellWidth));
       const rows = Math.ceil(loosePieces.length / columns);
       const trayHeight = Math.max(620, rows * cellHeight + pad);
-      el.tray.style.minHeight = `${trayHeight}px`;
+      el.tray.style.setProperty("--content-height",`${trayHeight}px`);
 
       const orderedPieces = getTrayOrder(loosePieces, columns, randomizeOrder);
       state.trayOrder = orderedPieces.map((piece) => piece.id);
@@ -1413,7 +1415,7 @@
     function rects(){
       state.boardRect = el.board.getBoundingClientRect();
       state.trayRect = el.tray.getBoundingClientRect();
-      state.scale = state.boardRect.width / IMAGE_SIZE;
+      state.scale = state.boardRect.width / BOARD_SIZE;
     }
 
     function onResize(){
@@ -1497,7 +1499,7 @@
     }
 
     function resetPuzzle(){
-      localStorage.removeItem(STORAGE_KEY);
+      dispatchEvent(new Event("jigsaw-reset"));localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(PASSWORD_KEY);
       state.guide = 1;
       state.progress = Array.from({length: LEVELS.length}, () => []);
@@ -1583,6 +1585,10 @@
       return 0;
     }
 
+
+    const notifyTrayLayout = installJigsawTray({tray:el.tray, getPieces:()=>state.pieces, isBusy:()=>!!state.drag || !!state.intro || !!state.transitioning, onRestore:loose=>{state.trayOrder=loose.slice().sort((a,b)=>a.sourceY-b.sourceY||a.sourceX-b.sourceX).map(p=>p.id)}});
+    const originalTraySave = save;
+    save = function (...args) { const result=originalTraySave(...args); notifyTrayLayout(); return result; };
   </script>
 </body>
 </html>

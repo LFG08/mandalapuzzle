@@ -36,6 +36,8 @@
     @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}.boardWrap{overflow:auto}}
   </style>
+  <link rel="stylesheet" href="../shared/jigsaw-layout.css">
+  <script src="../shared/jigsaw-tray.js"></script>
 </head>
 <body>
   <main class="app">
@@ -57,7 +59,7 @@
   </main>
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script>
-    const BOARD=768,SNAP=82,KEY="greenEyeJigsawProgress";
+    const BOARD=1280,SNAP=82,KEY="greenEyeJigsawProgress";
     const PIECE_PLACE_SOUND_SRC="../sound_effects/766640__stavsounds__keyboard_tactile_9.ogg";
     const PIECES=Array.from({length:58},(_,i)=>`${i+1}.png`);
     const BOUNDS={
@@ -147,7 +149,7 @@
       status();
       addEventListener("resize",resize);
       el.shuffle.onclick=()=>shuffleLoose(true);
-      el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+      el.reset.onclick=()=>{dispatchEvent(new Event("jigsaw-reset"));localStorage.removeItem(KEY);location.reload()};
       el.mainMenu.onclick=()=>{location.href="/"};
       el.soundToggle.onclick=()=>{
         st.soundOn=!st.soundOn;
@@ -163,13 +165,13 @@
       const img=await loadImage(src),box=BOUNDS[String(n)];
       if(!box)throw new Error(`${src} has no visible pixels`);
       const can=document.createElement("canvas");
-      can.width=box.w;can.height=box.h;
+      const scale=BOARD/768;can.width=Math.round(box.w*scale);can.height=Math.round(box.h*scale);
       const ctx=can.getContext("2d");
-      ctx.drawImage(img,box.x,box.y,box.w,box.h,0,0,box.w,box.h);
+      ctx.drawImage(img,box.x,box.y,box.w,box.h,0,0,can.width,can.height);
       const node=el.tpl.content.firstElementChild.cloneNode(true);
       node.appendChild(can);
-      node.style.width=`${box.w}px`;node.style.height=`${box.h}px`;
-      const piece={id:String(n),src,node,can,w:box.w,h:box.h,targetX:box.x,targetY:box.y,currentX:0,currentY:0,sourceX:0,sourceY:0,placed:false};
+      node.style.width=`${can.width}px`;node.style.height=`${can.height}px`;
+      const piece={id:String(n),src,node,can,w:can.width,h:can.height,targetX:box.x*scale,targetY:box.y*scale,currentX:0,currentY:0,sourceX:0,sourceY:0,placed:false};
       node.onpointerdown=e=>startDrag(e,piece);
       el.tray.appendChild(node);
       return piece;
@@ -258,7 +260,7 @@
         p.currentX=st.trayRect.left+x;p.currentY=st.trayRect.top+y;
         x+=p.w+pad;row=Math.max(row,p.h);
       }
-      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;
+      el.tray.style.setProperty("--content-height",`${Math.max(y+row+pad,710)}px`);
     }
     function restore(saved){
       const ids=new Set(Array.isArray(saved.placed)?saved.placed:[]);
@@ -307,6 +309,10 @@
         placeSound.play().catch(()=>{});
       }catch{}
     }
+
+    const notifyTrayLayout = installJigsawTray({tray:el.tray, getPieces:()=>st.pieces, isBusy:()=>!!st.drag || !!st.intro || !!st.transitioning});
+    const originalTraySave = save;
+    save = function (...args) { const result=originalTraySave(...args); notifyTrayLayout(); return result; };
   </script>
 </body>
 </html>

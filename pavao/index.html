@@ -234,6 +234,8 @@
       .board { width: 100%; height: auto; aspect-ratio: 1; }
     }
   </style>
+  <link rel="stylesheet" href="../shared/jigsaw-layout.css">
+  <script src="../shared/jigsaw-tray.js"></script>
 </head>
 <body>
   <main class="app">
@@ -243,7 +245,7 @@
           <img id="boardGuide" class="boardGuide" alt="">
           <img id="boardFinal" class="boardFinal" alt="">
           <div class="boardGlow"></div>
-          <canvas id="boardCanvas" width="768" height="768"></canvas>
+          <canvas id="boardCanvas" width="1280" height="1280"></canvas>
         </div>
         <div class="controls">
           <label for="guide">Visibilidade do Guia</label>
@@ -322,7 +324,7 @@
     let guideMaxOpacity = 0;
     let pieces = [];
     let drag = null;
-    let boardSize = 768;
+    let boardSize = 1280;
     let trayWidth = 620;
     let trayHeight = 1200;
     let soundOn = true;
@@ -611,7 +613,7 @@
         saveProgressTimer = null;
       }
       try {
-        localStorage.removeItem(PROGRESS_KEY);
+        dispatchEvent(new Event("jigsaw-reset"));localStorage.removeItem(PROGRESS_KEY);
       } catch (err) {
         console.warn("Nao foi possivel limpar o progresso.", err);
       }
@@ -992,6 +994,16 @@
     start().catch(err => {
       console.error(err);
     });
+
+    const notifyTrayLayout = installJigsawTray({tray:trayEl, getPieces:()=>pieces, canvas:true, isBusy:()=>!!drag, redraw:renderTray,
+      onRestore:loose=>{
+        trayHeight=Math.max(760,...loose.map(p=>p.trayY+p.raster.height*p.scale+20));
+        trayCanvas.height=trayHeight;
+        trayCanvas.style.height=`${trayHeight}px`;
+        trayCanvas.style.minHeight=`${trayHeight}px`;
+      }});
+    const originalLayoutTray = layoutTray;
+    layoutTray = function (...args) { const result=originalLayoutTray(...args); notifyTrayLayout(); return result; };
   </script>
 </body>
 </html>

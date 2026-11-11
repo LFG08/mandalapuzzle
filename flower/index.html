@@ -38,6 +38,8 @@
     @media (max-width:1280px){.layout{grid-template-columns:1fr}.boardWrap{position:static}.board{margin:0 auto}.tray{height:780px}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}}
   </style>
+  <link rel="stylesheet" href="../shared/jigsaw-layout.css">
+  <script src="../shared/jigsaw-tray.js"></script>
 </head>
 <body>
   <main class="app">
@@ -86,7 +88,7 @@
   <template id="tpl"><button class="piece" type="button" aria-label="Puzzle piece"></button></template>
   <script src="assets.js"></script>
   <script>
-    const BOARD=768,SNAP=110,AXIS=72,KEY="flowerJigsawProgress",BREAK_SOUND="661830__rslebs__ice-breaking-slow.wav",PLACE_SOUND="../fundodomar/766640__stavsounds__keyboard_tactile_9.ogg";
+    const BOARD=1280,SNAP=110,AXIS=72,KEY="flowerJigsawProgress",BREAK_SOUND="661830__rslebs__ice-breaking-slow.wav",PLACE_SOUND="../fundodomar/766640__stavsounds__keyboard_tactile_9.ogg";
     const LEVELS=[{id:"levelOne",label:"Level 1",image:"flower_jigsaw_level_1.png",frame:"flower_jigsaw_frame.png",mode:"hybrid"},{id:"levelTwo",label:"Level 2",image:"flower_jigsaw_level_2.png",rows:6,cols:6,mode:"grid"}];
     const GUIDE1={img:"flower_jigsaw_level_1.png",overlay:"linear-gradient(rgba(255,247,235,.16),rgba(255,247,235,.16))",opacity:.62};
     const INTRO_GUIDE={img:"flower_jigsaw_level_1.png",overlay:"linear-gradient(rgba(255,247,235,0),rgba(255,247,235,0))",opacity:1};
@@ -119,7 +121,7 @@
       st.placeAudio=createPlaceAudio();
       st.levels=await Promise.all(LEVELS.map(loadLevel));
       st.levels.forEach((lv,i)=>createPieces(lv,i===0));rects();if(saved)restore(saved);else await playIntroShatter();status();
-      addEventListener("resize",resize);el.guide.oninput=e=>{applyGuide(+e.target.value/100);save()};el.shuffle.onclick=shuffleLoose;el.reset.onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+      addEventListener("resize",resize);el.guide.oninput=e=>{applyGuide(+e.target.value/100);save()};el.shuffle.onclick=shuffleLoose;el.reset.onclick=()=>{dispatchEvent(new Event("jigsaw-reset"));localStorage.removeItem(KEY);location.reload()};
       el.volume.onclick=toggleSound;
       el.about.onclick=()=>el.aboutDialog.showModal();
       el.closeAbout.onclick=()=>el.aboutDialog.close();
@@ -235,7 +237,7 @@
       return map
     }
     function createPieces(level,active){if(level.mode==="hybrid")return regionPieces(level,active);const pw=BOARD/level.cols,ph=BOARD/level.rows,tab=Math.round(Math.min(pw,ph)*.24);for(let r=0;r<level.rows;r++)for(let c=0;c<level.cols;c++){const node=el.tpl.content.firstElementChild.cloneNode(true);st.pieces.push(gridPiece(level,r,c,pw,ph,tab,level.edges[r][c],node,active))}}
-    function regionPieces(level,active){for(const region of level.regions){const node=el.tpl.content.firstElementChild.cloneNode(true),can=document.createElement("canvas");can.width=region.w;can.height=region.h;drawRegion(can,level.img,region);node.appendChild(can);node.classList.toggle("level2",level.id==="levelTwo");node.classList.toggle("active",active);node.style.width=`${region.w}px`;node.style.height=`${region.h}px`;const piece={id:`${level.id}-${region.id}`,levelId:level.id,node,can,w:region.w,h:region.h,targetX:region.x,targetY:region.y,currentX:0,currentY:0,placed:false,active};node.onpointerdown=e=>startDrag(e,piece);el.tray.appendChild(node);st.pieces.push(piece)}}
+    function regionPieces(level,active){for(const region of level.regions){const node=el.tpl.content.firstElementChild.cloneNode(true),can=document.createElement("canvas");can.width=region.w;can.height=region.h;drawRegion(can,level.img,region);const scale=BOARD/level.img.width,w=region.w*scale,h=region.h*scale;can.style.width=`${w}px`;can.style.height=`${h}px`;node.appendChild(can);node.classList.toggle("level2",level.id==="levelTwo");node.classList.toggle("active",active);node.style.width=`${w}px`;node.style.height=`${h}px`;const piece={id:`${level.id}-${region.id}`,levelId:level.id,node,can,w,h,targetX:region.x*scale,targetY:region.y*scale,currentX:0,currentY:0,placed:false,active};node.onpointerdown=e=>startDrag(e,piece);el.tray.appendChild(node);st.pieces.push(piece)}}
     function gridPiece(level,row,col,pw,ph,tab,edges,node,active){
       const can=document.createElement("canvas"),w=Math.round(pw+tab*2),h=Math.round(ph+tab*2);can.width=w;can.height=h;drawGrid(can,level.img,row,col,pw,ph,tab,edges);node.appendChild(can);
       node.classList.toggle("level2",level.id==="levelTwo");node.classList.toggle("active",active);node.style.width=`${w}px`;node.style.height=`${h}px`;
@@ -249,7 +251,7 @@
     }
     function drawGrid(can,img,row,col,pw,ph,tab,edges){
       const x=can.getContext("2d"),ox=tab,oy=tab;x.save();x.beginPath();trace(x,ox,oy,pw,ph,tab,edges);x.closePath();x.clip();
-      x.drawImage(img,col*pw-tab,row*ph-tab,pw+tab*2,ph+tab*2,0,0,can.width,can.height);x.restore();x.beginPath();trace(x,ox,oy,pw,ph,tab,edges);x.closePath();x.lineWidth=1.4;x.strokeStyle="rgba(82,53,30,.48)";x.stroke()
+      x.drawImage(img,(col*pw-tab)*img.width/BOARD,(row*ph-tab)*img.height/BOARD,(pw+tab*2)*img.width/BOARD,(ph+tab*2)*img.height/BOARD,0,0,can.width,can.height);x.restore();x.beginPath();trace(x,ox,oy,pw,ph,tab,edges);x.closePath();x.lineWidth=1.4;x.strokeStyle="rgba(82,53,30,.48)";x.stroke()
     }
     function trace(x,sx,sy,w,h,t,e){x.moveTo(sx,sy);hedge(x,sx,sy,w,t,e.top,1);vedge(x,sx+w,sy,h,t,e.right,1);hedge(x,sx+w,sy+h,w,t,e.bottom,-1);vedge(x,sx,sy+h,h,t,e.left,-1)}
     function hedge(p,sx,sy,span,t,d,sign){
@@ -289,7 +291,7 @@
       rects();const loose=st.pieces.filter(p=>p.active&&!p.placed);if(!loose.length)return empty();
       clearEmpty();const pad=12,max=Math.max(el.tray.clientWidth-pad,180);let x=pad,y=pad,row=0;
       for(const p of shuffleList(loose)){if(!el.tray.contains(p.node))el.tray.appendChild(p.node);if(x+p.w>max){x=pad;y+=row+pad;row=0}p.node.style.position="absolute";p.node.style.left=`${x}px`;p.node.style.top=`${y}px`;p.sourceX=x;p.sourceY=y;p.currentX=(st.trayRect?.left??0)+x;p.currentY=(st.trayRect?.top??0)+y;x+=p.w+pad;row=Math.max(row,p.h)}
-      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;save()
+      el.tray.style.setProperty("--content-height",`${Math.max(y+row+pad,710)}px`);save()
     }
     async function playIntroShatter(){
       st.intro=true;clearEmpty();setGuide(INTRO_GUIDE);rects();const pieces=shuffleList(st.pieces.filter(p=>p.levelId==="levelOne"&&!p.placed));
@@ -299,7 +301,7 @@
       await frame();playBreakSound();await shatterAlongPieces(pieces);const layout=trayLayout(pieces);await sinkPiecesIntoBoard(pieces);stopBreakSound();await emergePiecesFromTray(pieces,layout);
       for(const p of pieces){p.node.style.opacity="";p.node.style.visibility=""}
       setGuide(GUIDE1);applyGuide(st.guide);
-      el.tray.style.minHeight=`${Math.max(layout.minHeight,710)}px`;st.intro=false;save()
+      el.tray.style.setProperty("--content-height",`${Math.max(layout.minHeight,710)}px`);st.intro=false;save()
     }
     function trayLayout(pieces){
       const slots=new Map(),pad=12,max=Math.max(el.tray.clientWidth-pad*2,180);let x=pad,y=pad,row=0;
@@ -397,7 +399,7 @@
       rects();const loose=st.pieces.filter(p=>p.active&&!p.placed);if(!loose.length)return empty();
       clearEmpty();const ordered=[...loose].sort((a,b)=>(a.sourceY??0)-(b.sourceY??0)||(a.sourceX??0)-(b.sourceX??0)),pad=12,max=Math.max(el.tray.clientWidth-pad,180);let x=pad,y=pad,row=0;
       for(const p of ordered){if(!el.tray.contains(p.node))el.tray.appendChild(p.node);if(x+p.w>max){x=pad;y+=row+pad;row=0}p.node.style.position="absolute";p.node.style.left=`${x}px`;p.node.style.top=`${y}px`;p.sourceX=x;p.sourceY=y;p.currentX=(st.trayRect?.left??0)+x;p.currentY=(st.trayRect?.top??0)+y;x+=p.w+pad;row=Math.max(row,p.h)}
-      el.tray.style.minHeight=`${Math.max(y+row+pad,710)}px`;save()
+      el.tray.style.setProperty("--content-height",`${Math.max(y+row+pad,710)}px`);save()
     }
     function shuffleList(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
     function status(){const lv=st.levels[st.current];el.placed.textContent=`${lv.placed} / ${lv.total}`}
@@ -422,6 +424,10 @@
       el.board.appendChild(piece.node);piece.node.style.position="absolute";piece.node.classList.add("placed","active");piece.placed=true;piece.active=true;piece.node.style.left=`${piece.targetX}px`;piece.node.style.top=`${piece.targetY}px`;
       piece.currentX=st.boardRect.left+piece.targetX;piece.currentY=st.boardRect.top+piece.targetY;st.levels.find(v=>v.id===piece.levelId).placed++
     }
+
+    const notifyTrayLayout = installJigsawTray({tray:el.tray, getPieces:()=>st.pieces, isBusy:()=>!!st.drag || !!st.intro || !!st.transitioning});
+    const originalTraySave = save;
+    save = function (...args) { const result=originalTraySave(...args); notifyTrayLayout(); return result; };
   </script>
 </body>
 </html>

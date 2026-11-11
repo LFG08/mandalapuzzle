@@ -1,0 +1,10 @@
+const {chromium}=require('playwright'),assert=require('assert');
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM_BINARY || '/usr/bin/chromium',headless:true,args:['--no-sandbox']});const p=await b.newPage({viewport:{width:1920,height:1080}});await p.goto('http://127.0.0.1:8000/green_eye/');await p.waitForFunction(()=>typeof st!=='undefined'&&st.pieces.length===58);
+// Exercise the real pointer handlers with a known piece and its matching target.
+const drag=await p.evaluate(()=>{const piece=st.pieces.find(p=>p.targetY>0&&p.targetY<500&&p.targetX>0&&p.targetX<900);el.tray.scrollTop=piece.sourceY-10;const r=piece.node.getBoundingClientRect(),board=el.board.getBoundingClientRect();window.testPiece=piece;return {from:[r.left+piece.w/2,r.top+piece.h/2],to:[board.left+piece.targetX+piece.w/2,board.top+piece.targetY+piece.h/2]}});
+await p.mouse.move(...drag.from);await p.mouse.down();await p.mouse.move(...drag.to,{steps:12});await p.mouse.up();await p.waitForTimeout(200);
+assert(await p.evaluate(()=>testPiece.placed));
+const result=await p.evaluate(()=>{const loose=st.pieces.filter(p=>!p.placed).sort((a,b)=>a.sourceY-b.sourceY||a.sourceX-b.sourceX);let x=12,y=12,row=0,max=el.tray.clientWidth-12;for(const piece of loose){if(x+piece.w>max){x=12;y+=row+12;row=0}if(piece.sourceX!==x||piece.sourceY!==y)return false;x+=piece.w+12;row=Math.max(row,piece.h)}return true});assert(result,'remaining tray pieces pack without holes');
+console.log('Green Eye: real drag snaps to board and compacts remaining 57 pieces without holes.');
+for(const width of [1280,390]){await p.setViewportSize({width,height:900});const dims=await p.evaluate(()=>({board:el.board.getBoundingClientRect().width,tray:el.tray.clientHeight,wrap:document.querySelector('.trayWrap').getBoundingClientRect().height,scroll:el.board.parentElement.scrollWidth>el.board.parentElement.clientWidth}));assert.equal(dims.board,1280);assert.equal(dims.wrap,1318);assert(dims.tray>100);assert(dims.scroll);console.log(width+'px viewport:',dims)}
+await b.close()})();

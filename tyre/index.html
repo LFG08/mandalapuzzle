@@ -460,6 +460,8 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="../shared/jigsaw-layout.css">
+  <script src="../shared/jigsaw-tray.js"></script>
 </head>
   <body>
   <main class="app-shell">
@@ -532,7 +534,7 @@
 
   <script src="assets.js"></script>
   <script>
-    const BOARD_SIZE = 768;
+    const BOARD_SIZE = 1280;
     const SNAP_DISTANCE = 110;
     const SNAP_AXIS_TOLERANCE = 72;
     const SAVE_KEY = "tyreJigsawProgress";
@@ -742,7 +744,7 @@
 
     function resetPuzzle() {
       try {
-        localStorage.removeItem(SAVE_KEY);
+        dispatchEvent(new Event("jigsaw-reset"));localStorage.removeItem(SAVE_KEY);
         for (const key of LEGACY_SAVE_KEYS) {
           localStorage.removeItem(key);
         }
@@ -1383,13 +1385,14 @@
     }
 
     function createRegionPieces(level, active) {
+      const scale = BOARD_SIZE / level.image.width;
       for (const region of level.regions) {
         const element = pieceTemplate.content.firstElementChild.cloneNode(true);
         const canvas = document.createElement("canvas");
         canvas.width = region.width;
         canvas.height = region.height;
-        canvas.style.width = `${region.width}px`;
-        canvas.style.height = `${region.height}px`;
+        canvas.style.width = `${region.width * scale}px`;
+        canvas.style.height = `${region.height * scale}px`;
 
         drawRegionPiece(canvas, level.image, region);
 
@@ -1398,8 +1401,8 @@
         element.classList.toggle("level-two", level.id === "levelTwo");
         element.classList.toggle("active", active);
         element.style.position = "absolute";
-        element.style.width = `${region.width}px`;
-        element.style.height = `${region.height}px`;
+        element.style.width = `${region.width * scale}px`;
+        element.style.height = `${region.height * scale}px`;
 
         const piece = {
           id: `${level.id}-${region.id}`,
@@ -1408,13 +1411,13 @@
           col: 0,
           element,
           canvas,
-          width: region.width,
-          height: region.height,
+          width: region.width * scale,
+          height: region.height * scale,
           tabSize: 0,
-          pieceWidth: region.width,
-          pieceHeight: region.height,
-          targetX: region.x,
-          targetY: region.y,
+          pieceWidth: region.width * scale,
+          pieceHeight: region.height * scale,
+          targetX: region.x * scale,
+          targetY: region.y * scale,
           currentX: 0,
           currentY: 0,
           placed: false,
@@ -1514,10 +1517,10 @@
 
       ctx.drawImage(
         level.image,
-        col * pieceWidth - tabSize,
-        row * pieceHeight - tabSize,
-        pieceWidth + tabSize * 2,
-        pieceHeight + tabSize * 2,
+        (col * pieceWidth - tabSize) * level.image.width / BOARD_SIZE,
+        (row * pieceHeight - tabSize) * level.image.height / BOARD_SIZE,
+        (pieceWidth + tabSize * 2) * level.image.width / BOARD_SIZE,
+        (pieceHeight + tabSize * 2) * level.image.height / BOARD_SIZE,
         0,
         0,
         canvas.width,
@@ -1545,10 +1548,10 @@
 
       maskCtx.drawImage(
         maskImage,
-        col * pieceWidth - tabSize,
-        row * pieceHeight - tabSize,
-        pieceWidth + tabSize * 2,
-        pieceHeight + tabSize * 2,
+        (col * pieceWidth - tabSize) * maskImage.width / BOARD_SIZE,
+        (row * pieceHeight - tabSize) * maskImage.height / BOARD_SIZE,
+        (pieceWidth + tabSize * 2) * maskImage.width / BOARD_SIZE,
+        (pieceHeight + tabSize * 2) * maskImage.height / BOARD_SIZE,
         0,
         0,
         maskCanvas.width,
@@ -1878,7 +1881,7 @@
         rowHeight = Math.max(rowHeight, piece.height);
       }
 
-      tray.style.minHeight = `${Math.max(cursorY + rowHeight + padding, 710)}px`;
+      tray.style.setProperty("--content-height",`${Math.max(cursorY + rowHeight + padding, 710)}px`);
       saveProgress();
     }
 
@@ -1935,7 +1938,7 @@
         rowHeight = Math.max(rowHeight, piece.height);
       }
 
-      tray.style.minHeight = `${Math.max(cursorY + rowHeight + padding, 710)}px`;
+      tray.style.setProperty("--content-height",`${Math.max(cursorY + rowHeight + padding, 710)}px`);
       saveProgress();
     }
 
@@ -2029,6 +2032,10 @@
       state.boardRect = board.getBoundingClientRect();
       state.trayRect = tray.getBoundingClientRect();
     }
+
+    const notifyTrayLayout = installJigsawTray({tray:tray, getPieces:()=>state.pieces, isBusy:()=>!!state.drag || !!state.intro || !!state.transitioning});
+    const originalTraySave = saveProgress;
+    saveProgress = function (...args) { const result=originalTraySave(...args); notifyTrayLayout(); return result; };
   </script>
 </body>
 </html>

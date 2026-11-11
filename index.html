@@ -1402,6 +1402,7 @@ return null;
 
 function getCelticStatus(meta, totalFallback){
 let lastLevel = localStorage.getItem("CELTIC_last_level") || "nivel1";
+let levelTwoUnlocked = safeParseStoredArray("CELTIC_unlocked_levels").includes("nivel2");
 let nivel1Progress = safeParseStoredArray("CELTIC_nivel1_progress");
 let nivel2Progress = safeParseStoredArray("CELTIC_nivel2_progress");
 
@@ -1423,6 +1424,10 @@ nivel2Progress = nivel2Progress.filter(id => validLevel2Ids.has(id));
 }
 }
 
+if(!levelTwoUnlocked){
+combinedTotal = null;
+}
+
 if(lastLevel === "nivel2"){
 let found = uniqueNivel1Found + nivel2Progress.length;
 return {
@@ -1435,7 +1440,7 @@ total: combinedTotal
 
 return {
 thumb: "thumbceltic1.png",
-counter: uniqueNivel1Found + " / " + combinedTotal,
+counter: uniqueNivel1Found + " / " + (combinedTotal === null ? "?" : combinedTotal),
 found: uniqueNivel1Found,
 total: combinedTotal
 };

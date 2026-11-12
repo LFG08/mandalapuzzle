@@ -1,0 +1,60 @@
+.mobile-puzzle-zoom { display: none; }
+/* Touch navigation shared by image-map puzzles, including Lispenard Street. */
+@media (max-width: 900px) and (any-pointer: coarse) {
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+  .mandala-footnote { width: 100% !important; padding-bottom: 80px; }
+  .mobile-puzzle-viewport {
+    width: 100%; height: calc(100dvh - 76px - env(safe-area-inset-bottom));
+    overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y pinch-zoom;
+  }
+  #wordMenu, #wordMenu.collapsed {
+    position: fixed !important;
+    inset: auto 8px max(8px, env(safe-area-inset-bottom)) 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: min(60dvh, var(--mobile-menu-height, 60dvh)) !important;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    box-shadow: 0 4px 24px #0008;
+  }
+  #wordMenu:not(.collapsed) { overflow-y: auto; overscroll-behavior: contain; }
+  #wordMenu #menuHeader { touch-action: auto; flex-shrink: 0; }
+  #wordMenu #menuHeader .title, #wordMenu #menuHeader .right { flex-wrap: wrap; white-space: normal; }
+  #wordMenu .info-btn, #wordMenu .menu-btn, #wordMenu #toggleMenu,
+  #wordMenu .menu-font-controls button { min-width: 44px; width: 44px; height: 44px; font-size: 16px; line-height: 1; margin-right: 0; }
+  #wordMenu > button, #wordMenu > select, #wordMenu #wordList li { min-height: 44px; flex-shrink: 0; }
+  #wordMenu #wordList { min-height: 44px; overscroll-behavior: contain; touch-action: pan-y; }
+  #wordMenu #wordList li { box-sizing: border-box; padding: 10px 6px; }
+  #wordMenu .menu-resize-handle, #wordMenu #mobileMenuOptions,
+  #wordMenu .scroll-zoom-toggle, #wordMenu #scrollZoomToggle { display: none !important; }
+  #wordMenu.collapsed > :not(#menuHeader) { display: none !important; }
+  #wordMenu .tooltip, #wordMenu .tooltip.help-tooltip {
+    position: fixed; top: auto; bottom: calc(62dvh + 8px); left: 12px; right: 12px;
+    width: auto; min-width: 0; max-width: none; max-height: 30dvh; overflow: auto;
+  }
+  #wordMenu .mobile-puzzle-zoom { display: flex; gap: 8px; padding: 6px 8px; flex-shrink: 0; }
+  .mobile-puzzle-zoom button { flex: 1; min-height: 44px; font: inherit; }
+}
+
+
+@media (max-width: 900px) and (any-pointer: coarse) {
+  #wordMenu.puzzle-panel, #wordMenu.puzzle-panel.collapsed {
+    min-height: 0;
+    max-height: min(60dvh, var(--mobile-menu-height, 60dvh)) !important;
+  }
+  #wordMenu.puzzle-panel #menuHeader { flex: 0 0 auto; max-height: none; overflow: visible; touch-action: pan-y; }
+  #wordMenu.puzzle-panel .panel-primary { touch-action: pan-y; }
+  #wordMenu.puzzle-panel #menuHeader button,
+  #wordMenu.puzzle-panel #menuHeader a { width: auto; min-width: 44px; min-height: 44px; height: auto; }
+  #wordMenu.puzzle-panel .panel-options summary { min-height: 44px; box-sizing: border-box; }
+  #wordMenu.puzzle-panel.collapsed .panel-options { display: none; }
+  #wordMenu.puzzle-panel .panel-resize { display: none; }
+  #wordMenu.puzzle-panel .panel-footer { flex: 0 0 auto; max-height: none; }
+  #wordMenu.puzzle-panel .panel-footer > button,
+  #wordMenu.puzzle-panel .panel-footer > select { min-height: 44px; }
+  #wordMenu.puzzle-panel #wordList { min-height: 44px; flex: 1 1 auto; }
+  #wordMenu.puzzle-panel .tooltip { bottom: auto; }
+  .panel-restore { top: auto; bottom: max(8px, env(safe-area-inset-bottom)); min-height: 44px; }
+}

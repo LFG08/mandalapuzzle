@@ -241,6 +241,7 @@
   </style>
   <link rel="stylesheet" href="../shared/jigsaw-layout.css">
   <script src="../shared/jigsaw-tray.js"></script>
+<link rel="stylesheet" href="../shared/mobile-jigsaw.css">
 </head>
 <body>
   <main class="app">
@@ -865,7 +866,7 @@
       const piece = drag.piece;
       const br = boardRect();
       const inBoard = evt.clientX >= br.left && evt.clientX <= br.right && evt.clientY >= br.top && evt.clientY <= br.bottom;
-      if (inBoard && tryPlace(piece, evt.clientX, evt.clientY)) {
+      if (globalThis.jigsawDropInsideBoard?.() !== false && inBoard && tryPlace(piece, evt.clientX, evt.clientY)) {
         drag = null;
         dctx.clearRect(0, 0, dragLayer.width, dragLayer.height);
         renderBoard();
@@ -1010,5 +1011,6 @@
     const originalLayoutTray = layoutTray;
     layoutTray = function (...args) { const result=originalLayoutTray(...args); notifyTrayLayout(); return result; };
   </script>
+<script src="../shared/mobile-jigsaw.js"></script>
 </body>
 </html>

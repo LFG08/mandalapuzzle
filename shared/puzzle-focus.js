@@ -31,7 +31,7 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       if (type === sideButtonDown) {
-        window.scrollBy({ left: event.button === 3 ? -160 : 160, top: 0, behavior: "smooth" });
+        (document.querySelector(".mobile-puzzle-viewport") || window).scrollBy({ left: event.button === 3 ? -160 : 160, top: 0, behavior: "smooth" });
       }
     }, { capture: true, passive: false });
   }

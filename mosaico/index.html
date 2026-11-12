@@ -50,12 +50,13 @@
     @media (max-width:1320px){.board{margin:0}}
     @media (max-width:860px){.app{width:min(100vw - 18px,100%)}.card,.trayWrap,.boardWrap{border-radius:18px}.boardWrap{overflow:auto}}
   </style>
+<link rel="stylesheet" href="../shared/mobile-jigsaw.css">
 </head>
 <body>
   <main class="app">
     <section class="layout">
       <div class="boardWrap">
-        <div id="board" class="board"></div>
+        <div id="board" class="board" data-touch-rotate data-touch-remove></div>
       </div>
       <aside class="trayWrap">
         <div class="card">
@@ -233,6 +234,7 @@
       // Mouse chords emit mousedown, not a second pointerdown. Keep native mouse events available.
       node.onpointerdown=e=>{if(e.pointerType!=="mouse")startDrag(e,piece)};
       node.onmousedown=e=>{if(e.button===0)startDrag(e,piece);else if(e.button===2&&!st.drag){e.preventDefault();st.suppressContextMenu=true;selectPiece(piece);rotatePiece(piece)}};
+      node.addEventListener("jigsaw-touch-rotate",()=>rotatePiece(piece));
       node.onfocus=()=>selectPiece(piece);
       node.oncontextmenu=e=>e.preventDefault();
       el.tray.appendChild(node);return piece;
@@ -274,7 +276,7 @@
     function startDrag(e,piece){
       if(st.difficulty===null)return;
       if(e.button===2)return;
-      if(st.drag||e.button!==0||(piece.placed&&!e.ctrlKey))return;
+      if(st.drag||e.button!==0||(piece.placed&&!e.ctrlKey&&globalThis.jigsawTouchRemoval!==true))return;
       selectPiece(piece);
       e.preventDefault();rects();
       const r=piece.node.getBoundingClientRect();
@@ -315,7 +317,7 @@
       if(removing){
         const x=e?.clientX??piece.currentX+st.drag.ox,y=e?.clientY??piece.currentY+st.drag.oy;
         const outside=x<st.boardRect.left||x>=(st.boardRect.right??st.boardRect.left+BOARD)||y<st.boardRect.top||y>=(st.boardRect.bottom??st.boardRect.top+BOARD);
-        if(outside){
+        if(outside||globalThis.jigsawDropInsideBoard?.(x,y)===false){
           piece.placed=false;piece.slot=null;piece.node.classList.remove("placed");st.completionShown=false;
           backToTray(piece);status();
           el.tray.scrollLeft=Math.max(0,piece.sourceX-12);el.tray.scrollTop=Math.max(0,piece.sourceY-12);
@@ -323,7 +325,7 @@
         }else returnToPlacedSlot(piece);
       }else{
         const slot=availableSlot(piece);
-        if(slot)dropOnBoard(piece,slot);else backToTray(piece);
+        if(slot&&globalThis.jigsawDropInsideBoard?.()!==false)dropOnBoard(piece,slot);else backToTray(piece);
       }
       st.drag=null;
       reflowTrayIfNeeded();
@@ -459,5 +461,6 @@
       }catch{}
     }
   </script>
+<script src="../shared/mobile-jigsaw.js"></script>
 </body>
 </html>

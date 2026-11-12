@@ -21,6 +21,7 @@
 <script src="../shared/puzzle-focus.js" defer></script>
 <script src="../shared/puzzle-audio.js"></script>
 <link rel="stylesheet" href="../shared/puzzle-panels.css">
+<link rel="stylesheet" href="../shared/mobile-navigation.css">
 </head>
 <body>
 <div id="wordMenu">
@@ -91,7 +92,8 @@ document.addEventListener("dragstart",e=>e.preventDefault());
 const STORAGE_KEY="lispenardStreetProgressV1", GUESS_KEY="lispenardStreetGuessesV1", HINT_KEY="lispenardStreetHintsV1", GATE_KEY="lispenardStreetGateV1", SPOILER_KEY="lispenardStreetSpoilersV1", SPOILER_ALERT_KEY="lispenardStreetSpoilerAlertV1", MENU_ZOOM_KEY="lispenardStreetMenuZoomV1", MANDALA_ZOOM_KEY="lispenardStreetMandalaZoomV1", SCROLL_ZOOM_KEY="lispenardStreetScrollZoomV1";
 const wordList=document.getElementById("wordList"), answersOverlay=document.getElementById("answersOverlay"), counter=document.getElementById("counter"), menu=document.getElementById("wordMenu"), tooltip=document.getElementById("wordTooltip");
 const MANDALA_WIDTH=3072, MANDALA_HEIGHT=3072;
-const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), guesses:JSON.parse(localStorage.getItem(GUESS_KEY)||"{}"), hints:JSON.parse(localStorage.getItem(HINT_KEY)||"{}"), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)!=="off", scrollZoom:localStorage.getItem(SCROLL_ZOOM_KEY)!=="off", menuZoom:Number(localStorage.getItem(MENU_ZOOM_KEY)||1)||1, mandalaZoom:Number(localStorage.getItem(MANDALA_ZOOM_KEY)||1)||1, audio:new Map(), endDismissed:false};
+function mandalaZoomPreferenceKey(){return MANDALA_ZOOM_KEY+(matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches?"Mobile":"");}
+const state={found:new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")), guesses:JSON.parse(localStorage.getItem(GUESS_KEY)||"{}"), hints:JSON.parse(localStorage.getItem(HINT_KEY)||"{}"), deselect:true, rotation:0, spoilers:localStorage.getItem(SPOILER_KEY)!=="off", scrollZoom:localStorage.getItem(SCROLL_ZOOM_KEY)!=="off", menuZoom:Number(localStorage.getItem(MENU_ZOOM_KEY)||1)||1, mandalaZoom:Number(localStorage.getItem(mandalaZoomPreferenceKey())||1)||1, audio:new Map(), endDismissed:false};
 const BELL_SEQUENCE=["C","D","F","A","A","Bb","A","G","G","F","G","A","highC","Bb"];
 const BELL_SOUNDS={
   C:"../sound_effects/339815__inspectorj__hand-bells-low-C-single.wav",
@@ -292,24 +294,32 @@ document.getElementById("clearButton").onclick=()=>{if(confirm("Resetar progress
 document.getElementById("toggleClickMode").onclick=()=>{state.deselect=!state.deselect;sync();};
 document.getElementById("rotateMandala").onclick=()=>{state.rotation=(state.rotation+90)%360;document.getElementById("rotateMandala").textContent=`Rotate (${state.rotation}°)`;sync();};
 const zoomMandalaButton=document.getElementById("zoomMandala");
-if(zoomMandalaButton){zoomMandalaButton.onclick=()=>{state.mandalaZoom=state.mandalaZoom>=1.5?.75:Number((state.mandalaZoom+.25).toFixed(2));localStorage.setItem(MANDALA_ZOOM_KEY,state.mandalaZoom);sync();};}
+if(zoomMandalaButton){zoomMandalaButton.onclick=()=>{state.mandalaZoom=state.mandalaZoom>=1.5?.75:Number((state.mandalaZoom+.25).toFixed(2));localStorage.setItem(mandalaZoomPreferenceKey(),state.mandalaZoom);sync();};}
 const zoomMenuWordsButton=document.getElementById("zoomMenuWords");
 if(zoomMenuWordsButton){zoomMenuWordsButton.onclick=()=>{state.menuZoom=state.menuZoom>=1.75?.75:Number((state.menuZoom+.25).toFixed(2));localStorage.setItem(MENU_ZOOM_KEY,state.menuZoom);sync();};}
 document.getElementById("spoilersToggle").onclick=()=>{state.spoilers=!state.spoilers;localStorage.setItem(SPOILER_KEY,state.spoilers?"on":"off");sync();};
 
-function minimumMandalaZoom(){return Math.min(1,Math.max(innerWidth/MANDALA_WIDTH,innerHeight/MANDALA_HEIGHT));}
-function clampZoom(value,min,max){return Math.min(max,Math.max(min,Number(value.toFixed(2))));}
+function minimumMandalaZoom(){return Math.min(1,(matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches?Math.min:Math.max)(innerWidth/MANDALA_WIDTH,(document.querySelector(".mobile-puzzle-viewport")?.clientHeight||innerHeight)/MANDALA_HEIGHT));}
+function clampZoom(value,min,max){return Math.min(max,Math.max(min,Number(value.toFixed(matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches?4:2))));}
+let mandalaZoomMode=matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
 function setMandalaZoom(nextZoom,event){
+  const mobile=matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
+  if(mandalaZoomMode!==mobile){mandalaZoomMode=mobile;state.mandalaZoom=Number(localStorage.getItem(mandalaZoomPreferenceKey()))||1;nextZoom=state.mandalaZoom;sync();}
   const oldZoom=state.mandalaZoom, newZoom=clampZoom(nextZoom,minimumMandalaZoom(),2.5);
   if(newZoom===oldZoom)return;
   const anchorX=event?event.clientX:innerWidth/2, anchorY=event?event.clientY:innerHeight/2;
   const beforeX=(scrollX+anchorX)/oldZoom, beforeY=(scrollY+anchorY)/oldZoom;
   state.mandalaZoom=newZoom;
-  localStorage.setItem(MANDALA_ZOOM_KEY,state.mandalaZoom);
+  localStorage.setItem(mandalaZoomPreferenceKey(),state.mandalaZoom);
   sync();
   scrollTo(beforeX*newZoom-anchorX,beforeY*newZoom-anchorY);
 }
+document.addEventListener("puzzle-mobile-zoom",event=>{
+  setMandalaZoom(event.detail==="fit"?minimumMandalaZoom():state.mandalaZoom*(event.detail==="in"?1.25:.8));
+  if(event.detail==="fit")scrollTo(0,0);
+});
 state.mandalaZoom=clampZoom(state.mandalaZoom,minimumMandalaZoom(),2.5);
+matchMedia("(max-width: 900px) and (any-pointer: coarse)").addEventListener("change",()=>setMandalaZoom(Number(localStorage.getItem(mandalaZoomPreferenceKey()))||1));
 window.addEventListener("resize",()=>setMandalaZoom(state.mandalaZoom));
 function setMenuZoom(nextZoom){
   state.menuZoom=clampZoom(nextZoom,.75,1.8);
@@ -350,6 +360,7 @@ function isMenuScrollbarInteraction(event){
   return event.clientX>=rect.right-scrollbarWidth;
 }
 function menuResizeEdges(event){
+  if(matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches)return "";
   if(menu.classList.contains("collapsed")||event.target.closest?.("button,a"))return "";
   if(isMenuScrollbarInteraction(event))return "";
   const rect=menu.getBoundingClientRect();
@@ -413,5 +424,6 @@ document.addEventListener("keydown",event=>{if(event.ctrlKey||event.metaKey||eve
 
 </script>
 <script charset="utf-8" src="../shared/puzzle-panels.js"></script>
+<script src="../shared/mobile-navigation.js"></script>
 </body>
 </html>

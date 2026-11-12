@@ -426,6 +426,7 @@
   </style>
   <link rel="stylesheet" href="../shared/jigsaw-layout.css">
   <script src="../shared/jigsaw-tray.js"></script>
+<link rel="stylesheet" href="../shared/mobile-jigsaw.css">
 </head>
   <body>
   <main class="app-shell">
@@ -1168,7 +1169,7 @@
         Math.abs(piece.currentX - (state.boardRect.left + piece.targetX)) <= SNAP_AXIS_TOLERANCE &&
         Math.abs(piece.currentY - (state.boardRect.top + piece.targetY)) <= SNAP_AXIS_TOLERANCE;
 
-      if (distance <= SNAP_DISTANCE || axisAligned) {
+      if (globalThis.jigsawDropInsideBoard?.() !== false && (distance <= SNAP_DISTANCE || axisAligned)) {
         placePiece(piece);
       } else {
         returnPieceToTray(piece);
@@ -1425,5 +1426,6 @@
     const originalTraySave = saveProgress;
     saveProgress = function (...args) { const result=originalTraySave(...args); notifyTrayLayout(); return result; };
   </script>
+<script src="../shared/mobile-jigsaw.js"></script>
 </body>
 </html>

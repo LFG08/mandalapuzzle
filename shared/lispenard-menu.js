@@ -11,7 +11,10 @@
   const savedSharedMenuZoom = Number(localStorage.getItem(menuZoomKey));
   const savedPuzzleMenuZoom = Number(localStorage.getItem(prefix + "menuZoom"));
   let menuZoom = savedSharedMenuZoom || savedPuzzleMenuZoom || 1;
-  let mandalaZoom = Number(localStorage.getItem(prefix + "mandalaZoom")) || 1;
+  const mobileLayout = matchMedia("(max-width: 900px) and (any-pointer: coarse)");
+  const zoomKey = () => prefix + (mobileLayout.matches ? "mobileMandalaZoom" : "mandalaZoom");
+  let mandalaZoom = Number(localStorage.getItem(zoomKey())) || 1;
+  let zoomMode = mobileLayout.matches;
   let scrollZoomEnabled = localStorage.getItem(prefix + "scrollZoom") !== "off";
 
   // Menu presentation is a user preference shared by every caça-palavras.
@@ -21,7 +24,7 @@
   }
 
   function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, Number(value.toFixed(2))));
+    return Math.min(max, Math.max(min, Number(value.toFixed(mobileLayout.matches ? 4 : 2))));
   }
 
   function syncMenuZoom() {
@@ -30,6 +33,7 @@
   }
 
   function keepMenuInViewport() {
+    if (mobileLayout.matches) return;
     const rect = menu.getBoundingClientRect();
     const gutter = 8;
     const maxLeft = Math.max(gutter, innerWidth - rect.width - gutter);
@@ -57,9 +61,19 @@
   }
 
   function syncMandalaZoom(nextZoom, event) {
+    // Resize can fire before the media-query change event. Restore the matching
+    // preference before clamping, so the previous mode cannot overwrite it.
+    if (zoomMode !== mobileLayout.matches) {
+      zoomMode = mobileLayout.matches;
+      mandalaZoom = Number(localStorage.getItem(zoomKey())) || 1;
+      container.style.zoom = mandalaZoom;
+      nextZoom = mandalaZoom;
+    }
     const oldZoom = mandalaZoom;
     const configuredMinimum = Number(container.dataset.minZoom);
-    const minimumZoom = container.dataset.minZoom === "fit"
+    const minimumZoom = matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches
+      ? Math.min(1, innerWidth / container.offsetWidth, (document.querySelector(".mobile-puzzle-viewport")?.clientHeight || innerHeight) / container.offsetHeight)
+      : container.dataset.minZoom === "fit"
       ? Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight))
       : Number.isFinite(configuredMinimum) && configuredMinimum > 0 ? configuredMinimum : .5;
     const newZoom = clamp(nextZoom, minimumZoom, 2.5);
@@ -73,7 +87,7 @@
 
     mandalaZoom = newZoom;
     container.style.zoom = mandalaZoom;
-    localStorage.setItem(prefix + "mandalaZoom", mandalaZoom);
+    localStorage.setItem(zoomKey(), mandalaZoom);
 
     scrollTo(
       scrollX + rect.left + contentX * newZoom - anchorX,
@@ -81,17 +95,26 @@
     );
   }
 
+  mobileLayout.addEventListener("change", () => {
+    const next = Number(localStorage.getItem(zoomKey())) || 1;
+    syncMandalaZoom(next);
+  });
+  document.addEventListener("puzzle-mobile-zoom", function (event) {
+    const fit = Math.min(1, innerWidth / container.offsetWidth, (document.querySelector(".mobile-puzzle-viewport")?.clientHeight || innerHeight) / container.offsetHeight);
+    syncMandalaZoom(event.detail === "fit" ? fit : mandalaZoom * (event.detail === "in" ? 1.25 : .8));
+    if (event.detail === "fit") scrollTo(0, 0);
+  });
   syncMenuZoom();
   const savedMenuWidth = Number(localStorage.getItem(menuWidthKey));
   if (Number.isFinite(savedMenuWidth) && savedMenuWidth >= 190) {
     menu.style.width = `${Math.min(savedMenuWidth, Math.max(190, innerWidth - 16))}px`;
   }
-  if (container.dataset.minZoom === "fit") {
+  if (!mobileLayout.matches && container.dataset.minZoom === "fit") {
     const fitMinimum = Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight));
     mandalaZoom = clamp(mandalaZoom, fitMinimum, 2.5);
   } else {
     const configuredMinimum = Number(container.dataset.minZoom);
-    if (Number.isFinite(configuredMinimum) && configuredMinimum > 0) {
+    if (!mobileLayout.matches && Number.isFinite(configuredMinimum) && configuredMinimum > 0) {
       mandalaZoom = clamp(mandalaZoom, configuredMinimum, 2.5);
     }
   }

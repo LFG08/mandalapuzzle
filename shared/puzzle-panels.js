@@ -6,13 +6,15 @@
   menu.classList.add('puzzle-panel');
   const hasList = Boolean(menu.querySelector('#wordList'));
   menu.classList.toggle('panel-without-list', !hasList);
+  const mobileLayout = matchMedia('(max-width: 900px) and (any-pointer: coarse)');
   const key = `puzzlePanel:${location.pathname}`;
+  const mobileKey = key + ':mobile';
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch (_) {}
   if (typeof saved !== 'object' || Array.isArray(saved)) saved = {};
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
   function fit() {
-    if (menu.hidden) return;
+    if (menu.hidden || mobileLayout.matches) return;
     const r = menu.getBoundingClientRect();
     menu.style.left = `${clamp(r.left, 8, innerWidth - r.width - 8)}px`;
     menu.style.top = `${clamp(r.top, 8, innerHeight - r.height - 8)}px`;
@@ -20,6 +22,10 @@
     menu.style.bottom = 'auto';
   }
   function remember() {
+    if (mobileLayout.matches) {
+      try { localStorage.setItem(mobileKey, JSON.stringify({hidden: menu.hidden})); } catch (_) {}
+      return;
+    }
     const next = { ...saved, hidden: menu.hidden };
     if (!menu.hidden) {
       const r = menu.getBoundingClientRect();
@@ -29,6 +35,10 @@
     try { localStorage.setItem(key, JSON.stringify(saved)); } catch (_) {}
   }
   function restoreLayout() {
+    if (mobileLayout.matches) {
+      try { menu.hidden = JSON.parse(localStorage.getItem(mobileKey))?.hidden === true; } catch (_) { menu.hidden = false; }
+      return;
+    }
     menu.hidden = saved.hidden === true;
     for (const prop of ['left', 'top', 'width']) {
       if (Number.isFinite(saved[prop])) menu.style[prop] = `${saved[prop]}px`;
@@ -37,6 +47,7 @@
     if (typeof saved.collapsed === 'boolean') menu.classList.toggle('collapsed', saved.collapsed);
   }
   restoreLayout();
+  mobileLayout.addEventListener('change', () => { restoreLayout(); restore.hidden = !menu.hidden; syncToggle(); fit(); });
   const actions = header.querySelector('.right, .menu-actions, .title:last-child') || header;
   const hide = document.createElement('button');
   hide.type = 'button'; hide.textContent = '\u00d7'; hide.title = 'Ocultar menu'; hide.setAttribute('aria-label', hide.title);

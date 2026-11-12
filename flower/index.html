@@ -40,6 +40,7 @@
   </style>
   <link rel="stylesheet" href="../shared/jigsaw-layout.css">
   <script src="../shared/jigsaw-tray.js"></script>
+<link rel="stylesheet" href="../shared/mobile-jigsaw.css">
 </head>
 <body>
   <main class="app">
@@ -272,7 +273,7 @@
       if(!st.drag)return;const {piece}=st.drag;piece.node.classList.remove("drag");
       const cx=piece.currentX+piece.w/2,cy=piece.currentY+piece.h/2,tx=st.boardRect.left+piece.targetX+piece.w/2,ty=st.boardRect.top+piece.targetY+piece.h/2;
       const d=Math.hypot(cx-tx,cy-ty),axis=Math.abs(piece.currentX-(st.boardRect.left+piece.targetX))<=AXIS&&Math.abs(piece.currentY-(st.boardRect.top+piece.targetY))<=AXIS;
-      if(d<=SNAP||axis)dropOnBoard(piece);else backToTray(piece);st.drag=null;removeEventListener("pointermove",moveDrag)
+      if(globalThis.jigsawDropInsideBoard?.()!==false&&(d<=SNAP||axis))dropOnBoard(piece);else backToTray(piece);st.drag=null;removeEventListener("pointermove",moveDrag)
     }
     function placeAt(piece,left,top){piece.currentX=left;piece.currentY=top;piece.node.style.left=`${left}px`;piece.node.style.top=`${top}px`}
     function dropOnBoard(piece){
@@ -429,5 +430,6 @@
     const originalTraySave = save;
     save = function (...args) { const result=originalTraySave(...args); notifyTrayLayout(); return result; };
   </script>
+<script src="../shared/mobile-jigsaw.js"></script>
 </body>
 </html>

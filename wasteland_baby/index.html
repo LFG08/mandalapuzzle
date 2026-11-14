@@ -82,7 +82,7 @@ animation:hintPulse 0.9s ease-in-out 2;
 /* ================= BACKGROUND ================= */
 
 body{
-background:rgb(56,21,0);
+background:#021328;
 margin:0;
 overflow:auto;
 cursor:grab;
@@ -357,7 +357,7 @@ color:#f0c28b;
 
 <div class="container" data-zoom-container data-min-zoom="fit">
 
-<img src="wasteland_baby_mandala.png" alt="Mandala Wasteland, Baby! — Hozier" width="2048" height="2048" usemap="#image-map">
+<img src="wasteland_mandala_v1.png" alt="Mandala Wasteland, Baby! — Hozier" width="2048" height="2048" usemap="#image-map">
 
 <div id="answersOverlay"></div>
 <div id="regionHint-1" class="hint-region" style="left:1px;top:2px;width:2045px;height:690px;"></div>
@@ -366,13 +366,7 @@ color:#f0c28b;
 
 </div>
 
-<footer class="sound-credits">
-Som: <cite>SYS_Ominous_Jingle</cite>, por
-<a href="https://freesound.org/people/MirMaximus/" target="_blank" rel="noopener noreferrer">MirMaximus</a>,
-disponível no
-<a href="https://freesound.org/s/865579/" target="_blank" rel="noopener noreferrer">Freesound</a> sob a licença
-<a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="license noopener noreferrer">CC0 1.0</a>.
-</footer>
+<footer class="sound-credits">Som: melodia sintetizada a partir da partitura fornecida.</footer>
 
 <!-- ================= IMAGE MAP ================= -->
 
@@ -571,45 +565,58 @@ const answerClips={};
 
 const soundStorageKey = "WASTELAND_BABY_soundEnabled";
 const soundButton = document.getElementById("soundButton");
-const soundEffectUrl = "/sound_effects/865579__mirmaximus__sys_ominous_jingle.wav";
+// Treble clef, one flat: D5 C5 A4 C5 D5 G4 F4 G4 A4 F4 C4.
+// One note per discovery; repeat the phrase for the remaining answers.
+const discoveryNotes = [74, 72, 69, 72, 74, 67, 65, 67, 69, 65, 60];
 let soundEnabled = localStorage.getItem(soundStorageKey) !== "false";
 let audioContext;
-let soundEffectBuffer;
+
 
 function updateSoundButton(){
   soundButton.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
   soundButton.setAttribute("aria-pressed", String(soundEnabled));
 }
 
-async function loadSoundEffect(){
-  if(soundEffectBuffer) return;
+function prepareAudio(){
   audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-  const response=await fetch(soundEffectUrl);
-  if(!response.ok) throw new Error("Não foi possível carregar o efeito sonoro.");
-  soundEffectBuffer=await audioContext.decodeAudioData(await response.arrayBuffer());
+  return audioContext.resume();
 }
 
 updateSoundButton();
-loadSoundEffect().catch(()=>{});
 
 soundButton.addEventListener("click",()=>{
   soundEnabled=!soundEnabled;
   localStorage.setItem(soundStorageKey,String(soundEnabled));
   updateSoundButton();
-  if(soundEnabled) loadSoundEffect().catch(()=>{});
+  if(soundEnabled) prepareAudio().catch(()=>{});
 });
 
 let isLoadingProgress = false;
 
-function playFoundSound(){
-  if(isLoadingProgress || !soundEnabled || !soundEffectBuffer) return;
-  audioContext.resume();
-  const source=audioContext.createBufferSource();
-  const gain=audioContext.createGain();
-  source.buffer=soundEffectBuffer;
-  gain.gain.setValueAtTime(0.7,audioContext.currentTime);
-  source.connect(gain).connect(audioContext.destination);
-  source.start();
+async function playFoundSound(){
+  if(isLoadingProgress || !soundEnabled) return;
+  const foundCount = document.querySelectorAll("#wordList li.found").length;
+  const midi = discoveryNotes[(foundCount - 1) % discoveryNotes.length];
+  try {
+    await prepareAudio();
+    const now = audioContext.currentTime;
+    const frequency = 440 * Math.pow(2, (midi - 69) / 12);
+    // A soft struck tone with a short attack and a natural decay.
+    [1, 2, 3].forEach((harmonic, index) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.frequency.value = frequency * harmonic;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.18 / (harmonic * harmonic), now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8 - index * 0.12);
+      oscillator.connect(gain).connect(audioContext.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.85);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    });
+  } catch(error) {
+    console.warn("Não foi possível reproduzir a nota.", error);
+  }
 }
 
 function toggleAnswer(area,word){

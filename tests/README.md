@@ -62,3 +62,14 @@ small screens and landscape. It also checks canvas dragging in Pavão and cancel
 gestures in Green Eye. The “Explorar” control switches between dragging
 pieces and scrolling over pieces/canvas; Mosaico also exposes “Girar peça” and
 “Retirar peça”. Desktop board coordinates and the existing save formats stay intact.
+
+## Hint navigation checks
+
+```sh
+node tests/hint-navigation.cjs
+```
+
+Checks every Wasteland Baby, Cores, and Mais Gatos hint destination at desktop
+and mobile viewport sizes, 70% and 140% zoom, and all four rotations. Verifies
+that each hint scrolls once to the rendered answer position and shows its region.
+Uses the same `TEST_ORIGIN` and `CHROMIUM_BINARY` settings as the other browser checks.

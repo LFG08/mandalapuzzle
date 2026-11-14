@@ -419,32 +419,6 @@ return 3;
 
 let activeRegionHintTimeout = null;
 
-function centerViewOnRegion(regionEl){
-if(!regionEl) return;
-let container = document.querySelector(".container");
-if(!container) return;
-
-let containerRect = container.getBoundingClientRect();
-let left = Number(regionEl.style.left.replace("px", "")) || 0;
-let top = Number(regionEl.style.top.replace("px", "")) || 0;
-let width = Number(regionEl.style.width.replace("px", "")) || regionEl.offsetWidth;
-let height = Number(regionEl.style.height.replace("px", "")) || regionEl.offsetHeight;
-let regionCenterX = left + (width / 2);
-let regionCenterY = top + (height / 2);
-
-let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
-let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
-
-let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
-let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-
-window.scrollTo({
-left: Math.min(Math.max(targetX, 0), maxX),
-top: Math.min(Math.max(targetY, 0), maxY),
-behavior: "smooth"
-});
-}
-
 function showRegionHint(regionId){
 document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
 let el = document.getElementById("regionHint-" + regionId);
@@ -455,7 +429,7 @@ clearTimeout(activeRegionHintTimeout);
 }
 
 el.classList.add("active");
-centerViewOnRegion(el);
+
 
 activeRegionHintTimeout = setTimeout(() => el.classList.remove("active"), 2200);
 }
@@ -554,6 +528,9 @@ if(regionId){
 li.dataset.hintLevel = "1";
 saveHints();
 showRegionHint(regionId);
+const area = Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area =>
+  (area.getAttribute("onclick") || "").includes("'" + word + "'"));
+window.PuzzleHints.centerArea(area);
 }
 });
 });
@@ -845,6 +822,7 @@ JSON.stringify(Object.keys(answerClips)
 </script>
 
 <script src="../shared/image-map-targets.js"></script>
+<script src="../shared/puzzle-hints.js"></script>
 
 
 

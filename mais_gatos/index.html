@@ -641,27 +641,7 @@ function getAreaBounds(area){
 }
 
 function centerViewOnArea(area){
-  let bounds = getAreaBounds(area);
-  if(!bounds) return;
-
-  let container = document.querySelector(".container");
-  if(!container) return;
-
-  let containerRect = container.getBoundingClientRect();
-  let areaCenterX = (bounds.minX + bounds.maxX) / 2;
-  let areaCenterY = (bounds.minY + bounds.maxY) / 2;
-
-  let targetX = window.scrollX + containerRect.left + areaCenterX - (window.innerWidth / 2);
-  let targetY = window.scrollY + containerRect.top + areaCenterY - (window.innerHeight / 2);
-
-  let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
-  let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-
-  window.scrollTo({
-    left: clamp(targetX, 0, maxX),
-    top: clamp(targetY, 0, maxY),
-    behavior: "smooth"
-  });
+  window.PuzzleHints.centerArea(area);
 }
 
 function showRegionHint(regionId){
@@ -1057,6 +1037,7 @@ window.addEventListener("resize", () => {
 
 <script src="../completion-popup.js"></script>
 <script src="../shared/image-map-targets.js"></script>
+<script src="../shared/puzzle-hints.js"></script>
 <script src="../shared/lispenard-menu.js"></script>
 <script charset="utf-8" src="../shared/puzzle-panels.js"></script>
 <script src="../shared/mobile-navigation.js"></script>

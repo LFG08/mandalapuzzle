@@ -366,7 +366,13 @@ color:#f0c28b;
 
 </div>
 
-<footer class="sound-credits">Som: melodia sintetizada a partir da partitura fornecida.</footer>
+<footer class="sound-credits">
+Som: <cite>SYS_Ominous_Jingle</cite>, por
+<a href="https://freesound.org/people/MirMaximus/" target="_blank" rel="noopener noreferrer">MirMaximus</a>,
+disponível no
+<a href="https://freesound.org/s/865579/" target="_blank" rel="noopener noreferrer">Freesound</a> sob a licença
+<a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="license noopener noreferrer">CC0 1.0</a>.
+</footer>
 
 <!-- ================= IMAGE MAP ================= -->
 
@@ -375,7 +381,7 @@ color:#f0c28b;
 <area alt="Movement" coords="912,45,1005,45,1005,125,912,125" shape="poly" onclick="toggleAnswer(this,'Movement');return false;">
 <area alt="Almost" coords="1640,0,1810,0,1810,115,1640,115" shape="poly" onclick="toggleAnswer(this,'Almost');return false;">
 <area alt="Be" coords="1875,40,2010,40,2010,175,1875,175" shape="poly" onclick="toggleAnswer(this,'Be');return false;">
-<area alt="Sing" coords="1310,480,1370,480,1370,530,1310,530" shape="poly" onclick="toggleAnswer(this,'Sing');return false;">
+<area alt="Sing" coords="550,630,610,630,610,690,550,690" shape="poly" onclick="toggleAnswer(this,'Sing');return false;">
 <area alt="Talk" coords="1360,550,1415,550,1415,605,1360,605" shape="poly" onclick="toggleAnswer(this,'Talk');return false;">
 <area alt="Would That I" coords="500,1030,645,1030,645,1110,500,1110" shape="poly" onclick="toggleAnswer(this,'WouldThatI');return false;">
 <area alt="No Plan" coords="920,1015,1005,1015,1005,1070,920,1070" shape="poly" onclick="toggleAnswer(this,'NoPlan');return false;">
@@ -413,32 +419,6 @@ return 3;
 
 let activeRegionHintTimeout = null;
 
-function centerViewOnRegion(regionEl){
-if(!regionEl) return;
-let container = document.querySelector(".container");
-if(!container) return;
-
-let containerRect = container.getBoundingClientRect();
-let left = Number(regionEl.style.left.replace("px", "")) || 0;
-let top = Number(regionEl.style.top.replace("px", "")) || 0;
-let width = Number(regionEl.style.width.replace("px", "")) || regionEl.offsetWidth;
-let height = Number(regionEl.style.height.replace("px", "")) || regionEl.offsetHeight;
-let regionCenterX = left + (width / 2);
-let regionCenterY = top + (height / 2);
-
-let targetX = window.scrollX + containerRect.left + regionCenterX - (window.innerWidth / 2);
-let targetY = window.scrollY + containerRect.top + regionCenterY - (window.innerHeight / 2);
-
-let maxX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
-let maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-
-window.scrollTo({
-left: Math.min(Math.max(targetX, 0), maxX),
-top: Math.min(Math.max(targetY, 0), maxY),
-behavior: "smooth"
-});
-}
-
 function showRegionHint(regionId){
 document.querySelectorAll(".hint-region.active").forEach(el => el.classList.remove("active"));
 let el = document.getElementById("regionHint-" + regionId);
@@ -449,7 +429,7 @@ clearTimeout(activeRegionHintTimeout);
 }
 
 el.classList.add("active");
-centerViewOnRegion(el);
+
 
 activeRegionHintTimeout = setTimeout(() => el.classList.remove("active"), 2200);
 }
@@ -548,6 +528,9 @@ if(regionId){
 li.dataset.hintLevel = "1";
 saveHints();
 showRegionHint(regionId);
+const area = Array.from(document.querySelectorAll("map[name='image-map'] area")).find(area =>
+  (area.getAttribute("onclick") || "").includes("'" + word + "'"));
+window.PuzzleHints.centerArea(area);
 }
 });
 });
@@ -565,58 +548,45 @@ const answerClips={};
 
 const soundStorageKey = "WASTELAND_BABY_soundEnabled";
 const soundButton = document.getElementById("soundButton");
-// Treble clef, one flat: D5 C5 A4 C5 D5 G4 F4 G4 A4 F4 C4.
-// One note per discovery; repeat the phrase for the remaining answers.
-const discoveryNotes = [74, 72, 69, 72, 74, 67, 65, 67, 69, 65, 60];
+const soundEffectUrl = "/sound_effects/865579__mirmaximus__sys_ominous_jingle.wav";
 let soundEnabled = localStorage.getItem(soundStorageKey) !== "false";
 let audioContext;
-
+let soundEffectBuffer;
 
 function updateSoundButton(){
   soundButton.textContent = soundEnabled ? "Som: ON" : "Som: OFF";
   soundButton.setAttribute("aria-pressed", String(soundEnabled));
 }
 
-function prepareAudio(){
+async function loadSoundEffect(){
+  if(soundEffectBuffer) return;
   audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-  return audioContext.resume();
+  const response=await fetch(soundEffectUrl);
+  if(!response.ok) throw new Error("Não foi possível carregar o efeito sonoro.");
+  soundEffectBuffer=await audioContext.decodeAudioData(await response.arrayBuffer());
 }
 
 updateSoundButton();
+loadSoundEffect().catch(()=>{});
 
 soundButton.addEventListener("click",()=>{
   soundEnabled=!soundEnabled;
   localStorage.setItem(soundStorageKey,String(soundEnabled));
   updateSoundButton();
-  if(soundEnabled) prepareAudio().catch(()=>{});
+  if(soundEnabled) loadSoundEffect().catch(()=>{});
 });
 
 let isLoadingProgress = false;
 
-async function playFoundSound(){
-  if(isLoadingProgress || !soundEnabled) return;
-  const foundCount = document.querySelectorAll("#wordList li.found").length;
-  const midi = discoveryNotes[(foundCount - 1) % discoveryNotes.length];
-  try {
-    await prepareAudio();
-    const now = audioContext.currentTime;
-    const frequency = 440 * Math.pow(2, (midi - 69) / 12);
-    // A soft struck tone with a short attack and a natural decay.
-    [1, 2, 3].forEach((harmonic, index) => {
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      oscillator.frequency.value = frequency * harmonic;
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.18 / (harmonic * harmonic), now + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8 - index * 0.12);
-      oscillator.connect(gain).connect(audioContext.destination);
-      oscillator.start(now);
-      oscillator.stop(now + 0.85);
-      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
-    });
-  } catch(error) {
-    console.warn("Não foi possível reproduzir a nota.", error);
-  }
+function playFoundSound(){
+  if(isLoadingProgress || !soundEnabled || !soundEffectBuffer) return;
+  audioContext.resume();
+  const source=audioContext.createBufferSource();
+  const gain=audioContext.createGain();
+  source.buffer=soundEffectBuffer;
+  gain.gain.setValueAtTime(0.7,audioContext.currentTime);
+  source.connect(gain).connect(audioContext.destination);
+  source.start();
 }
 
 function toggleAnswer(area,word){
@@ -852,6 +822,7 @@ JSON.stringify(Object.keys(answerClips)
 </script>
 
 <script src="../shared/image-map-targets.js"></script>
+<script src="../shared/puzzle-hints.js"></script>
 
 
 

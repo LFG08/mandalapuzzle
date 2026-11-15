@@ -60,6 +60,15 @@
     });
   }
 
+  function minimumMandalaZoom() {
+    if (mobileLayout.matches) {
+      return Math.min(1, innerWidth / container.offsetWidth,
+        (document.querySelector(".mobile-puzzle-viewport")?.clientHeight || innerHeight) / container.offsetHeight);
+    }
+    // Never shrink the artwork below either viewport edge on desktop.
+    return Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight);
+  }
+
   function syncMandalaZoom(nextZoom, event) {
     // Resize can fire before the media-query change event. Restore the matching
     // preference before clamping, so the previous mode cannot overwrite it.
@@ -70,14 +79,9 @@
       nextZoom = mandalaZoom;
     }
     const oldZoom = mandalaZoom;
-    const configuredMinimum = Number(container.dataset.minZoom);
-    const minimumZoom = matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches
-      ? Math.min(1, innerWidth / container.offsetWidth, (document.querySelector(".mobile-puzzle-viewport")?.clientHeight || innerHeight) / container.offsetHeight)
-      : container.dataset.minZoom === "fit"
-      ? Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight))
-      : Number.isFinite(configuredMinimum) && configuredMinimum > 0 ? configuredMinimum : .5;
+    const minimumZoom = minimumMandalaZoom();
     const newZoom = clamp(nextZoom, minimumZoom, 2.5);
-    if (newZoom === oldZoom) return;
+    if (newZoom === oldZoom && !event) return;
 
     const anchorX = event ? event.clientX : innerWidth / 2;
     const anchorY = event ? event.clientY : innerHeight / 2;
@@ -89,10 +93,16 @@
     container.style.zoom = mandalaZoom;
     localStorage.setItem(zoomKey(), mandalaZoom);
 
-    scrollTo(
-      scrollX + rect.left + contentX * newZoom - anchorX,
-      scrollY + rect.top + contentY * newZoom - anchorY
-    );
+    let targetX = scrollX + rect.left + contentX * newZoom - anchorX;
+    let targetY = scrollY + rect.top + contentY * newZoom - anchorY;
+    if (!mobileLayout.matches) {
+      const bounds = container.getBoundingClientRect();
+      const left = scrollX + bounds.left;
+      const top = scrollY + bounds.top;
+      targetX = Math.min(Math.max(left, left + bounds.width - innerWidth), Math.max(left, targetX));
+      targetY = Math.min(Math.max(top, top + bounds.height - innerHeight), Math.max(top, targetY));
+    }
+    scrollTo(targetX, targetY);
   }
 
   mobileLayout.addEventListener("change", () => {
@@ -109,14 +119,8 @@
   if (Number.isFinite(savedMenuWidth) && savedMenuWidth >= 190) {
     menu.style.width = `${Math.min(savedMenuWidth, Math.max(190, innerWidth - 16))}px`;
   }
-  if (!mobileLayout.matches && container.dataset.minZoom === "fit") {
-    const fitMinimum = Math.min(1, Math.max(innerWidth / container.offsetWidth, innerHeight / container.offsetHeight));
-    mandalaZoom = clamp(mandalaZoom, fitMinimum, 2.5);
-  } else {
-    const configuredMinimum = Number(container.dataset.minZoom);
-    if (!mobileLayout.matches && Number.isFinite(configuredMinimum) && configuredMinimum > 0) {
-      mandalaZoom = clamp(mandalaZoom, configuredMinimum, 2.5);
-    }
+  if (!mobileLayout.matches) {
+    mandalaZoom = clamp(mandalaZoom, minimumMandalaZoom(), 2.5);
   }
   container.style.zoom = mandalaZoom;
 
@@ -149,7 +153,7 @@
   });
   window.addEventListener("resize", function () {
     requestAnimationFrame(keepMenuInViewport);
-    if (container.dataset.minZoom === "fit") syncMandalaZoom(mandalaZoom);
+    syncMandalaZoom(mandalaZoom);
   });
   window.addEventListener("storage", function (event) {
     if (event.key === menuZoomKey) {

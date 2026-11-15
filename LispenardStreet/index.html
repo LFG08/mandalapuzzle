@@ -299,20 +299,26 @@ const zoomMenuWordsButton=document.getElementById("zoomMenuWords");
 if(zoomMenuWordsButton){zoomMenuWordsButton.onclick=()=>{state.menuZoom=state.menuZoom>=1.75?.75:Number((state.menuZoom+.25).toFixed(2));localStorage.setItem(MENU_ZOOM_KEY,state.menuZoom);sync();};}
 document.getElementById("spoilersToggle").onclick=()=>{state.spoilers=!state.spoilers;localStorage.setItem(SPOILER_KEY,state.spoilers?"on":"off");sync();};
 
-function minimumMandalaZoom(){return Math.min(1,(matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches?Math.min:Math.max)(innerWidth/MANDALA_WIDTH,(document.querySelector(".mobile-puzzle-viewport")?.clientHeight||innerHeight)/MANDALA_HEIGHT));}
+function minimumMandalaZoom(){return matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches?Math.min(1,innerWidth/MANDALA_WIDTH,(document.querySelector(".mobile-puzzle-viewport")?.clientHeight||innerHeight)/MANDALA_HEIGHT):Math.max(innerWidth/MANDALA_WIDTH,innerHeight/MANDALA_HEIGHT);}
 function clampZoom(value,min,max){return Math.min(max,Math.max(min,Number(value.toFixed(matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches?4:2))));}
 let mandalaZoomMode=matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
 function setMandalaZoom(nextZoom,event){
   const mobile=matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches;
   if(mandalaZoomMode!==mobile){mandalaZoomMode=mobile;state.mandalaZoom=Number(localStorage.getItem(mandalaZoomPreferenceKey()))||1;nextZoom=state.mandalaZoom;sync();}
   const oldZoom=state.mandalaZoom, newZoom=clampZoom(nextZoom,minimumMandalaZoom(),2.5);
-  if(newZoom===oldZoom)return;
+  if(newZoom===oldZoom&&!event)return;
   const anchorX=event?event.clientX:innerWidth/2, anchorY=event?event.clientY:innerHeight/2;
   const beforeX=(scrollX+anchorX)/oldZoom, beforeY=(scrollY+anchorY)/oldZoom;
   state.mandalaZoom=newZoom;
   localStorage.setItem(mandalaZoomPreferenceKey(),state.mandalaZoom);
   sync();
-  scrollTo(beforeX*newZoom-anchorX,beforeY*newZoom-anchorY);
+  let x=beforeX*newZoom-anchorX,y=beforeY*newZoom-anchorY;
+  if(!mobile){
+    const bounds=document.getElementById("mandalaContainer").getBoundingClientRect(),left=scrollX+bounds.left,top=scrollY+bounds.top;
+    x=Math.min(Math.max(left,left+bounds.width-innerWidth),Math.max(left,x));
+    y=Math.min(Math.max(top,top+bounds.height-innerHeight),Math.max(top,y));
+  }
+  scrollTo(x,y);
 }
 document.addEventListener("puzzle-mobile-zoom",event=>{
   setMandalaZoom(event.detail==="fit"?minimumMandalaZoom():state.mandalaZoom*(event.detail==="in"?1.25:.8));

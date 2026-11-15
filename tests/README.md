@@ -73,3 +73,14 @@ Checks every Wasteland Baby, Cores, and Mais Gatos hint destination at desktop
 and mobile viewport sizes, 70% and 140% zoom, and all four rotations. Verifies
 that each hint scrolls once to the rendered answer position and shows its region.
 Uses the same `TEST_ORIGIN` and `CHROMIUM_BINARY` settings as the other browser checks.
+
+## Mandala zoom edge checks
+
+```sh
+node tests/zoom-edges.cjs
+```
+
+Checks all 18 word/element puzzles by scrolling to the page’s far edge and
+zooming out repeatedly with wheel events. The visible artwork must reach every
+viewport edge, including when repeated wheel events hit the minimum zoom.
+Uses `TEST_ORIGIN` and `CHROMIUM_BINARY` like the other browser checks.
